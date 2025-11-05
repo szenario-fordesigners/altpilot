@@ -1,48 +1,49 @@
 {
-  "name": "szenario/craft-alt-pilot",
-  "description": "test-descritopn",
-  "type": "craft-plugin",
-  "license": "proprietary",
-  "support": {
-    "email": "support@szenario.design",
-    "issues": "https://github.com/szenario-fordesigners/altpilot/issues?state=open",
-    "source": "https://github.com/szenario-fordesigners/altpilot",
-    "docs": "https://github.com/szenario-fordesigners/altpilot",
-    "rss": "https://github.com/szenario-fordesigners/altpilot/releases.atom"
-  },
-  "require": {
-    "php": ">=8.2",
-    "craftcms/cms": "^5.8.0"
-  },
-  "require-dev": {
-    "craftcms/ecs": "dev-main",
-    "craftcms/phpstan": "dev-main"
-  },
-  "autoload": {
-    "psr-4": {
-      "szenario\\craftaltpilot\\": "src/"
-    }
-  },
-  "extra": {
-    "handle": "alt-pilot",
-    "name": "AltPilot",
-    "developer": "szenario",
-    "documentationUrl": "https://github.com/szenario-fordesigners/altpilot",
-    "class": "szenario\\craftaltpilot\\AltPilot"
-  },
-  "scripts": {
-    "check-cs": "ecs check --ansi",
-    "fix-cs": "ecs check --ansi --fix",
-    "phpstan": "phpstan --memory-limit=1G"
-  },
-  "config": {
-    "sort-packages": true,
-    "platform": {
-      "php": "8.2"
-    },
-    "allow-plugins": {
-      "yiisoft/yii2-composer": true,
-      "craftcms/plugin-installer": true
-    }
-  }
+	"name": "szenario/craft-alt-pilot",
+	"description": "test-descritopn",
+	"type": "craft-plugin",
+	"license": "proprietary",
+	"support": {
+		"email": "support@szenario.design",
+		"issues": "https://github.com/szenario-fordesigners/altpilot/issues?state=open",
+		"source": "https://github.com/szenario-fordesigners/altpilot",
+		"docs": "https://github.com/szenario-fordesigners/altpilot",
+		"rss": "https://github.com/szenario-fordesigners/altpilot/releases.atom"
+	},
+	"require": {
+		"php": ">=8.2",
+		"craftcms/cms": "^5.8.0",
+		"openai-php/client": "^0.18.0"
+	},
+	"require-dev": {
+		"craftcms/ecs": "dev-main",
+		"craftcms/phpstan": "dev-main"
+	},
+	"autoload": {
+		"psr-4": {
+			"szenario\\craftaltpilot\\": "src/"
+		}
+	},
+	"extra": {
+		"handle": "alt-pilot",
+		"name": "AltPilot",
+		"developer": "szenario",
+		"documentationUrl": "https://github.com/szenario-fordesigners/altpilot",
+		"class": "szenario\\craftaltpilot\\AltPilot"
+	},
+	"scripts": {
+		"check-cs": "ecs check --ansi",
+		"fix-cs": "ecs check --ansi --fix",
+		"phpstan": "phpstan --memory-limit=1G"
+	},
+	"config": {
+		"sort-packages": true,
+		"platform": {
+			"php": "8.2"
+		},
+		"allow-plugins": {
+			"yiisoft/yii2-composer": true,
+			"craftcms/plugin-installer": true
+		}
+	}
 }

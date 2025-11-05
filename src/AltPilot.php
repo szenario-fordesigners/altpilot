@@ -6,6 +6,7 @@ use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
 use szenario\craftaltpilot\models\Settings;
+use szenario\craftaltpilot\services\OpenAiService;
 
 /**
  * AltPilot plugin
@@ -15,6 +16,7 @@ use szenario\craftaltpilot\models\Settings;
  * @author szenario <support@szenario.design>
  * @copyright szenario
  * @license https://craftcms.github.io/license/ Craft License
+ * @property-read OpenAiService $openAiService
  */
 class AltPilot extends Plugin
 {
@@ -24,9 +26,7 @@ class AltPilot extends Plugin
     public static function config(): array
     {
         return [
-            'components' => [
-                // Define component configs here...
-            ],
+            'components' => ['openAiService' => OpenAiService::class],
         ];
     }
 
