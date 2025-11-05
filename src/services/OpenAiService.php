@@ -38,6 +38,36 @@ class OpenAiService extends Component
     }
 
     /**
+     * Send a chat completion request to OpenAI
+     *
+     * @param array $messages Array of message objects with 'role' and 'content' keys
+     * @param array $options Additional options (model, temperature, max_tokens, etc.)
+     * @return \OpenAI\Responses\Chat\CreateResponse The API response
+     * @throws \Exception
+     */
+    private function chatCompletion(array $messages, array $options = [])
+    {
+        try {
+            $settings = \szenario\craftaltpilot\AltPilot::getInstance()->getSettings();
+
+            $defaultOptions = [
+                'model' => $settings->openAiModel ?? 'gpt-5-nano',
+            ];
+
+            $params = array_merge($defaultOptions, $options, [
+                'messages' => $messages,
+            ]);
+
+            $response = $this->getClient()->chat()->create($params);
+
+            return $response;
+        } catch (\Exception $e) {
+            Craft::error('OpenAI API error: ' . $e->getMessage(), __METHOD__);
+            throw $e;
+        }
+    }
+
+    /**
      * Generate alt text for an image using OpenAI Vision API
      *
      * @param string $imageUrl The public URL of the image (preferred to save tokens)
@@ -71,40 +101,18 @@ class OpenAiService extends Component
         ];
 
         $options = array_merge([
-            'max_tokens' => 300,
+            // 'max_completion_tokens' => 300,
         ], $additionalOptions);
 
         $response = $this->chatCompletion($messages, $options);
+
+        Craft::info('OpenAI API response: ' . json_encode($response), "alt-pilot");
 
         if (empty($response->choices[0]->message->content)) {
             throw new \Exception('No content returned from OpenAI API');
         }
 
         return trim($response->choices[0]->message->content);
-    }
-
-    /**
-     * Get the public URL for a Craft Asset
-     *
-     * @param \craft\elements\Asset $asset The Craft Asset element
-     * @return string The public URL of the asset
-     * @throws \Exception
-     */
-    public function getAssetUrl(\craft\elements\Asset $asset): string
-    {
-        $url = $asset->getUrl();
-
-        if ($url === null) {
-            throw new \Exception('Asset does not have a public URL. Make sure the asset is accessible.');
-        }
-
-        // Ensure we have a full URL (add base URL if needed)
-        if (strpos($url, 'http') !== 0) {
-            $baseUrl = Craft::getAlias('@web');
-            $url = rtrim($baseUrl, '/') . '/' . ltrim($url, '/');
-        }
-
-        return $url;
     }
 
     /**
