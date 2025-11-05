@@ -27,12 +27,12 @@
     label: 'Open AI Model'|t('app'),
     id: 'openAiModel',
     name: 'openAiModel',
-    instructions: "The OpenAI model used to generate the response. To find out which models are capable of vision OpenAI suggest to look [on the models page](https://platform.openai.com/docs/models)"|t("aialttext"),
+    instructions: "The OpenAI model used to generate the response. We strongly recommend to use GPT-5 Nano. Using other models may lead to extraordinary costs and lower quality. For details, take a look at the calculator at the bottom of the [OpenAI pricing page](https://openai.com/api/pricing/#trigger_2L7BlliZjpyN3nKgx6ujVA). To find out which models are capable of vision OpenAI suggest to look [on the models page](https://platform.openai.com/docs/models)"|t("aialttext"),
     value: settings.openAiModel,
     errors: settings.getErrors('openAiModel'),
     options: [
         {value: 'gpt-5-nano', label: 'GPT-5 Nano — Fastest and cheapest option'},
         {value: 'gpt-4o-mini', label: 'GPT-4o Mini — Alternative to  GPT-5 Nano while being a non-reasoning model'},
-        {value: 'gpt-4o', label: 'GPT-4o — Highest quality for complex images (better accuracy, 4x more expensive)'},
+        {value: 'gpt-4o', label: 'GPT-4o — Highest quality for complex images (better accuracy, more expensive)'},
     ],
 }) }}

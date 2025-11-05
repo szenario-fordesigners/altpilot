@@ -70,13 +70,13 @@ class OpenAiService extends Component
     /**
      * Generate alt text for an image using OpenAI Vision API
      *
-     * @param string $imageUrl The public URL of the image (preferred to save tokens)
+     * @param string $imageData The base64 data URL or public URL of the image
      * @param string|null $prompt Optional custom prompt (uses settings prompt if not provided)
      * @param array $additionalOptions Additional options for the API request
      * @return string The generated alt text
      * @throws \Exception
      */
-    public function generateAltText(string $imageUrl, ?string $prompt = null, array $additionalOptions = []): string
+    public function generateAltText(string $imageData, ?string $prompt = null, array $additionalOptions = []): string
     {
         $settings = \szenario\craftaltpilot\AltPilot::getInstance()->getSettings();
 
@@ -93,7 +93,7 @@ class OpenAiService extends Component
                     [
                         'type' => 'image_url',
                         'image_url' => [
-                            'url' => $imageUrl,
+                            'url' => $imageData,
                         ],
                     ],
                 ],
