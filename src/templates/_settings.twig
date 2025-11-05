@@ -3,4 +3,33 @@
 
 {% import '_includes/forms.twig' as forms %}
 
-{# ... #}
+{{ forms.autosuggestField({
+    label: "OpenAI API Key"|t("aialttext"),
+    instructions: "The API key from your Open AI account"|t("aialttext"),
+    id: "openAiApiKey",
+    name: "openAiApiKey",
+    suggestEnvVars: true,
+    value: settings.openAiApiKey,
+    errors: settings.getErrors("openAiApiKey"),
+}) }}
+
+{{ forms.textareaField({
+    label: 'Prompt'|t('app'),
+    id: 'openAiPrompt',
+    name: 'openAiPrompt',
+    instructions: "The text prompt which will be sent to OpenAI with the image to generate the response, supports simple Asset Model and Site Model property values using `{asset.property}` and `{site.property}`"|t("aialttext"),
+    value: settings.openAiPrompt,
+    placeholder: "Describe the image provided, make it suitable for an alt text description (roughly 150 characters maximum). Consider transparency within the image if supported by the file type, e.g. don't suggest it has a dark background if it is transparent. Do not add a prefix of any kind (e.g. alt text: AI content) so the value is suitable for the alt text attribute value of the image. Output in {site.language}",
+    errors: settings.getErrors('openAiPrompt'),
+}) }}
+
+{{ forms.autosuggestField({
+    label: 'Open AI Model'|t('app'),
+    id: 'openAiModel',
+    name: 'openAiModel',
+    instructions: "The OpenAI model used to generate the response. To find out which models are capable of vision OpenAI suggest to look [on the models page](https://platform.openai.com/docs/models)"|t("aialttext"),
+    value: settings.openAiModel,
+    placeholder: 'gpt-5-nano',
+    errors: settings.getErrors('openAiModel'),
+    suggestEnvVars: true,
+}) }}

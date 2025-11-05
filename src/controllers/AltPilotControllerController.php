@@ -20,5 +20,8 @@ class AltPilotControllerController extends Controller
     public function actionIndex(): Response
     {
         // ...
+        return $this->asJson([
+            'message' => 'simon',
+        ]);
     }
 }
