@@ -17,17 +17,24 @@ class AltPilotService extends Component
 
         $plugin = \szenario\craftaltpilot\AltPilot::getInstance();
         $openAiService = $plugin->openAiService;
+        $urlReachabilityChecker = $plugin->urlReachabilityChecker;
 
         // Try to get public URL first (cheaper, faster)
         $publicUrl = $this->getAssetPublicUrl($asset);
 
         if ($publicUrl !== null) {
-            Craft::info('Using public URL for asset: ' . $asset->id, "alt-pilot");
-            return $openAiService->generateAltText($publicUrl, $prompt, $additionalOptions);
+            // Check if the URL is actually reachable from the internet
+            if ($urlReachabilityChecker->isReachable($publicUrl)) {
+                Craft::info('Using public URL for asset: ' . $asset->id, "alt-pilot");
+                return $openAiService->generateAltText($publicUrl, $prompt, $additionalOptions);
+            }
+
+            Craft::info('Public URL exists but is not reachable, falling back to base64 encoding for asset: ' . $asset->id, "alt-pilot");
+        } else {
+            Craft::info('No public URL available, falling back to base64 encoding for asset: ' . $asset->id, "alt-pilot");
         }
 
-        // Fall back to base64 encoding if no public URL available
-        Craft::info('Falling back to base64 encoding for asset: ' . $asset->id, "alt-pilot");
+        // Fall back to base64 encoding if no public URL available or not reachable
         $base64Image = $this->assetToBase64($asset);
         return $openAiService->generateAltText($base64Image, $prompt, $additionalOptions);
     }

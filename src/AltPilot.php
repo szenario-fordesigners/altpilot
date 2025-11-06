@@ -8,6 +8,7 @@ use craft\base\Plugin;
 use szenario\craftaltpilot\models\Settings;
 use szenario\craftaltpilot\services\AltPilotService;
 use szenario\craftaltpilot\services\OpenAiService;
+use szenario\craftaltpilot\services\UrlReachabilityChecker;
 
 /**
  * AltPilot plugin
@@ -19,6 +20,7 @@ use szenario\craftaltpilot\services\OpenAiService;
  * @license https://craftcms.github.io/license/ Craft License
  * @property-read OpenAiService $openAiService
  * @property-read AltPilotService $altPilotService
+ * @property-read UrlReachabilityChecker $urlReachabilityChecker
  */
 class AltPilot extends Plugin
 {
@@ -28,7 +30,7 @@ class AltPilot extends Plugin
     public static function config(): array
     {
         return [
-            'components' => ['openAiService' => OpenAiService::class, 'altPilotService' => AltPilotService::class],
+            'components' => ['openAiService' => OpenAiService::class, 'altPilotService' => AltPilotService::class, 'urlReachabilityChecker' => UrlReachabilityChecker::class],
         ];
     }
 

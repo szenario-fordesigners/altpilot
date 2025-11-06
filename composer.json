@@ -13,6 +13,7 @@
 	"require": {
 		"php": ">=8.2",
 		"craftcms/cms": "^5.8.0",
+		"ilyagvc/checkhost": "^1.2",
 		"openai-php/client": "^0.18.0"
 	},
 	"require-dev": {
