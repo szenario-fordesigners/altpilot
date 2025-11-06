@@ -21,6 +21,7 @@ class UrlReachabilityChecker extends Component
     private function getCheckHost(): CheckHost
     {
         if ($this->_checkHost === null) {
+            // leave all at default, except timeout which is set to 5 seconds
             $this->_checkHost = new CheckHost(
                 null,
                 false,

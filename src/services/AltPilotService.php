@@ -10,6 +10,34 @@ use yii\base\Component;
  */
 class AltPilotService extends Component
 {
+    /**
+     * Queue alt text generation for an asset
+     *
+     * @param \craft\elements\Asset $asset The asset to generate alt text for
+     * @param string|null $prompt Optional custom prompt
+     * @param array $additionalOptions Additional options for OpenAI
+     * @return void
+     */
+    public function queueAltTextGeneration(\craft\elements\Asset $asset, ?string $prompt = null, array $additionalOptions = []): void
+    {
+        $job = new \szenario\craftaltpilot\jobs\AltTextGenerator();
+        $job->asset = $asset;
+        $job->prompt = $prompt;
+        $job->additionalOptions = $additionalOptions;
+
+        Craft::$app->getQueue()->push($job);
+
+        Craft::info('Queued alt text generation for asset: ' . $asset->id, 'alt-pilot');
+    }
+
+    /**
+     * Generate alt text for an asset (synchronous)
+     *
+     * @param \craft\elements\Asset $asset The asset to generate alt text for
+     * @param string|null $prompt Optional custom prompt
+     * @param array $additionalOptions Additional options for OpenAI
+     * @return string The generated alt text
+     */
     public function generateAltText(\craft\elements\Asset $asset, ?string $prompt = null, array $additionalOptions = []): string
     {
         // Validate asset meets OpenAI requirements
