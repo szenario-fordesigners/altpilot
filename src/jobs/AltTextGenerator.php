@@ -12,23 +12,16 @@ use Exception;
  */
 class AltTextGenerator extends BaseJob
 {
-    public ?Asset $asset = null;
+    public Asset $asset;
     public ?string $prompt = null;
-    public array $additionalOptions = [];
 
     public function execute($queue): void
     {
-        if ($this->asset === null) {
-            Craft::error('Asset is required for alt text generation', 'alt-pilot');
-            return;
-        }
-
         $plugin = \szenario\craftaltpilot\AltPilot::getInstance();
         $altPilotService = $plugin->altPilotService;
 
         try {
-            // Generate the alt text (saving will be added later)
-            $altText = $altPilotService->generateAltText($this->asset, $this->prompt, $this->additionalOptions);
+            $altText = $altPilotService->generateAltText($this->asset, $this->prompt);
 
             Craft::info('Alt text generated for asset: ' . $this->asset->id . ' - ' . $altText, 'alt-pilot');
 
@@ -36,7 +29,7 @@ class AltTextGenerator extends BaseJob
                 throw new Exception('Empty alt text generated for asset: ' . $this->asset->filename);
             }
 
-            $this->asset->altText = $altText;
+            $this->asset->alt = $altText;
 
             if (!Craft::$app->elements->saveElement($this->asset, true)) {
                 throw new Exception('Failed to save alt text for asset: ' . $this->asset->filename);

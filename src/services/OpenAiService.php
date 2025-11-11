@@ -72,11 +72,10 @@ class OpenAiService extends Component
      *
      * @param string $imageData The base64 data URL or public URL of the image
      * @param string|null $prompt Optional custom prompt (uses settings prompt if not provided)
-     * @param array $additionalOptions Additional options for the API request
      * @return string The generated alt text
      * @throws \Exception
      */
-    public function generateAltText(string $imageData, ?string $prompt = null, array $additionalOptions = []): string
+    public function generateAltText(string $imageData, ?string $prompt = null): string
     {
         $settings = \szenario\craftaltpilot\AltPilot::getInstance()->getSettings();
 
@@ -102,7 +101,7 @@ class OpenAiService extends Component
 
         $options = array_merge([
             // 'max_completion_tokens' => 300,
-        ], $additionalOptions);
+        ]);
 
         $response = $this->chatCompletion($messages, $options);
 
@@ -113,22 +112,5 @@ class OpenAiService extends Component
         }
 
         return trim($response->choices[0]->message->content);
-    }
-
-    /**
-     * List available models
-     *
-     * @return \OpenAI\Responses\Models\ListResponse List of available models
-     * @throws \Exception
-     */
-    public function listModels()
-    {
-        try {
-            $response = $this->getClient()->models()->list();
-            return $response;
-        } catch (\Exception $e) {
-            Craft::error('OpenAI API error listing models: ' . $e->getMessage(), __METHOD__);
-            throw $e;
-        }
     }
 }

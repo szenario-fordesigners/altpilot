@@ -42,18 +42,18 @@ class AltPilotWebController extends Controller
             ]);
         }
 
-        Craft::info('Starting alt text generation for asset ID: ' . $assetId, "alt-pilot");
+        Craft::info('Queuing alt text generation for asset ID: ' . $assetId, "alt-pilot");
 
-        $altPilot = \szenario\craftaltpilot\AltPilot::getInstance();
-        $altText = $altPilot->altPilotService->generateAltText($asset);
 
-        Craft::info('Alt text generated for asset ID: ' . $assetId, "alt-pilot");
-        Craft::info('Alt text: ' . $altText, "alt-pilot");
+        $job = new \szenario\craftaltpilot\jobs\AltTextGenerator(['asset' => $asset]);
+        Craft::$app->getQueue()->push($job);
+
+        Craft::info('Alt text generation queued for asset ID: ' . $assetId, "alt-pilot");
 
         return $this->asJson([
             'success' => true,
             'assetId' => $assetId,
-            'altText' => $altText,
+            'message' => 'Alt text generation has been queued',
         ]);
     }
 }

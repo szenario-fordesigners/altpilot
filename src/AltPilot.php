@@ -7,6 +7,7 @@ use craft\base\Model;
 use craft\base\Plugin;
 use szenario\craftaltpilot\models\Settings;
 use szenario\craftaltpilot\services\AltPilotService;
+use szenario\craftaltpilot\services\ImageUtilityService;
 use szenario\craftaltpilot\services\OpenAiService;
 use szenario\craftaltpilot\services\UrlReachabilityChecker;
 
@@ -21,6 +22,7 @@ use szenario\craftaltpilot\services\UrlReachabilityChecker;
  * @property-read OpenAiService $openAiService
  * @property-read AltPilotService $altPilotService
  * @property-read UrlReachabilityChecker $urlReachabilityChecker
+ * @property-read ImageUtilityService $imageUtilityService
  */
 class AltPilot extends Plugin
 {
@@ -30,7 +32,7 @@ class AltPilot extends Plugin
     public static function config(): array
     {
         return [
-            'components' => ['openAiService' => OpenAiService::class, 'altPilotService' => AltPilotService::class, 'urlReachabilityChecker' => UrlReachabilityChecker::class],
+            'components' => ['openAiService' => OpenAiService::class, 'altPilotService' => AltPilotService::class, 'urlReachabilityChecker' => UrlReachabilityChecker::class, 'imageUtilityService' => ImageUtilityService::class],
         ];
     }
 
@@ -42,7 +44,7 @@ class AltPilot extends Plugin
 
         // Any code that creates an element query or loads Twig should be deferred until
         // after Craft is fully initialized, to avoid conflicts with other plugins/modules
-        Craft::$app->onInit(function() {
+        Craft::$app->onInit(function () {
             // ...
         });
     }
