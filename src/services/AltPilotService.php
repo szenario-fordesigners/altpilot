@@ -19,9 +19,6 @@ class AltPilotService extends Component
      */
     public function generateAltText(\craft\elements\Asset $asset, ?string $prompt = null): string
     {
-        // Validate asset meets OpenAI requirements
-        $this->validateAssetForOpenAI($asset);
-
         $plugin = \szenario\craftaltpilot\AltPilot::getInstance();
         $openAiService = $plugin->openAiService;
         $urlReachabilityChecker = $plugin->urlReachabilityChecker;
