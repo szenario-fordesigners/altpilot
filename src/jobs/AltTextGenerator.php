@@ -23,12 +23,6 @@ class AltTextGenerator extends BaseJob
         try {
             $altText = $altPilotService->generateAltText($this->asset, $this->prompt);
 
-            Craft::info('Alt text generated for asset: ' . $this->asset->id . ' - ' . $altText, 'alt-pilot');
-
-            if (empty($altText)) {
-                throw new Exception('Empty alt text generated for asset: ' . $this->asset->filename);
-            }
-
             $this->asset->alt = $altText;
 
             if (!Craft::$app->elements->saveElement($this->asset, true)) {
@@ -50,7 +44,8 @@ class AltTextGenerator extends BaseJob
 
         $assetName = $this->asset->filename ?? 'Asset #' . $this->asset->id;
 
-        return Craft::t('alt-pilot', 'Generating alt text for {asset}', [
+        return Craft::t('alt-pilot', '[Asset ID: {id}] Generating alt text for {asset}', [
+            'id' => $this->asset->id,
             'asset' => $assetName,
         ]);
     }

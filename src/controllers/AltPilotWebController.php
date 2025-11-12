@@ -5,6 +5,7 @@ namespace szenario\craftaltpilot\controllers;
 use Craft;
 use craft\web\Controller;
 use yii\web\Response;
+use szenario\craftaltpilot\AltPilot;
 
 /**
  * Alt Pilot Web controller
@@ -45,8 +46,7 @@ class AltPilotWebController extends Controller
         Craft::info('Queuing alt text generation for asset ID: ' . $assetId, "alt-pilot");
 
 
-        $job = new \szenario\craftaltpilot\jobs\AltTextGenerator(['asset' => $asset]);
-        Craft::$app->getQueue()->push($job);
+        AltPilot::getInstance()->queueService->safelyCreateJob($asset);
 
         Craft::info('Alt text generation queued for asset ID: ' . $assetId, "alt-pilot");
 

@@ -9,6 +9,7 @@ use szenario\craftaltpilot\models\Settings;
 use szenario\craftaltpilot\services\AltPilotService;
 use szenario\craftaltpilot\services\ImageUtilityService;
 use szenario\craftaltpilot\services\OpenAiService;
+use szenario\craftaltpilot\services\QueueService;
 use szenario\craftaltpilot\services\UrlReachabilityChecker;
 
 /**
@@ -23,6 +24,7 @@ use szenario\craftaltpilot\services\UrlReachabilityChecker;
  * @property-read AltPilotService $altPilotService
  * @property-read UrlReachabilityChecker $urlReachabilityChecker
  * @property-read ImageUtilityService $imageUtilityService
+ * @property-read QueueService $queueService
  */
 class AltPilot extends Plugin
 {
@@ -32,7 +34,7 @@ class AltPilot extends Plugin
     public static function config(): array
     {
         return [
-            'components' => ['openAiService' => OpenAiService::class, 'altPilotService' => AltPilotService::class, 'urlReachabilityChecker' => UrlReachabilityChecker::class, 'imageUtilityService' => ImageUtilityService::class],
+            'components' => ['openAiService' => OpenAiService::class, 'altPilotService' => AltPilotService::class, 'urlReachabilityChecker' => UrlReachabilityChecker::class, 'imageUtilityService' => ImageUtilityService::class, 'queueService' => QueueService::class],
         ];
     }
 

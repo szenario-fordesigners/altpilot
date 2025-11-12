@@ -93,6 +93,7 @@ class OpenAiService extends Component
                         'type' => 'image_url',
                         'image_url' => [
                             'url' => $imageData,
+                            'detail' => 'low',
                         ],
                     ],
                 ],
