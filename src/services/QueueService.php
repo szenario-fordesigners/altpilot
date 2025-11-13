@@ -11,7 +11,7 @@ use craft\elements\Asset;
  */
 class QueueService extends Component
 {
-    public function safelyCreateJob(Asset $asset, bool $force = false): void
+    public function safelyCreateJob(Asset $asset): void
     {
         // check if a job for this asset is already in the queue
         $jobs = Craft::$app->getQueue()->getJobInfo();

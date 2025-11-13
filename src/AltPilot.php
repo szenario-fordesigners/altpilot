@@ -5,6 +5,10 @@ namespace szenario\craftaltpilot;
 use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
+use craft\elements\Asset;
+use craft\events\RegisterElementActionsEvent;
+use szenario\craftaltpilot\elements\actions\GenerateAltPilotElementAction;
+use yii\base\Event;
 use szenario\craftaltpilot\models\Settings;
 use szenario\craftaltpilot\services\AltPilotService;
 use szenario\craftaltpilot\services\ImageUtilityService;
@@ -68,5 +72,14 @@ class AltPilot extends Plugin
     {
         // Register event handlers here ...
         // (see https://craftcms.com/docs/5.x/extend/events.html to get started)
+
+        Event::on(
+            Asset::class,
+            Asset::EVENT_REGISTER_ACTIONS,
+            function (RegisterElementActionsEvent $event) {
+                $event->actions[] = GenerateAltPilotElementAction::class;
+            }
+        );
+
     }
 }
