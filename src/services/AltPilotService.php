@@ -4,7 +4,8 @@ namespace szenario\craftaltpilot\services;
 
 use Craft;
 use yii\base\Component;
-
+use craft\events\DefineMenuItemsEvent;
+use craft\enums\MenuItemType;
 /**
  * Alt Pilot Service service
  */
@@ -43,5 +44,62 @@ class AltPilotService extends Component
         // Transform logic is handled internally by assetToBase64()
         $base64Image = $imageUtilityService->assetToBase64($asset);
         return $openAiService->generateAltText($base64Image, $prompt);
+    }
+
+
+
+    public function handleAssetActionMenuItems(DefineMenuItemsEvent $event)
+    {
+        $asset = $event->sender;
+
+        if (!$asset instanceof \craft\elements\Asset) {
+            return;
+        }
+
+        if ($asset->kind !== 'image') {
+            return;
+        }
+
+        $buttonId = sprintf('action-generate-ai-alt-%s', mt_rand());
+
+        $event->items[] = [
+            'type' => MenuItemType::Button,
+            'id' => $buttonId,
+            'icon' => 'plane-departure',
+            'label' => 'Generate Alt Text',
+        ];
+
+        $view = Craft::$app->getView();
+        $view->registerJsWithVars(
+            fn(string $id, int $assetId) => <<<JS
+const \$button = $('#' + $id);
+\$button.on('activate', () => {
+  \$button.addClass('loading');
+
+  Craft.cp.displayNotice('Generating alt text...');
+
+  Craft.sendActionRequest('POST', 'alt-pilot/web/queue', {
+    data: {assetID: $assetId}
+  }).then(({data}) => {
+    Craft.cp.displayNotice(data.message ?? 'Alt text generation has been queued');
+  }).catch(({response}) => {
+    const errorMessage = response?.data?.error ?? 'Failed to generate alt text';
+    Craft.cp.displayError(errorMessage);
+  }).finally(() => {
+    \$button.removeClass('loading');
+
+    if (Craft.cp.elementIndex) {
+        Craft.cp.elementIndex.updateElements();
+        return;
+    }
+  });
+
+});
+JS,
+            [
+                $view->namespaceInputId($buttonId),
+                $asset->id,
+            ]
+        );
     }
 }
