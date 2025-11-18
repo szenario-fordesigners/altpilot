@@ -50,6 +50,11 @@ class GenerateAltPilotElementAction extends ElementAction
             // Set the current site id on asset
             $asset = Asset::find()->id($element->id)->siteId($query->siteId)->one();
 
+            if ($asset === null) {
+                Craft::warning('Unable to queue alt text generation: asset not found for ID ' . $element->id, 'alt-pilot');
+                continue;
+            }
+
             // Create a job for the asset
             AltPilot::getInstance()->queueService->safelyCreateJob($asset);
             $jobCount++;

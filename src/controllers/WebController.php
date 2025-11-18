@@ -24,34 +24,89 @@ class WebController extends Controller
         $this->requirePostRequest();
         $this->requireAcceptsJson();
 
-        $assetId = $this->request->getRequiredBodyParam('assetID');
+        $assetIdParam = $this->request->getRequiredBodyParam('assetID');
 
         // validate and convert the assetId to an integer
-        $assetId = filter_var($assetId, FILTER_VALIDATE_INT);
+        $assetId = filter_var($assetIdParam, FILTER_VALIDATE_INT);
         if ($assetId === false) {
             return $this->asJson([
                 'error' => 'Asset ID must be a valid integer',
             ]);
         }
 
-        $asset = Craft::$app->assets->getAssetById($assetId);
+        $siteResolution = $this->resolveSiteId();
+        if ($siteResolution['error'] !== null) {
+            return $this->asJson([
+                'error' => $siteResolution['error'],
+            ]);
+        }
+        $siteId = $siteResolution['siteId'];
+
+        $asset = Craft::$app->assets->getAssetById($assetId, $siteId);
         if (!$asset) {
             return $this->asJson([
-                'error' => 'Asset not found',
+                'error' => 'Asset not found for the requested site',
             ]);
         }
 
-        Craft::info('Queuing alt text generation for asset ID: ' . $assetId, "alt-pilot");
+        Craft::info(sprintf('Queuing alt text generation for asset ID: %d on site ID: %d', $assetId, $siteId), "alt-pilot");
 
 
-        AltPilot::getInstance()->queueService->safelyCreateJob($asset);
+        $result = AltPilot::getInstance()->queueService->safelyCreateJob($asset);
 
-        Craft::info('Alt text generation queued for asset ID: ' . $assetId, "alt-pilot");
+        Craft::info(sprintf('Alt text generation queued for asset ID: %d on site ID: %d', $assetId, $siteId), "alt-pilot");
 
         return $this->asJson([
-            'success' => true,
-            'assetId' => $assetId,
-            'message' => 'Alt text generation has been queued',
+            'status' => $result['status'],
+            'message' => $result['message'],
         ]);
+    }
+
+    private function resolveSiteId(): array
+    {
+        $siteIdParam = $this->request->getBodyParam('siteId');
+
+        if ($siteIdParam !== null) {
+            $siteId = filter_var($siteIdParam, FILTER_VALIDATE_INT);
+            if ($siteId === false) {
+                return [
+                    'siteId' => null,
+                    'error' => 'Site ID must be a valid integer',
+                ];
+            }
+
+            if (Craft::$app->getSites()->getSiteById($siteId) === null) {
+                return [
+                    'siteId' => null,
+                    'error' => 'Site not found',
+                ];
+            }
+
+            return [
+                'siteId' => $siteId,
+                'error' => null,
+            ];
+        }
+
+        $currentSite = Craft::$app->getSites()->getCurrentSite();
+        if ($currentSite !== null) {
+            return [
+                'siteId' => (int) $currentSite->id,
+                'error' => null,
+            ];
+        }
+
+        $primarySite = Craft::$app->getSites()->getPrimarySite();
+        if ($primarySite !== null) {
+            return [
+                'siteId' => (int) $primarySite->id,
+                'error' => null,
+            ];
+        }
+
+        return [
+            'siteId' => null,
+            'error' => 'Unable to determine site context for the request',
+        ];
     }
 }

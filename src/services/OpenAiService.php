@@ -71,15 +71,14 @@ class OpenAiService extends Component
      * Generate alt text for an image using OpenAI Vision API
      *
      * @param string $imageData The base64 data URL or public URL of the image
-     * @param string|null $prompt Optional custom prompt (uses settings prompt if not provided)
      * @return string The generated alt text
      * @throws \Exception
      */
-    public function generateAltText(string $imageData, ?string $prompt = null): string
+    public function generateAltText(string $imageData): string
     {
         $settings = \szenario\craftaltpilot\AltPilot::getInstance()->getSettings();
 
-        $userPrompt = $prompt ?? $settings->openAiPrompt ?? 'Describe this image in a way suitable for alt text (roughly 150 characters maximum).';
+        $userPrompt = $settings->openAiPrompt ?? 'Describe this image in a way suitable for alt text (roughly 150 characters maximum).';
 
         $messages = [
             [

@@ -13,7 +13,6 @@ use Exception;
 class AltTextGenerator extends BaseJob
 {
     public Asset $asset;
-    public ?string $prompt = null;
 
     public function execute($queue): void
     {
@@ -21,32 +20,27 @@ class AltTextGenerator extends BaseJob
         $altPilotService = $plugin->altPilotService;
 
         try {
-            $altText = $altPilotService->generateAltText($this->asset, $this->prompt);
+            $altText = $altPilotService->generateAltText($this->asset);
 
             $this->asset->alt = $altText;
 
             if (!Craft::$app->elements->saveElement($this->asset, true)) {
-                throw new Exception('Failed to save alt text for asset: ' . $this->asset->filename);
+                throw new Exception('Failed to save alt text for asset: ' . ($this->asset->filename ?? ('Asset #' . $this->asset->id)));
             }
 
-            Craft::info('Alt text saved for asset: ' . $this->asset->id, 'alt-pilot');
+            Craft::info(sprintf('Alt text saved for %s on site ID: %d', $this->asset->filename ?? $this->asset->id, $this->asset->siteId ?? 0), 'alt-pilot');
         } catch (Exception $e) {
-            Craft::error('Error generating alt text for asset ' . $this->asset->id . ': ' . $e->getMessage(), 'alt-pilot');
+            Craft::error(sprintf('Error generating alt text for %s on site ID: %s - %s', $this->asset->filename ?? $this->asset->id, $this->asset->siteId ?? 'N/A', $e->getMessage()), 'alt-pilot');
             throw $e;
         }
     }
 
     protected function defaultDescription(): ?string
     {
-        if ($this->asset === null) {
-            return Craft::t('alt-pilot', 'Generating alt text');
-        }
-
-        $assetName = $this->asset->filename ?? 'Asset #' . $this->asset->id;
-
-        return Craft::t('alt-pilot', '[Asset ID: {id}] Generating alt text for {asset}', [
+        return Craft::t('alt-pilot', '[Asset ID: {id} | Site ID: {siteId}] Generating alt text for {asset}', [
             'id' => $this->asset->id,
-            'asset' => $assetName,
+            'siteId' => $this->asset->siteId,
+            'asset' => $this->asset->filename,
         ]);
     }
 }
