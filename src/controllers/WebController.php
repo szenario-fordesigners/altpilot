@@ -109,4 +109,49 @@ class WebController extends Controller
             'error' => 'Unable to determine site context for the request',
         ];
     }
+
+    public function actionSetAltTextChecked(): Response
+    {
+        $this->requirePostRequest();
+        $this->requireAcceptsJson();
+
+        $assetIdParam = $this->request->getRequiredBodyParam('assetID');
+        $altTextCheckedParam = $this->request->getRequiredBodyParam('altTextChecked');
+
+        $assetId = filter_var($assetIdParam, FILTER_VALIDATE_INT);
+        if ($assetId === false) {
+            return $this->asJson([
+                'status' => 'error',
+                'message' => 'Asset ID must be a valid integer',
+            ]);
+        }
+
+        $altTextChecked = filter_var($altTextCheckedParam, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($altTextChecked == null) {
+            return $this->asJson([
+                'status' => 'error',
+                'message' => 'Alt text checked status must be a valid boolean',
+            ]);
+        }
+
+        $asset = Craft::$app->assets->getAssetById($assetId);
+        if (!$asset) {
+            return $this->asJson([
+                'status' => 'error',
+                'message' => 'Asset not found',
+            ]);
+        }
+
+        $asset->getBehavior('altTextChecked')->setAltTextChecked($altTextChecked);
+        if (!Craft::$app->elements->saveElement($asset)) {
+            return $this->asJson([
+                'error' => 'Failed to save asset',
+            ]);
+        }
+
+        return $this->asJson([
+            'status' => 'success',
+            'message' => 'Alt text checked status set for ' . $asset->filename ?? $asset->id,
+        ]);
+    }
 }
