@@ -6,27 +6,25 @@ use Craft;
 use craft\web\Controller;
 use yii\web\Response;
 use szenario\craftaltpilot\AltPilot;
+use Throwable;
 
 /**
  * Alt Pilot Web controller
  */
-class AltPilotWebController extends Controller
+class WebController extends Controller
 {
-    public $defaultAction = 'index';
+    public $defaultAction = 'queue';
     protected array|int|bool $allowAnonymous = self::ALLOW_ANONYMOUS_NEVER;
 
     /**
      * alt-pilot/alt-pilot-web action
      */
-    public function actionIndex(): Response
+    public function actionQueue(): Response
     {
-        // get the asset id from the request query parameter assetID
-        $assetId = Craft::$app->request->getQueryParam('assetID');
-        if (!$assetId) {
-            return $this->asJson([
-                'error' => 'Asset ID is required',
-            ]);
-        }
+        $this->requirePostRequest();
+        $this->requireAcceptsJson();
+
+        $assetId = $this->request->getRequiredBodyParam('assetID');
 
         // validate and convert the assetId to an integer
         $assetId = filter_var($assetId, FILTER_VALIDATE_INT);
