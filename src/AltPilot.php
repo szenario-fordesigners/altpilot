@@ -17,6 +17,7 @@ use szenario\craftaltpilot\services\QueueService;
 use szenario\craftaltpilot\services\UrlReachabilityChecker;
 use craft\events\DefineMenuItemsEvent;
 use craft\base\Element;
+use szenario\craftaltpilot\behaviors\AltTextChecked;
 
 /**
  * AltPilot plugin
@@ -75,6 +76,16 @@ class AltPilot extends Plugin
         // Register event handlers here ...
         // (see https://craftcms.com/docs/5.x/extend/events.html to get started)
 
+        // Attach AltTextChecked behavior to all Asset elements
+        Event::on(
+            Asset::class,
+            Element::EVENT_INIT,
+            function (Event $event) {
+                /** @var Asset $asset */
+                $asset = $event->sender;
+                $asset->attachBehavior('altTextChecked', AltTextChecked::class);
+            }
+        );
 
         // register asset dropdown menu item
         Event::on(
