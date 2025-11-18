@@ -15,6 +15,8 @@ use szenario\craftaltpilot\services\ImageUtilityService;
 use szenario\craftaltpilot\services\OpenAiService;
 use szenario\craftaltpilot\services\QueueService;
 use szenario\craftaltpilot\services\UrlReachabilityChecker;
+use craft\events\DefineMenuItemsEvent;
+use craft\base\Element;
 
 /**
  * AltPilot plugin
@@ -73,6 +75,17 @@ class AltPilot extends Plugin
         // Register event handlers here ...
         // (see https://craftcms.com/docs/5.x/extend/events.html to get started)
 
+
+        // register asset dropdown menu item
+        Event::on(
+            Asset::class,
+            Element::EVENT_DEFINE_ACTION_MENU_ITEMS,
+            function (DefineMenuItemsEvent $event) {
+                $this->altPilotService->handleAssetActionMenuItems($event);
+            }
+        );
+
+        // register element action
         Event::on(
             Asset::class,
             Asset::EVENT_REGISTER_ACTIONS,
