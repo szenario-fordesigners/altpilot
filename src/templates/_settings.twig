@@ -36,3 +36,21 @@
         {value: 'gpt-4o', label: 'GPT-4o — Highest quality for complex images (better accuracy, more expensive)'},
     ],
 }) }}
+
+{{ forms.lightswitchField({
+    label: 'Generate on Upload'|t('app'),
+    id: 'generateOnUpload',
+    name: 'generateOnUpload',
+    instructions: "Generate the alt text when an image is uploaded. If disabled, ???"|t("aialttext"),
+    value: settings.generateOnUpload,
+    errors: settings.getErrors('generateOnUpload'),
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Generate per Language'|t('app'),
+    id: 'generatePerLanguage',
+    name: 'generatePerLanguage',
+    instructions: "Generate the alt text for each language. If disabled, the alt text will be generated for the default language only."|t("aialttext"),
+    value: settings.generatePerLanguage,
+    errors: settings.getErrors('generatePerLanguage'),
+}) }}
