@@ -13,6 +13,13 @@ class QueueService extends Component
 {
     public function safelyCreateJob(Asset $asset): array
     {
+        // check if an openai key is set
+        $settings = \szenario\craftaltpilot\AltPilot::getInstance()->getSettings();
+        if (empty($settings->openAiApiKey)) {
+            return ['status' => "error", 'message' => 'AltPilot OpenAI API key is not set'];
+        }
+
+
         // check if a job for this asset is already in the queue
         $jobs = Craft::$app->getQueue()->getJobInfo();
         foreach ($jobs as $job) {
