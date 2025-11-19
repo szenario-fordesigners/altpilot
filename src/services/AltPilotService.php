@@ -11,66 +11,30 @@ use craft\enums\MenuItemType;
  */
 class AltPilotService extends Component
 {
-    /**
-     * Generate alt text for an asset (synchronous)
-     *
-     * @param \craft\elements\Asset $asset The asset to generate alt text for
-     * @return string The generated alt text
-     */
-    public function generateAltText(\craft\elements\Asset $asset): string
-    {
-        $plugin = \szenario\craftaltpilot\AltPilot::getInstance();
-        $openAiService = $plugin->openAiService;
-        $urlReachabilityChecker = $plugin->urlReachabilityChecker;
-        $imageUtilityService = $plugin->imageUtilityService;
+  public function handleAssetActionMenuItems(DefineMenuItemsEvent $event)
+  {
+    $asset = $event->sender;
 
-        // Try to get public URL first (cheaper, faster)
-        // Transform logic is handled internally by getAssetPublicUrl()
-        $publicUrl = $imageUtilityService->getAssetPublicUrl($asset);
-
-        if ($publicUrl !== null) {
-            // Check if the URL is actually reachable from the internet
-            if ($urlReachabilityChecker->isReachable($publicUrl)) {
-                return $openAiService->generateAltText($publicUrl);
-            }
-
-            Craft::info('Public URL exists but is not reachable, falling back to base64 encoding for asset: ' . $asset->id, "alt-pilot");
-        } else {
-            Craft::info('No public URL available, falling back to base64 encoding for asset: ' . $asset->id, "alt-pilot");
-        }
-
-        // Fall back to base64 encoding if no public URL available or not reachable
-        // Transform logic is handled internally by assetToBase64()
-        $base64Image = $imageUtilityService->assetToBase64($asset);
-        return $openAiService->generateAltText($base64Image);
+    if (!$asset instanceof \craft\elements\Asset) {
+      return;
     }
 
+    if ($asset->kind !== 'image') {
+      return;
+    }
 
+    $buttonId = sprintf('action-generate-ai-alt-%s', mt_rand());
 
-    public function handleAssetActionMenuItems(DefineMenuItemsEvent $event)
-    {
-        $asset = $event->sender;
+    $event->items[] = [
+      'type' => MenuItemType::Button,
+      'id' => $buttonId,
+      'icon' => 'plane-departure',
+      'label' => 'Generate Alt Text',
+    ];
 
-        if (!$asset instanceof \craft\elements\Asset) {
-            return;
-        }
-
-        if ($asset->kind !== 'image') {
-            return;
-        }
-
-        $buttonId = sprintf('action-generate-ai-alt-%s', mt_rand());
-
-        $event->items[] = [
-            'type' => MenuItemType::Button,
-            'id' => $buttonId,
-            'icon' => 'plane-departure',
-            'label' => 'Generate Alt Text',
-        ];
-
-        $view = Craft::$app->getView();
-        $view->registerJsWithVars(
-            fn(string $id, int $assetId, int $siteId) => <<<JS
+    $view = Craft::$app->getView();
+    $view->registerJsWithVars(
+      fn(string $id, int $assetId, int $siteId) => <<<JS
 const \$button = $('#' + $id);
 \$button.on('activate', () => {
   \$button.addClass('loading');
@@ -100,11 +64,11 @@ const \$button = $('#' + $id);
 
 });
 JS,
-            [
-                $view->namespaceInputId($buttonId),
-                $asset->id,
-                $asset->siteId,
-            ]
-        );
-    }
+      [
+        $view->namespaceInputId($buttonId),
+        $asset->id,
+        $asset->siteId,
+      ]
+    );
+  }
 }

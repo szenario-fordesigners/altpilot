@@ -17,10 +17,10 @@ class AltTextGenerator extends BaseJob
     public function execute($queue): void
     {
         $plugin = \szenario\craftaltpilot\AltPilot::getInstance();
-        $altPilotService = $plugin->altPilotService;
+        $altTextGenerator = $plugin->altTextGenerator;
 
         try {
-            $altText = $altPilotService->generateAltText($this->asset);
+            $altText = $altTextGenerator->generateAltText($this->asset);
 
             $this->asset->alt = $altText;
 
