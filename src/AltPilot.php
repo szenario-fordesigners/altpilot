@@ -3,21 +3,22 @@
 namespace szenario\craftaltpilot;
 
 use Craft;
+use craft\base\Element;
 use craft\base\Model;
 use craft\base\Plugin;
 use craft\elements\Asset;
+use craft\events\DefineMenuItemsEvent;
 use craft\events\RegisterElementActionsEvent;
+use szenario\craftaltpilot\behaviors\AltTextChecked;
 use szenario\craftaltpilot\elements\actions\GenerateAltPilotElementAction;
-use yii\base\Event;
 use szenario\craftaltpilot\models\Settings;
 use szenario\craftaltpilot\services\AltPilotService;
+use szenario\craftaltpilot\services\AltTextGenerator;
 use szenario\craftaltpilot\services\ImageUtilityService;
 use szenario\craftaltpilot\services\OpenAiService;
 use szenario\craftaltpilot\services\QueueService;
 use szenario\craftaltpilot\services\UrlReachabilityChecker;
-use craft\events\DefineMenuItemsEvent;
-use craft\base\Element;
-use szenario\craftaltpilot\behaviors\AltTextChecked;
+use yii\base\Event;
 
 /**
  * AltPilot plugin
@@ -32,6 +33,7 @@ use szenario\craftaltpilot\behaviors\AltTextChecked;
  * @property-read UrlReachabilityChecker $urlReachabilityChecker
  * @property-read ImageUtilityService $imageUtilityService
  * @property-read QueueService $queueService
+ * @property-read AltTextGenerator $altTextGenerator
  */
 class AltPilot extends Plugin
 {
@@ -41,7 +43,7 @@ class AltPilot extends Plugin
     public static function config(): array
     {
         return [
-            'components' => ['openAiService' => OpenAiService::class, 'altPilotService' => AltPilotService::class, 'urlReachabilityChecker' => UrlReachabilityChecker::class, 'imageUtilityService' => ImageUtilityService::class, 'queueService' => QueueService::class],
+            'components' => ['openAiService' => OpenAiService::class, 'altPilotService' => AltPilotService::class, 'urlReachabilityChecker' => UrlReachabilityChecker::class, 'imageUtilityService' => ImageUtilityService::class, 'queueService' => QueueService::class, 'altTextGenerator' => AltTextGenerator::class],
         ];
     }
 
