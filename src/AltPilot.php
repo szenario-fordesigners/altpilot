@@ -19,6 +19,10 @@ use szenario\craftaltpilot\services\OpenAiService;
 use szenario\craftaltpilot\services\QueueService;
 use szenario\craftaltpilot\services\UrlReachabilityChecker;
 use yii\base\Event;
+use craft\events\RegisterCpNavItemsEvent;
+use craft\web\twig\variables\Cp;
+use craft\events\RegisterUrlRulesEvent;
+use craft\web\UrlManager;
 
 /**
  * AltPilot plugin
@@ -107,5 +111,18 @@ class AltPilot extends Plugin
             }
         );
 
+
+        // register control panel section
+        Event::on(
+            Cp::class,
+            Cp::EVENT_REGISTER_CP_NAV_ITEMS,
+            function (RegisterCpNavItemsEvent $event) {
+                $event->navItems[] = [
+                    'url' => 'alt-pilot',
+                    'label' => 'Section Label',
+                    'icon' => '@mynamespace/path/to/icon.svg',
+                ];
+            }
+        );
     }
 }

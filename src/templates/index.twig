@@ -1,0 +1,9 @@
+{% extends "_layouts/cp.twig" %}
+
+{% do view.registerAssetBundle("szenario\\craftaltpilot\\web\\assets\\altpilotfrontend\\AltPilotFrontendAsset") %}
+
+{% set title = "Alt Pilot"|t('alt-pilot') %}
+
+{% block content %}
+	<div id="app"></div>
+{% endblock %}
