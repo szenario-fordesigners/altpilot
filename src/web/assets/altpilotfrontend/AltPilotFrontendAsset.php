@@ -18,6 +18,6 @@ class AltPilotFrontendAsset extends AssetBundle
         'main.js'
     ];
     public $css = [
-        'main.css'
+        'frontend.css'
     ];
 }
