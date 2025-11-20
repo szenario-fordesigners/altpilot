@@ -4,6 +4,7 @@ namespace szenario\craftaltpilot\controllers;
 
 use Craft;
 use craft\web\Controller;
+use craft\elements\Asset;
 use yii\web\Response;
 use szenario\craftaltpilot\AltPilot;
 use Throwable;
@@ -154,4 +155,63 @@ class WebController extends Controller
             'message' => 'Alt text checked status set for ' . $asset->filename ?? $asset->id,
         ]);
     }
+
+
+    public function actionGetAssets(): Response
+    {
+        $this->requireAcceptsJson();
+
+        $limitParam = $this->request->getQueryParam('limit', 50);
+        $offsetParam = $this->request->getQueryParam('offset', 0);
+
+        $limit = filter_var($limitParam, FILTER_VALIDATE_INT, [
+            'options' => [
+                'min_range' => 1,
+                'default' => 50,
+            ],
+        ]);
+
+        if ($limit === false) {
+            return $this->asJson([
+                'status' => 'error',
+                'message' => 'Limit must be a positive integer',
+            ]);
+        }
+
+        $offset = filter_var($offsetParam, FILTER_VALIDATE_INT, [
+            'options' => [
+                'min_range' => 0,
+                'default' => 0,
+            ],
+        ]);
+
+        if ($offset === false) {
+            return $this->asJson([
+                'status' => 'error',
+                'message' => 'Offset must be zero or a positive integer',
+            ]);
+        }
+
+        $assetQuery = Asset::find()
+            ->kind('image')
+            ->orderBy('dateCreated DESC');
+
+        $total = (clone $assetQuery)->count();
+        $assets = $assetQuery
+            ->offset($offset)
+            ->limit($limit)
+            ->all();
+
+        return $this->asJson([
+            'assets' => array_map(static fn(Asset $asset) => $asset->toArray([], [], true), $assets),
+            'pagination' => [
+                'limit' => $limit,
+                'offset' => $offset,
+                'total' => $total,
+                'hasMore' => ($offset + $limit) < $total,
+            ],
+        ]);
+    }
+
+
 }
