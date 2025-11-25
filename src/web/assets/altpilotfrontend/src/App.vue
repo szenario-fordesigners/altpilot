@@ -7,6 +7,7 @@ import AssetPagination from './components/AssetPagination.vue';
 
 const { cpTrigger } = defineProps<{
   cpTrigger: string;
+  csrfToken: { name: string; value: string };
 }>();
 
 const assetCardLimit = 20;

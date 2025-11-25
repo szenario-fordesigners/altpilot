@@ -4,6 +4,8 @@
 
 {% set title = "Alt Pilot"|t('alt-pilot') %}
 
+{% set csrfToken = { name: craft.app.request.csrfParam, value: craft.app.request.getCsrfToken() } %}
+
 {% block content %}
-	<div id="app" data-props='{{ { cpTrigger: craft.app.config.general.cpTrigger }|json_encode }}'></div>
+	<div id="app" data-props='{{ { cpTrigger: craft.app.config.general.cpTrigger, csrfToken: csrfToken }|json_encode }}'></div>
 {% endblock %}
