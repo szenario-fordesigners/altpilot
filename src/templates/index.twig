@@ -6,6 +6,10 @@
 
 {% set csrfToken = { name: craft.app.request.csrfParam, value: craft.app.request.getCsrfToken() } %}
 
+{# get all site languages #}
+{% set sites = craft.app.getSites().getAllSites() %}
+
+
 {% block content %}
-	<div id="app" data-props='{{ { cpTrigger: craft.app.config.general.cpTrigger, csrfToken: csrfToken }|json_encode }}'></div>
+	<div id="app" data-props='{{ { cpTrigger: craft.app.config.general.cpTrigger, csrfToken: csrfToken, sites: sites }|json_encode }}'></div>
 {% endblock %}

@@ -5,5 +5,6 @@ import { ref } from 'vue';
 export const useGlobalState = createGlobalState(() => {
   const csrfToken = ref<{ name: string; value: string } | null>(null);
   const cpTrigger = ref<string | null>(null);
-  return { csrfToken, cpTrigger };
+  const sites = ref<Site[]>([]);
+  return { csrfToken, cpTrigger, sites };
 });
