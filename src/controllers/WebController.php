@@ -259,30 +259,4 @@ class WebController extends Controller
             ],
         ]);
     }
-
-    public function actionGetSingleAsset(): Response
-    {
-        $this->requireAcceptsJson();
-
-        $assetIdParam = $this->request->getRequiredBodyParam('assetID');
-        $assetId = filter_var($assetIdParam, FILTER_VALIDATE_INT);
-        if ($assetId === false) {
-            return $this->asJson([
-                'error' => 'Asset ID must be a valid integer',
-            ]);
-        }
-
-        $asset = Craft::$app->assets->getAssetById($assetId);
-        if (!$asset) {
-            return $this->asJson([
-                'error' => 'Asset not found',
-            ]);
-        }
-
-        return $this->asJson([
-            'message' => 'Asset found',
-            'asset' => $asset
-        ]);
-    }
-
 }
