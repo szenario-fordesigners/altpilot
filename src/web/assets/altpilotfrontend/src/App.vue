@@ -2,13 +2,16 @@
 import { onMounted } from 'vue';
 import { useAssets } from './composables/useAssets';
 import AssetCard from './components/AssetCard.vue';
+import AssetCardSkeleton from './components/AssetCardSkeleton.vue';
 import AssetPagination from './components/AssetPagination.vue';
 
 const { cpTrigger } = defineProps<{
   cpTrigger: string;
 }>();
 
-const { assets, loading, error, pagination, fetchAssets } = useAssets();
+const assetCardLimit = 20;
+
+const { assets, loading, error, pagination, fetchAssets } = useAssets(assetCardLimit);
 
 const handlePrevious = () => {
   if (!pagination.value) return;
@@ -29,19 +32,30 @@ onMounted(() => {
 
 <template>
   <div id="altPilotWrapper">
-    <p v-if="loading">Loading assets…</p>
-    <p v-else-if="error" class="text-red-500">Failed to load assets: {{ error }}</p>
+    <p v-if="error" class="text-red-500">Failed to load assets: {{ error }}</p>
 
     <template v-else>
       <div
         class="grid auto-rows-fr [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))] gap-4"
       >
-        <div v-for="asset in assets" :key="asset.id" class="h-full">
-          <AssetCard :asset="asset" :cpTrigger="cpTrigger" />
-        </div>
+        <template v-if="loading">
+          <div v-for="i in assetCardLimit" :key="`skeleton-${i}`" class="h-full">
+            <AssetCardSkeleton />
+          </div>
+        </template>
+        <template v-else>
+          <div v-for="asset in assets" :key="asset.id" class="h-full">
+            <AssetCard :asset="asset" :cpTrigger="cpTrigger" />
+          </div>
+        </template>
       </div>
 
-      <AssetPagination :pagination="pagination" @previous="handlePrevious" @next="handleNext" />
+      <AssetPagination
+        v-if="!loading"
+        :pagination="pagination"
+        @previous="handlePrevious"
+        @next="handleNext"
+      />
     </template>
   </div>
 </template>
