@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useGlobalState } from '../composables/useGlobalState';
 
 const { asset } = defineProps<{
@@ -10,6 +10,9 @@ const { csrfToken, cpTrigger } = useGlobalState();
 const altText = ref(asset.alt ?? '');
 const saving = ref(false);
 const saveError = ref<string | null>(null);
+const originalAltText = ref(asset.alt ?? '');
+
+const hasChanges = computed(() => altText.value !== originalAltText.value);
 
 const handleSave = async () => {
   if (!csrfToken.value) {
@@ -48,6 +51,9 @@ const handleSave = async () => {
     if (data.success === false || (data.error && !data.id)) {
       throw new Error(data.error || data.message || 'Failed to save asset');
     }
+
+    // Update the original value after successful save
+    originalAltText.value = altText.value;
   } catch (err) {
     saveError.value = err instanceof Error ? err.message : 'Unknown error';
   } finally {
@@ -66,7 +72,12 @@ const handleSave = async () => {
     </div>
     <div class="flex gap-2">
       <button class="button">Generate</button>
-      <button class="button" @click="handleSave" :disabled="saving">
+      <button
+        class="button"
+        :class="{ 'button--disabled': !hasChanges }"
+        @click="handleSave"
+        :disabled="saving || !hasChanges"
+      >
         {{ saving ? 'Saving...' : 'Save' }}
       </button>
       <a
@@ -86,5 +97,12 @@ const handleSave = async () => {
   padding: 0.125rem 0.25rem;
 
   text-decoration: none;
+}
+
+.button--disabled,
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #e5e5e5;
 }
 </style>
