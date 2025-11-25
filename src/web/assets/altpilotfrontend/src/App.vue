@@ -13,8 +13,9 @@ const { cpTrigger, csrfToken } = defineProps<{
 
 const state = useGlobalState();
 
-// set the csrf token in the global state
+// set the csrf token and cp trigger in the global state
 state.csrfToken.value = csrfToken;
+state.cpTrigger.value = cpTrigger;
 
 const assetCardLimit = 20;
 const { assets, loading, error, pagination, fetchAssets } = useAssets(assetCardLimit);
@@ -51,7 +52,7 @@ onMounted(() => {
         </template>
         <template v-else>
           <div v-for="asset in assets" :key="asset.id" class="h-full">
-            <AssetCard :asset="asset" :cpTrigger="cpTrigger" />
+            <AssetCard :asset="asset" />
           </div>
         </template>
       </div>
