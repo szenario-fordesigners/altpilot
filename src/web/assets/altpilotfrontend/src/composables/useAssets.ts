@@ -1,3 +1,4 @@
+import { createGlobalState } from '@vueuse/core';
 import { ref } from 'vue';
 
 type FetchAssetsOptions = {
@@ -12,15 +13,22 @@ type PaginationInfo = {
   hasMore: boolean;
 };
 
-export function useAssets(defaultLimit = 20, defaultOffset = 0) {
+const useAssetsState = createGlobalState(() => {
   const assets = ref<Asset[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
   const pagination = ref<PaginationInfo | null>(null);
+  const defaultLimit = ref(20);
+  const defaultOffset = ref(0);
+
+  const setDefaults = (limit: number, offset: number) => {
+    defaultLimit.value = limit;
+    defaultOffset.value = offset;
+  };
 
   const fetchAssets = async (options: FetchAssetsOptions = {}) => {
-    const limit = options.limit ?? defaultLimit;
-    const offset = options.offset ?? defaultOffset;
+    const limit = options.limit ?? defaultLimit.value;
+    const offset = options.offset ?? defaultOffset.value;
 
     loading.value = true;
     error.value = null;
@@ -40,7 +48,7 @@ export function useAssets(defaultLimit = 20, defaultOffset = 0) {
       }
 
       const data = await response.json();
-      assets.value = data.assets ?? [];
+      assets.value = (data.assets ?? []) as Asset[];
       pagination.value = data.pagination ?? null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Unknown error';
@@ -51,11 +59,28 @@ export function useAssets(defaultLimit = 20, defaultOffset = 0) {
     }
   };
 
+  const replaceAsset = (updatedAsset: Asset) => {
+    const index = assets.value.findIndex((asset) => asset.id === updatedAsset.id);
+    if (index === -1) {
+      return;
+    }
+
+    assets.value.splice(index, 1, updatedAsset);
+  };
+
   return {
     assets,
     loading,
     error,
     pagination,
     fetchAssets,
+    setDefaults,
+    replaceAsset,
   };
+});
+
+export function useAssets(defaultLimit = 20, defaultOffset = 0) {
+  const state = useAssetsState();
+  state.setDefaults(defaultLimit, defaultOffset);
+  return state;
 }

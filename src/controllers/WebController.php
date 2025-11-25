@@ -7,7 +7,6 @@ use craft\web\Controller;
 use craft\elements\Asset;
 use yii\web\Response;
 use szenario\craftaltpilot\AltPilot;
-use Throwable;
 
 /**
  * Alt Pilot Web controller
@@ -60,6 +59,7 @@ class WebController extends Controller
         return $this->asJson([
             'status' => $result['status'],
             'message' => $result['message'],
+            'jobId' => $result['jobId'] ?? null,
         ]);
     }
 
@@ -156,6 +156,53 @@ class WebController extends Controller
         ]);
     }
 
+    public function actionJobStatus(): Response
+    {
+        $this->requirePostRequest();
+        $this->requireAcceptsJson();
+
+        $assetsPayload = $this->request->getBodyParam('assets', []);
+        if (!is_array($assetsPayload) || $assetsPayload === []) {
+            return $this->asJson([
+                'status' => 'error',
+                'message' => 'Assets payload must be a non-empty array',
+            ]);
+        }
+
+        $assetsToCheck = [];
+        foreach ($assetsPayload as $assetPayload) {
+            if (!is_array($assetPayload)) {
+                continue;
+            }
+
+            $assetId = filter_var($assetPayload['assetId'] ?? null, FILTER_VALIDATE_INT);
+            if ($assetId === false) {
+                continue;
+            }
+
+            $siteIdRaw = $assetPayload['siteId'] ?? null;
+            $siteId = $siteIdRaw === null || $siteIdRaw === '' ? null : filter_var($siteIdRaw, FILTER_VALIDATE_INT);
+            $assetsToCheck[] = [
+                'assetId' => $assetId,
+                'siteId' => $siteId === false ? null : $siteId,
+            ];
+        }
+
+        if ($assetsToCheck === []) {
+            return $this->asJson([
+                'status' => 'error',
+                'message' => 'No valid assets specified',
+            ]);
+        }
+
+        $results = AltPilot::getInstance()->queueService->getJobStatuses($assetsToCheck);
+
+        return $this->asJson([
+            'status' => 'success',
+            'assets' => $results,
+        ]);
+    }
+
 
     public function actionGetAssets(): Response
     {
@@ -213,5 +260,29 @@ class WebController extends Controller
         ]);
     }
 
+    public function actionGetSingleAsset(): Response
+    {
+        $this->requireAcceptsJson();
+
+        $assetIdParam = $this->request->getRequiredBodyParam('assetID');
+        $assetId = filter_var($assetIdParam, FILTER_VALIDATE_INT);
+        if ($assetId === false) {
+            return $this->asJson([
+                'error' => 'Asset ID must be a valid integer',
+            ]);
+        }
+
+        $asset = Craft::$app->assets->getAssetById($assetId);
+        if (!$asset) {
+            return $this->asJson([
+                'error' => 'Asset not found',
+            ]);
+        }
+
+        return $this->asJson([
+            'message' => 'Asset found',
+            'asset' => $asset
+        ]);
+    }
 
 }
