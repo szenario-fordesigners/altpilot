@@ -4,4 +4,11 @@ import './assets/main.scss';
 import { createApp } from 'vue';
 import App from './App.vue';
 
-createApp(App).mount('#app');
+// dom content loaded
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('#app').forEach((el) => {
+    const props = JSON.parse((el as HTMLElement).dataset.props || '{}');
+    const app = createApp(App, props);
+    app.mount(el);
+  });
+});

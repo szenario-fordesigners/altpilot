@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { asset } = defineProps<{
   asset: Asset;
+  cpTrigger: string;
 }>();
 </script>
 
@@ -14,7 +15,9 @@ const { asset } = defineProps<{
     <div class="flex gap-2">
       <button class="button">Generate</button>
       <button class="button">Save</button>
-      <button class="button">Control Panel</button>
+      <a class="button" :href="`${cpTrigger}/assets/edit/${asset.id}`" target="_blank"
+        >Control Panel</a
+      >
     </div>
   </div>
 </template>
@@ -22,5 +25,8 @@ const { asset } = defineProps<{
 <style scoped>
 .button {
   border: 1px solid black;
+  padding: 0.125rem 0.25rem;
+
+  text-decoration: none;
 }
 </style>
