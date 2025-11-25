@@ -63,9 +63,18 @@ class WebController extends Controller
         ]);
     }
 
-    private function resolveSiteId(): array
+    private function resolveSiteId(string $mode = 'body'): array
     {
-        $siteIdParam = $this->request->getBodyParam('siteId');
+        if ($mode === 'body') {
+            $siteIdParam = $this->request->getBodyParam('siteId');
+        } else if ($mode === 'query') {
+            $siteIdParam = $this->request->getQueryParam('siteId');
+        } else {
+            return [
+                'siteId' => null,
+                'error' => 'Invalid mode',
+            ];
+        }
 
         if ($siteIdParam !== null) {
             $siteId = filter_var($siteIdParam, FILTER_VALIDATE_INT);
@@ -204,9 +213,51 @@ class WebController extends Controller
     }
 
 
+    public function actionGetSingleAsset(): Response
+    {
+        $this->requireAcceptsJson();
+
+        $assetIdParam = $this->request->getRequiredBodyParam('assetID');
+        $assetId = filter_var($assetIdParam, FILTER_VALIDATE_INT);
+        if ($assetId === false) {
+            return $this->asJson([
+                'error' => 'Asset ID must be a valid integer',
+            ]);
+        }
+
+        $siteResolution = $this->resolveSiteId('query');
+        if ($siteResolution['error'] !== null) {
+            return $this->asJson([
+                'error' => $siteResolution['error'],
+            ]);
+        }
+        $siteId = $siteResolution['siteId'];
+
+        $asset = Craft::$app->assets->getAssetById($assetId, $siteId);
+        if (!$asset) {
+            return $this->asJson([
+                'error' => 'Asset not found',
+            ]);
+        }
+
+        return $this->asJson([
+            'asset' => $asset->toArray([], [], true),
+        ]);
+    }
+
+
+
     public function actionGetAssets(): Response
     {
         $this->requireAcceptsJson();
+
+        $siteResolution = $this->resolveSiteId('query');
+        if ($siteResolution['error'] !== null) {
+            return $this->asJson([
+                'error' => $siteResolution['error'],
+            ]);
+        }
+        $siteId = $siteResolution['siteId'];
 
         $limitParam = $this->request->getQueryParam('limit', 50);
         $offsetParam = $this->request->getQueryParam('offset', 0);
@@ -241,6 +292,7 @@ class WebController extends Controller
 
         $assetQuery = Asset::find()
             ->kind('image')
+            ->siteId($siteId)
             ->orderBy('dateCreated DESC');
 
         $total = (clone $assetQuery)->count();

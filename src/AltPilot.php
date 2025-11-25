@@ -119,7 +119,7 @@ class AltPilot extends Plugin
             function (RegisterCpNavItemsEvent $event) {
                 $event->navItems[] = [
                     'url' => 'alt-pilot',
-                    'label' => 'Section Label',
+                    'label' => 'AltPilot',
                     'icon' => '@mynamespace/path/to/icon.svg',
                 ];
             }

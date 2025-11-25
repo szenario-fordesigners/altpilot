@@ -6,10 +6,11 @@ import AssetCard from './components/AssetCard.vue';
 import AssetCardSkeleton from './components/AssetCardSkeleton.vue';
 import AssetPagination from './components/AssetPagination.vue';
 
-const { cpTrigger, csrfToken, sites } = defineProps<{
+const { cpTrigger, csrfToken, sites, currentSiteId } = defineProps<{
   cpTrigger: string;
   csrfToken: { name: string; value: string };
   sites: Site[];
+  currentSiteId: number;
 }>();
 
 const state = useGlobalState();
@@ -18,6 +19,7 @@ const state = useGlobalState();
 state.csrfToken.value = csrfToken;
 state.cpTrigger.value = cpTrigger;
 state.sites.value = sites;
+state.currentSiteId.value = currentSiteId;
 
 const assetCardLimit = 20;
 const { assets, loading, error, pagination, fetchAssets } = useAssets(assetCardLimit);
