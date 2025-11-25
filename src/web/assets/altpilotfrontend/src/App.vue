@@ -1,17 +1,22 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useAssets } from './composables/useAssets';
+import { useGlobalState } from './composables/useGlobalState';
 import AssetCard from './components/AssetCard.vue';
 import AssetCardSkeleton from './components/AssetCardSkeleton.vue';
 import AssetPagination from './components/AssetPagination.vue';
 
-const { cpTrigger } = defineProps<{
+const { cpTrigger, csrfToken } = defineProps<{
   cpTrigger: string;
   csrfToken: { name: string; value: string };
 }>();
 
-const assetCardLimit = 20;
+const state = useGlobalState();
 
+// set the csrf token in the global state
+state.csrfToken.value = csrfToken;
+
+const assetCardLimit = 20;
 const { assets, loading, error, pagination, fetchAssets } = useAssets(assetCardLimit);
 
 const handlePrevious = () => {

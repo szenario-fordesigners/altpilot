@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { useGlobalState } from '../composables/useGlobalState';
+
 const { asset } = defineProps<{
   asset: Asset;
   cpTrigger: string;
 }>();
+
+const { csrfToken } = useGlobalState();
 </script>
 
 <template>
