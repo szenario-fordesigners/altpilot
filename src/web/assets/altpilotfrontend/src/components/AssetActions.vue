@@ -10,6 +10,7 @@ const props = withDefaults(
     canSave?: boolean;
     cpTrigger?: string | null;
     asset: MultiLanguageAsset;
+    thisSelectedSiteId: number;
   }>(),
   {
     isGenerating: false,
@@ -17,16 +18,18 @@ const props = withDefaults(
     isSaving: false,
     canSave: true,
     cpTrigger: null,
+    thisSelectedSiteId: 1,
   },
 );
+
+const { sites } = useGlobalState();
 
 const emit = defineEmits<{
   (event: 'generate'): void;
   (event: 'save'): void;
 }>();
 
-const { selectedSiteId } = useGlobalState();
-const currentAsset = computed(() => props.asset[selectedSiteId.value] as Asset);
+const currentAsset = computed(() => props.asset[props.thisSelectedSiteId] as Asset);
 </script>
 
 <template>
@@ -45,7 +48,7 @@ const currentAsset = computed(() => props.asset[selectedSiteId.value] as Asset);
     <a
       v-if="cpTrigger"
       class="button"
-      :href="`${cpTrigger}/assets/edit/${currentAsset.id}`"
+      :href="`${cpTrigger}/assets/edit/${currentAsset.id}?site=${sites.find((site) => site.id === thisSelectedSiteId)?.handle}`"
       target="_blank"
     >
       Control Panel

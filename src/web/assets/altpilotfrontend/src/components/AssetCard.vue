@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import AssetActions from './AssetActions.vue';
 import AssetAltEditor from './AssetAltEditor.vue';
 import { useAssetAltEditor } from '../composables/useAssetAltEditor';
@@ -14,7 +14,20 @@ const { cpTrigger, selectedSiteId } = useGlobalState();
 
 const currentAsset = computed(() => props.asset[selectedSiteId.value] as Asset);
 
-const { altText, hasChanges, saving, error: saveError, save } = useAssetAltEditor(props.asset);
+const thisSelectedSiteId = ref(selectedSiteId.value);
+
+// override when global changes
+watch(selectedSiteId, (newSelectedSiteId) => {
+  thisSelectedSiteId.value = newSelectedSiteId;
+});
+
+const {
+  altText,
+  hasChanges,
+  saving,
+  error: saveError,
+  save,
+} = useAssetAltEditor(props.asset, thisSelectedSiteId);
 
 const {
   generating,
@@ -23,7 +36,11 @@ const {
   generationMessage,
   isGenerationActive,
   generate,
-} = useAssetGeneration(props.asset);
+} = useAssetGeneration(props.asset, thisSelectedSiteId);
+
+const handleSelectSite = (siteId: number) => {
+  thisSelectedSiteId.value = siteId;
+};
 </script>
 
 <template>
@@ -35,16 +52,19 @@ const {
     />
 
     <AssetAltEditor
+      :this-selected-site-id="thisSelectedSiteId"
       v-model:altText="altText"
       :title="currentAsset.title"
       :save-error="saveError"
       :generate-error="generateError"
       :generation-message="generationMessage"
       :generate-success="generateSuccess"
+      @select-site="handleSelectSite"
     />
 
     <AssetActions
       :asset="props.asset"
+      :this-selected-site-id="thisSelectedSiteId"
       :is-generating="generating"
       :is-generation-active="isGenerationActive"
       :is-saving="saving"

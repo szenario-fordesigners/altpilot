@@ -1,9 +1,9 @@
 import { computed, type Ref, ref, watch } from 'vue';
 import { useGlobalState } from './useGlobalState';
 
-export function useAssetAltEditor(asset: MultiLanguageAsset) {
-  const { csrfToken, selectedSiteId } = useGlobalState();
-  const currentAsset = computed(() => asset[selectedSiteId.value]);
+export function useAssetAltEditor(asset: MultiLanguageAsset, thisSelectedSiteId: Ref<number>) {
+  const { csrfToken } = useGlobalState();
+  const currentAsset = computed(() => asset[thisSelectedSiteId.value]);
 
   const altText = ref(currentAsset.value?.alt ?? '');
   const originalAltText = ref(currentAsset.value?.alt ?? '');
@@ -38,7 +38,7 @@ export function useAssetAltEditor(asset: MultiLanguageAsset) {
       const formData = new FormData();
       formData.append('action', 'elements/save');
       formData.append('elementId', currentAsset.value!.id.toString());
-      formData.append('siteId', selectedSiteId.value.toString());
+      formData.append('siteId', thisSelectedSiteId.value.toString());
       formData.append('alt', altText.value);
       formData.append(csrfToken.value.name, csrfToken.value.value);
 

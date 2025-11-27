@@ -4,10 +4,10 @@ import { useGenerationTracker } from './useGenerationTracker';
 
 const HIDDEN_IFRAME_REMOVE_DELAY = 1000;
 
-export function useAssetGeneration(asset: MultiLanguageAsset) {
-  const { csrfToken, cpTrigger, selectedSiteId } = useGlobalState();
+export function useAssetGeneration(asset: MultiLanguageAsset, thisSelectedSiteId: Ref<number>) {
+  const { csrfToken, cpTrigger } = useGlobalState();
   const { trackAsset, stateForAsset, isAssetRunning } = useGenerationTracker();
-  const currentAsset = computed(() => asset[selectedSiteId.value] as Asset);
+  const currentAsset = computed(() => asset[thisSelectedSiteId.value] as Asset);
 
   const generating = ref(false);
   const error = ref<string | null>(null);
