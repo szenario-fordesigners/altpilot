@@ -4,19 +4,20 @@ import { useGenerationTracker } from './useGenerationTracker';
 
 const HIDDEN_IFRAME_REMOVE_DELAY = 1000;
 
-export function useAssetGeneration(assetRef: Ref<Asset>) {
-  const { csrfToken, cpTrigger } = useGlobalState();
+export function useAssetGeneration(asset: MultiLanguageAsset) {
+  const { csrfToken, cpTrigger, selectedSiteId } = useGlobalState();
   const { trackAsset, stateForAsset, isAssetRunning } = useGenerationTracker();
+  const currentAsset = computed(() => asset[selectedSiteId.value] as Asset);
 
   const generating = ref(false);
   const error = ref<string | null>(null);
   const success = ref<string | null>(null);
 
   const generationState = computed(() =>
-    stateForAsset(assetRef.value.id, assetRef.value.siteId ?? null),
+    stateForAsset(currentAsset.value.id, currentAsset.value.siteId ?? null),
   );
   const isGenerationActive = computed(() =>
-    isAssetRunning(assetRef.value.id, assetRef.value.siteId ?? null),
+    isAssetRunning(currentAsset.value.id, currentAsset.value.siteId ?? null),
   );
   const generationMessage = computed(() => generationState.value?.message ?? null);
 
@@ -33,7 +34,9 @@ export function useAssetGeneration(assetRef: Ref<Asset>) {
     document.body.appendChild(iframe);
 
     setTimeout(() => {
-      document.body.removeChild(iframe);
+      if (iframe.parentNode) {
+        document.body.removeChild(iframe);
+      }
     }, HIDDEN_IFRAME_REMOVE_DELAY);
   };
 
@@ -49,11 +52,11 @@ export function useAssetGeneration(assetRef: Ref<Asset>) {
 
     try {
       const payload: Record<string, string> = {
-        assetID: assetRef.value.id.toString(),
+        assetID: currentAsset.value.id.toString(),
       };
 
-      if (assetRef.value.siteId) {
-        payload.siteId = assetRef.value.siteId.toString();
+      if (currentAsset.value.siteId) {
+        payload.siteId = currentAsset.value.siteId.toString();
       }
 
       payload[csrfToken.value.name] = csrfToken.value.value;
@@ -83,8 +86,8 @@ export function useAssetGeneration(assetRef: Ref<Asset>) {
 
       success.value = data.message || 'Alt text generation queued successfully';
       trackAsset({
-        assetId: assetRef.value.id,
-        siteId: assetRef.value.siteId ?? null,
+        assetId: currentAsset.value.id,
+        siteId: currentAsset.value.siteId ?? null,
         jobId: data.jobId ?? null,
         message: data.message ?? null,
       });

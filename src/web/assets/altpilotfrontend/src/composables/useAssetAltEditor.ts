@@ -1,21 +1,23 @@
 import { computed, type Ref, ref, watch } from 'vue';
 import { useGlobalState } from './useGlobalState';
 
-export function useAssetAltEditor(assetRef: Ref<Asset>) {
-  const { csrfToken } = useGlobalState();
-  const altText = ref(assetRef.value.alt ?? '');
-  const originalAltText = ref(assetRef.value.alt ?? '');
-  const saving = ref(false);
-  const error = ref<string | null>(null);
+export function useAssetAltEditor(asset: MultiLanguageAsset) {
+  const { csrfToken, selectedSiteId } = useGlobalState();
+  const currentAsset = computed(() => asset[selectedSiteId.value]);
+
+  const altText = ref(currentAsset.value?.alt ?? '');
+  const originalAltText = ref(currentAsset.value?.alt ?? '');
 
   watch(
-    () => assetRef.value.alt,
+    () => currentAsset.value?.alt,
     (newAlt) => {
-      const updated = newAlt ?? '';
-      altText.value = updated;
-      originalAltText.value = updated;
+      altText.value = newAlt ?? '';
+      originalAltText.value = newAlt ?? '';
     },
   );
+
+  const saving = ref(false);
+  const error = ref<string | null>(null);
 
   const hasChanges = computed(() => altText.value !== originalAltText.value);
 
@@ -35,7 +37,8 @@ export function useAssetAltEditor(assetRef: Ref<Asset>) {
     try {
       const formData = new FormData();
       formData.append('action', 'elements/save');
-      formData.append('elementId', assetRef.value.id.toString());
+      formData.append('elementId', currentAsset.value!.id.toString());
+      formData.append('siteId', selectedSiteId.value.toString());
       formData.append('alt', altText.value);
       formData.append(csrfToken.value.name, csrfToken.value.value);
 

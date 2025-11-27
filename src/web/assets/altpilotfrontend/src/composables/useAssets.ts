@@ -14,7 +14,7 @@ type PaginationInfo = {
 };
 
 const useAssetsState = createGlobalState(() => {
-  const assets = ref<Asset[]>([]);
+  const assets = ref<AssetsByAssetId>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
   const pagination = ref<PaginationInfo | null>(null);
@@ -35,7 +35,7 @@ const useAssetsState = createGlobalState(() => {
 
     try {
       const response = await fetch(
-        `/actions/alt-pilot/web/get-assets?limit=${limit}&offset=${offset}`,
+        `/actions/alt-pilot/web/get-all-assets?limit=${limit}&offset=${offset}&siteId=all`,
         {
           headers: {
             Accept: 'application/json',

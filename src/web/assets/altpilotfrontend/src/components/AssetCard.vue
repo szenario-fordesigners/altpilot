@@ -7,13 +7,14 @@ import { useAssetGeneration } from '../composables/useAssetGeneration';
 import { useGlobalState } from '../composables/useGlobalState';
 
 const props = defineProps<{
-  asset: Asset;
+  asset: MultiLanguageAsset;
 }>();
 
-const assetRef = computed(() => props.asset);
-const { cpTrigger } = useGlobalState();
+const { cpTrigger, selectedSiteId } = useGlobalState();
 
-const { altText, hasChanges, saving, error: saveError, save } = useAssetAltEditor(assetRef);
+const currentAsset = computed(() => props.asset[selectedSiteId.value] as Asset);
+
+const { altText, hasChanges, saving, error: saveError, save } = useAssetAltEditor(props.asset);
 
 const {
   generating,
@@ -22,20 +23,20 @@ const {
   generationMessage,
   isGenerationActive,
   generate,
-} = useAssetGeneration(assetRef);
+} = useAssetGeneration(props.asset);
 </script>
 
 <template>
   <div class="flex h-full flex-col gap-2 border-2 border-black bg-white p-4">
     <img
       class="aspect-[4/3] w-full rounded object-cover"
-      :src="assetRef.url"
-      :alt="assetRef.title"
+      :src="currentAsset.url"
+      :alt="currentAsset.title"
     />
 
     <AssetAltEditor
       v-model:altText="altText"
-      :title="assetRef.title"
+      :title="currentAsset.title"
       :save-error="saveError"
       :generate-error="generateError"
       :generation-message="generationMessage"
@@ -43,7 +44,7 @@ const {
     />
 
     <AssetActions
-      :asset-id="assetRef.id"
+      :asset="props.asset"
       :is-generating="generating"
       :is-generation-active="isGenerationActive"
       :is-saving="saving"

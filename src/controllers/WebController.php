@@ -77,6 +77,15 @@ class WebController extends Controller
         }
 
         if ($siteIdParam !== null) {
+            // special case for 'all'
+            if ($siteIdParam === 'all') {
+                return [
+                    'siteId' => 'all',
+                    'error' => null,
+                ];
+            }
+
+
             $siteId = filter_var($siteIdParam, FILTER_VALIDATE_INT);
             if ($siteId === false) {
                 return [
@@ -247,7 +256,7 @@ class WebController extends Controller
 
 
 
-    public function actionGetAssets(): Response
+    public function actionGetAllAssets(): Response
     {
         $this->requireAcceptsJson();
 
@@ -292,7 +301,7 @@ class WebController extends Controller
 
         $assetQuery = Asset::find()
             ->kind('image')
-            ->siteId($siteId)
+            ->siteId($siteId === 'all' ? '*' : $siteId)
             ->orderBy('dateCreated DESC');
 
         $total = (clone $assetQuery)->count();
@@ -301,8 +310,14 @@ class WebController extends Controller
             ->limit($limit)
             ->all();
 
+
+        $assetsByAssetId = [];
+        foreach ($assets as $asset) {
+            $assetsByAssetId[$asset->id][$asset->siteId] = $asset;
+        }
+
         return $this->asJson([
-            'assets' => array_map(static fn(Asset $asset) => $asset->toArray([], [], true), $assets),
+            'assets' => $assetsByAssetId,
             'pagination' => [
                 'limit' => $limit,
                 'offset' => $offset,

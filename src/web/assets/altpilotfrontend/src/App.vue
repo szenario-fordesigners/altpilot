@@ -20,6 +20,7 @@ state.csrfToken.value = csrfToken;
 state.cpTrigger.value = cpTrigger;
 state.sites.value = sites;
 state.currentSiteId.value = currentSiteId;
+state.selectedSiteId.value = currentSiteId;
 
 const assetCardLimit = 20;
 const { assets, loading, error, pagination, fetchAssets } = useAssets(assetCardLimit);
@@ -43,9 +44,25 @@ onMounted(() => {
 
 <template>
   <div id="altPilotWrapper">
+    state.selectedSiteId: {{ state.selectedSiteId.value }}
+
     <p v-if="error" class="text-red-500">Failed to load assets: {{ error }}</p>
 
     <template v-else>
+      <div class="border border-red-500"></div>
+      <!-- v-model="state.selectedSiteId"  -->
+      <select
+        class="border border-green-500"
+        @change="
+          (event) =>
+            (state.selectedSiteId.value = parseInt((event.target as HTMLSelectElement).value))
+        "
+      >
+        <option v-for="site in sites" :key="site.id" :value="site.id">
+          {{ site.name }} ({{ site.language }})
+        </option>
+      </select>
+
       <div
         class="grid auto-rows-fr [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))] gap-4"
       >
@@ -55,7 +72,7 @@ onMounted(() => {
           </div>
         </template>
         <template v-else>
-          <div v-for="asset in assets" :key="asset.id" class="h-full">
+          <div v-for="asset in assets" :key="asset[state.selectedSiteId.value]!.id" class="h-full">
             <AssetCard :asset="asset" />
           </div>
         </template>

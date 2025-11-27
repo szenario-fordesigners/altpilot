@@ -5,3 +5,11 @@ declare type Asset = {
   title: string;
   alt: string | null;
 };
+
+declare type MultiLanguageAsset = {
+  [siteId: number]: Asset;
+};
+
+declare type AssetsByAssetId = {
+  [assetId: number]: MultiLanguageAsset;
+};

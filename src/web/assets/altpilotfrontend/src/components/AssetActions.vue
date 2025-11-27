@@ -1,12 +1,15 @@
 <script setup lang="ts">
-withDefaults(
+import { computed } from 'vue';
+import { useGlobalState } from '../composables/useGlobalState';
+
+const props = withDefaults(
   defineProps<{
     isGenerating?: boolean;
     isGenerationActive?: boolean;
     isSaving?: boolean;
     canSave?: boolean;
     cpTrigger?: string | null;
-    assetId: number;
+    asset: MultiLanguageAsset;
   }>(),
   {
     isGenerating: false,
@@ -21,6 +24,9 @@ const emit = defineEmits<{
   (event: 'generate'): void;
   (event: 'save'): void;
 }>();
+
+const { selectedSiteId } = useGlobalState();
+const currentAsset = computed(() => props.asset[selectedSiteId.value] as Asset);
 </script>
 
 <template>
@@ -39,7 +45,7 @@ const emit = defineEmits<{
     <a
       v-if="cpTrigger"
       class="button"
-      :href="`${cpTrigger}/assets/edit/${assetId}`"
+      :href="`${cpTrigger}/assets/edit/${currentAsset.id}`"
       target="_blank"
     >
       Control Panel
