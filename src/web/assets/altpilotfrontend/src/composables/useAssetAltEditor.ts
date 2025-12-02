@@ -1,9 +1,8 @@
 import { computed, type Ref, ref, watch } from 'vue';
-import { useGlobalState } from './useGlobalState';
 import type { Asset, MultiLanguageAsset } from '../types/Asset';
+import { apiClient } from '@/utils/apiClient';
 
 export function useAssetAltEditor(asset: MultiLanguageAsset, thisSelectedSiteId: Ref<number>) {
-  const { csrfToken } = useGlobalState();
   const currentAsset = computed<Asset | undefined>(() => asset[thisSelectedSiteId.value]);
 
   const altText = ref(currentAsset.value?.alt ?? '');
@@ -22,12 +21,14 @@ export function useAssetAltEditor(asset: MultiLanguageAsset, thisSelectedSiteId:
 
   const hasChanges = computed(() => altText.value !== originalAltText.value);
 
-  const save = async () => {
-    if (!csrfToken.value) {
-      error.value = 'CSRF token not available';
-      return;
-    }
+  type SaveAssetResponse = {
+    success?: boolean;
+    error?: string;
+    message?: string;
+    errors?: Record<string, string[]>;
+  };
 
+  const save = async () => {
     if (!hasChanges.value) {
       return;
     }
@@ -41,27 +42,13 @@ export function useAssetAltEditor(asset: MultiLanguageAsset, thisSelectedSiteId:
       formData.append('elementId', currentAsset.value!.id.toString());
       formData.append('siteId', thisSelectedSiteId.value.toString());
       formData.append('alt', altText.value);
-      formData.append(csrfToken.value.name, csrfToken.value.value);
 
-      const response = await fetch('/actions/elements/save', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: formData,
-        redirect: 'manual',
-      });
+      const { data } = await apiClient.postForm<SaveAssetResponse>(
+        '/actions/elements/save',
+        formData,
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to save asset' }));
-        throw new Error(
-          errorData.error || errorData.message || `Request failed with status ${response.status}`,
-        );
-      }
-
-      const data = await response.json();
-      if (data.success === false || (data.error && !data.id)) {
+      if (data?.success === false) {
         throw new Error(data.error || data.message || 'Failed to save asset');
       }
 

@@ -3,6 +3,7 @@ import { reactive, ref, watch } from 'vue';
 import { useAssets } from './useAssets';
 import { useGlobalState } from './useGlobalState';
 import type { Asset } from '../types/Asset';
+import { apiClient } from '@/utils/apiClient';
 
 type GenerationStatus = 'waiting' | 'running' | 'finished' | 'failed' | 'missing' | 'unknown';
 
@@ -22,6 +23,10 @@ type StatusResponse = {
   message?: string | null;
   asset?: Asset | null;
   progress?: number | null;
+};
+
+type JobStatusResponse = {
+  assets: StatusResponse[];
 };
 
 const ASSET_KEY_SEPARATOR = ':';
@@ -61,21 +66,12 @@ export const useGenerationTracker = createGlobalState(() => {
     };
 
     try {
-      const response = await fetch('/actions/alt-pilot/web/job-status', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      const { data } = await apiClient.postJson<JobStatusResponse>(
+        '/actions/alt-pilot/web/job-status',
+        payload,
+      );
 
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
-      const assets = (data?.assets ?? []) as StatusResponse[];
+      const assets = data?.assets ?? [];
 
       assets.forEach((item) => {
         const key = makeKey(item.assetId, item.siteId ?? null);

@@ -1,5 +1,6 @@
 import { createGlobalState } from '@vueuse/core';
 import { ref } from 'vue';
+import { apiClient } from '@/utils/apiClient';
 import type { Asset, AssetsByAssetId } from '../types/Asset';
 
 type FetchAssetsOptions = {
@@ -12,6 +13,11 @@ type PaginationInfo = {
   offset: number;
   total: number;
   hasMore: boolean;
+};
+
+type AssetsResponse = {
+  assets: AssetsByAssetId;
+  pagination: PaginationInfo | null;
 };
 
 const useAssetsState = createGlobalState(() => {
@@ -35,21 +41,10 @@ const useAssetsState = createGlobalState(() => {
     error.value = null;
 
     try {
-      const response = await fetch(
+      const { data } = await apiClient.get<AssetsResponse>(
         `/actions/alt-pilot/web/get-all-assets?limit=${limit}&offset=${offset}&siteId=all`,
-        {
-          headers: {
-            Accept: 'application/json',
-          },
-        },
       );
-
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
-      assets.value = (data.assets ?? {}) as AssetsByAssetId;
+      assets.value = data.assets ?? {};
       pagination.value = data.pagination ?? null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Unknown error';

@@ -29,24 +29,18 @@ class WebController extends Controller
         // validate and convert the assetId to an integer
         $assetId = filter_var($assetIdParam, FILTER_VALIDATE_INT);
         if ($assetId === false) {
-            return $this->asJson([
-                'error' => 'Asset ID must be a valid integer',
-            ]);
+            return $this->errorResponse('Asset ID must be a valid integer');
         }
 
         $siteResolution = $this->resolveSiteId();
         if ($siteResolution['error'] !== null) {
-            return $this->asJson([
-                'error' => $siteResolution['error'],
-            ]);
+            return $this->errorResponse($siteResolution['error']);
         }
         $siteId = $siteResolution['siteId'];
 
         $asset = Craft::$app->assets->getAssetById($assetId, $siteId);
         if (!$asset) {
-            return $this->asJson([
-                'error' => 'Asset not found for the requested site',
-            ]);
+            return $this->errorResponse('Asset not found for the requested site', 404);
         }
 
         Craft::info(sprintf('Queuing alt text generation for asset ID: %d on site ID: %d', $assetId, $siteId), "alt-pilot");
@@ -56,11 +50,10 @@ class WebController extends Controller
 
         Craft::info(sprintf('Alt text generation queued for asset ID: %d on site ID: %d', $assetId, $siteId), "alt-pilot");
 
-        return $this->asJson([
-            'status' => $result['status'],
-            'message' => $result['message'],
+        return $this->successResponse([
             'jobId' => $result['jobId'] ?? null,
-        ]);
+            'queueStatus' => $result['status'] ?? 'queued',
+        ], $result['message'] ?? 'Alt text generation queued');
     }
 
     private function resolveSiteId(string $mode = 'body'): array
@@ -139,39 +132,27 @@ class WebController extends Controller
 
         $assetId = filter_var($assetIdParam, FILTER_VALIDATE_INT);
         if ($assetId === false) {
-            return $this->asJson([
-                'status' => 'error',
-                'message' => 'Asset ID must be a valid integer',
-            ]);
+            return $this->errorResponse('Asset ID must be a valid integer');
         }
 
         $altTextChecked = filter_var($altTextCheckedParam, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         if ($altTextChecked == null) {
-            return $this->asJson([
-                'status' => 'error',
-                'message' => 'Alt text checked status must be a valid boolean',
-            ]);
+            return $this->errorResponse('Alt text checked status must be a valid boolean');
         }
 
         $asset = Craft::$app->assets->getAssetById($assetId);
         if (!$asset) {
-            return $this->asJson([
-                'status' => 'error',
-                'message' => 'Asset not found',
-            ]);
+            return $this->errorResponse('Asset not found', 404);
         }
 
         $asset->getBehavior('altTextChecked')->setAltTextChecked($altTextChecked);
         if (!Craft::$app->elements->saveElement($asset)) {
-            return $this->asJson([
-                'error' => 'Failed to save asset',
-            ]);
+            return $this->errorResponse('Failed to save asset', 500);
         }
 
-        return $this->asJson([
-            'status' => 'success',
-            'message' => 'Alt text checked status set for ' . $asset->filename ?? $asset->id,
-        ]);
+        $filename = $asset->filename ?? (string) $asset->id;
+
+        return $this->successResponse([], 'Alt text checked status set for ' . $filename);
     }
 
     public function actionJobStatus(): Response
@@ -181,10 +162,7 @@ class WebController extends Controller
 
         $assetsPayload = $this->request->getBodyParam('assets', []);
         if (!is_array($assetsPayload) || $assetsPayload === []) {
-            return $this->asJson([
-                'status' => 'error',
-                'message' => 'Assets payload must be a non-empty array',
-            ]);
+            return $this->errorResponse('Assets payload must be a non-empty array');
         }
 
         $assetsToCheck = [];
@@ -207,16 +185,12 @@ class WebController extends Controller
         }
 
         if ($assetsToCheck === []) {
-            return $this->asJson([
-                'status' => 'error',
-                'message' => 'No valid assets specified',
-            ]);
+            return $this->errorResponse('No valid assets specified');
         }
 
         $results = AltPilot::getInstance()->queueService->getJobStatuses($assetsToCheck);
 
-        return $this->asJson([
-            'status' => 'success',
+        return $this->successResponse([
             'assets' => $results,
         ]);
     }
@@ -229,27 +203,21 @@ class WebController extends Controller
         $assetIdParam = $this->request->getRequiredBodyParam('assetID');
         $assetId = filter_var($assetIdParam, FILTER_VALIDATE_INT);
         if ($assetId === false) {
-            return $this->asJson([
-                'error' => 'Asset ID must be a valid integer',
-            ]);
+            return $this->errorResponse('Asset ID must be a valid integer');
         }
 
         $siteResolution = $this->resolveSiteId('query');
         if ($siteResolution['error'] !== null) {
-            return $this->asJson([
-                'error' => $siteResolution['error'],
-            ]);
+            return $this->errorResponse($siteResolution['error']);
         }
         $siteId = $siteResolution['siteId'];
 
         $asset = Craft::$app->assets->getAssetById($assetId, $siteId);
         if (!$asset) {
-            return $this->asJson([
-                'error' => 'Asset not found',
-            ]);
+            return $this->errorResponse('Asset not found', 404);
         }
 
-        return $this->asJson([
+        return $this->successResponse([
             'asset' => $asset->toArray([], [], true),
         ]);
     }
@@ -262,9 +230,7 @@ class WebController extends Controller
 
         $siteResolution = $this->resolveSiteId('query');
         if ($siteResolution['error'] !== null) {
-            return $this->asJson([
-                'error' => $siteResolution['error'],
-            ]);
+            return $this->errorResponse($siteResolution['error']);
         }
         $siteId = $siteResolution['siteId'];
 
@@ -279,10 +245,7 @@ class WebController extends Controller
         ]);
 
         if ($limit === false) {
-            return $this->asJson([
-                'status' => 'error',
-                'message' => 'Limit must be a positive integer',
-            ]);
+            return $this->errorResponse('Limit must be a positive integer');
         }
 
         $offset = filter_var($offsetParam, FILTER_VALIDATE_INT, [
@@ -293,10 +256,7 @@ class WebController extends Controller
         ]);
 
         if ($offset === false) {
-            return $this->asJson([
-                'status' => 'error',
-                'message' => 'Offset must be zero or a positive integer',
-            ]);
+            return $this->errorResponse('Offset must be zero or a positive integer');
         }
 
         $assetQuery = Asset::find()
@@ -316,7 +276,7 @@ class WebController extends Controller
             $assetsByAssetId[$asset->id][$asset->siteId] = $asset;
         }
 
-        return $this->asJson([
+        return $this->successResponse([
             'assets' => $assetsByAssetId,
             'pagination' => [
                 'limit' => $limit,
@@ -324,6 +284,38 @@ class WebController extends Controller
                 'total' => $total,
                 'hasMore' => ($offset + $limit) < $total,
             ],
-        ]);
+        ], 'Assets fetched');
+    }
+
+    private function successResponse(array $data = [], ?string $message = null, int $statusCode = 200): Response
+    {
+        $payload = [
+            'status' => 'success',
+            'data' => $data,
+        ];
+
+        if ($message !== null) {
+            $payload['message'] = $message;
+        }
+
+        $response = $this->asJson($payload);
+        $response->setStatusCode($statusCode);
+        return $response;
+    }
+
+    private function errorResponse(string $message, int $statusCode = 400, array $data = []): Response
+    {
+        $payload = [
+            'status' => 'error',
+            'message' => $message,
+        ];
+
+        if ($data !== []) {
+            $payload['data'] = $data;
+        }
+
+        $response = $this->asJson($payload);
+        $response->setStatusCode($statusCode);
+        return $response;
     }
 }

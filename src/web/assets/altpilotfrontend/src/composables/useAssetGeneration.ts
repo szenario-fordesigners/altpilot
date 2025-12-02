@@ -2,8 +2,14 @@ import { computed, type Ref, ref, watch } from 'vue';
 import { useGlobalState } from './useGlobalState';
 import { useGenerationTracker } from './useGenerationTracker';
 import type { Asset, MultiLanguageAsset } from '../types/Asset';
+import { apiClient } from '@/utils/apiClient';
 
 const HIDDEN_IFRAME_REMOVE_DELAY = 1000;
+
+type QueueResponse = {
+  jobId: string | null;
+  queueStatus: string | null;
+};
 
 export function useAssetGeneration(asset: MultiLanguageAsset, thisSelectedSiteId: Ref<number>) {
   const { csrfToken, cpTrigger } = useGlobalState();
@@ -62,38 +68,19 @@ export function useAssetGeneration(asset: MultiLanguageAsset, thisSelectedSiteId
       const payload: Record<string, string> = {
         assetID: currentAsset.value.id.toString(),
         siteId: thisSelectedSiteId.value.toString(),
-        [csrfToken.value.name]: csrfToken.value.value,
       };
 
-      const response = await fetch('/actions/alt-pilot/web/queue', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      const { data, message } = await apiClient.postJson<QueueResponse>(
+        '/actions/alt-pilot/web/queue',
+        payload,
+      );
 
-      if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ error: 'Failed to queue generation' }));
-        throw new Error(
-          errorData.error || errorData.message || `Request failed with status ${response.status}`,
-        );
-      }
-
-      const data = await response.json();
-      if (data.status === 'error') {
-        throw new Error(data.message || 'Failed to queue generation');
-      }
-
-      success.value = data.message || 'Alt text generation queued successfully';
+      success.value = message || 'Alt text generation queued successfully';
       trackAsset({
         assetId: currentAsset.value.id,
         siteId: currentAsset.value.siteId ?? null,
         jobId: data.jobId ?? null,
-        message: data.message ?? null,
+        message: message,
       });
 
       triggerQueueRunner();
