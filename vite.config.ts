@@ -20,6 +20,7 @@ export default defineConfig({
   },
   define: {
     'process.env': JSON.stringify({ NODE_ENV: nodeEnv }),
+    __VUE_PROD_DEVTOOLS__: true,
   },
   build: {
     lib: {
@@ -36,6 +37,8 @@ export default defineConfig({
     },
     outDir: './src/web/assets/altpilotfrontend/dist',
     emptyOutDir: true,
-    sourcemap: false,
+
+    sourcemap: true,
+    minify: false,
   },
 });
