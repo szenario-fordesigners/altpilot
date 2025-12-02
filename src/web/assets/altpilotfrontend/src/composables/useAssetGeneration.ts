@@ -1,7 +1,7 @@
 import { computed, type Ref, ref, watch } from 'vue';
-import { useGlobalState } from './useGlobalState';
-import { useGenerationTracker } from './useGenerationTracker';
-import type { Asset, MultiLanguageAsset } from '../types/Asset';
+import { useGlobalState } from '@/composables/useGlobalState';
+import { useGenerationTracker } from '@/composables/useGenerationTracker';
+import type { Asset, MultiLanguageAsset } from '@/types/Asset';
 import { apiClient } from '@/utils/apiClient';
 
 const HIDDEN_IFRAME_REMOVE_DELAY = 1000;

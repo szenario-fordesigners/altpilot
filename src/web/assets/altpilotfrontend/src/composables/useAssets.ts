@@ -1,7 +1,7 @@
 import { createGlobalState } from '@vueuse/core';
 import { ref } from 'vue';
 import { apiClient } from '@/utils/apiClient';
-import type { Asset, AssetsByAssetId } from '../types/Asset';
+import type { Asset, AssetsByAssetId } from '@/types/Asset';
 
 type FetchAssetsOptions = {
   limit?: number;

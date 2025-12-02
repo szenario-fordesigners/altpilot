@@ -1,5 +1,5 @@
 import { computed, type Ref, ref, watch } from 'vue';
-import type { Asset, MultiLanguageAsset } from '../types/Asset';
+import type { Asset, MultiLanguageAsset } from '@/types/Asset';
 import { apiClient } from '@/utils/apiClient';
 
 export function useAssetAltEditor(asset: MultiLanguageAsset, thisSelectedSiteId: Ref<number>) {

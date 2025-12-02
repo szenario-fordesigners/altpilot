@@ -1,8 +1,8 @@
 import { createGlobalState, useIntervalFn } from '@vueuse/core';
 import { reactive, ref, watch } from 'vue';
-import { useAssets } from './useAssets';
-import { useGlobalState } from './useGlobalState';
-import type { Asset } from '../types/Asset';
+import { useAssets } from '@/composables/useAssets';
+import { useGlobalState } from '@/composables/useGlobalState';
+import type { Asset } from '@/types/Asset';
 import { apiClient } from '@/utils/apiClient';
 
 type GenerationStatus = 'waiting' | 'running' | 'finished' | 'failed' | 'missing' | 'unknown';
