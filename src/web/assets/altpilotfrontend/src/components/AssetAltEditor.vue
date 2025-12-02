@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useGlobalState } from '../composables/useGlobalState';
+import { useGlobalState } from '@/composables/useGlobalState';
 
 const altText = defineModel<string>('altText', { required: true });
 const { sites } = useGlobalState();
