@@ -23,9 +23,9 @@ state.sites.value = sites;
 state.currentSiteId.value = currentSiteId;
 state.selectedSiteId.value = currentSiteId;
 
-const assetCardLimit = 20;
+const ASSET_CARD_LIMIT = 20;
 const { assets, loading, error, pagination, fetchAssets } = useAssets({
-  defaultLimit: assetCardLimit,
+  defaultLimit: ASSET_CARD_LIMIT,
 });
 
 const handlePrevious = () => {
@@ -70,7 +70,7 @@ onMounted(() => {
         class="grid auto-rows-fr [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))] gap-4"
       >
         <template v-if="loading">
-          <div v-for="i in assetCardLimit" :key="`skeleton-${i}`" class="h-full">
+          <div v-for="i in ASSET_CARD_LIMIT" :key="`skeleton-${i}`" class="h-full">
             <AssetCardSkeleton />
           </div>
         </template>
