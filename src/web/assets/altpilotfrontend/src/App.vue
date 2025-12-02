@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import { useAssets } from './composables/useAssets';
-import { useGlobalState } from './composables/useGlobalState';
-import AssetCard from './components/AssetCard.vue';
-import AssetCardSkeleton from './components/AssetCardSkeleton.vue';
-import AssetPagination from './components/AssetPagination.vue';
-import type { Site } from './types/Site';
+import { useAssets } from '@/composables/useAssets';
+import { useGlobalState } from '@/composables/useGlobalState';
+import AssetCard from '@/components/AssetCard.vue';
+import AssetCardSkeleton from '@/components/AssetCardSkeleton.vue';
+import AssetPagination from '@/components/AssetPagination.vue';
+import type { Site } from '@/types/Site';
 
 const { cpTrigger, csrfToken, sites, currentSiteId } = defineProps<{
   cpTrigger: string;
@@ -24,7 +24,9 @@ state.currentSiteId.value = currentSiteId;
 state.selectedSiteId.value = currentSiteId;
 
 const assetCardLimit = 20;
-const { assets, loading, error, pagination, fetchAssets } = useAssets(assetCardLimit);
+const { assets, loading, error, pagination, fetchAssets } = useAssets({
+  defaultLimit: assetCardLimit,
+});
 
 const handlePrevious = () => {
   if (!pagination.value) return;

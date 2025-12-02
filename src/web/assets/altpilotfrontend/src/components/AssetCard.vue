@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import AssetActions from './AssetActions.vue';
-import AssetAltEditor from './AssetAltEditor.vue';
+import AssetActions from '@/components/AssetActions.vue';
+import AssetAltEditor from '@/components/AssetAltEditor.vue';
 import { useAssetAltEditor } from '@/composables/useAssetAltEditor';
 import { useAssetGeneration } from '@/composables/useAssetGeneration';
 import { useGlobalState } from '@/composables/useGlobalState';

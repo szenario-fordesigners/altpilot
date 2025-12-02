@@ -20,6 +20,11 @@ type AssetsResponse = {
   pagination: PaginationInfo | null;
 };
 
+type UseAssetsOptions = {
+  defaultLimit?: number;
+  defaultOffset?: number;
+};
+
 const useAssetsState = createGlobalState(() => {
   const assets = ref<AssetsByAssetId>({});
   const loading = ref(false);
@@ -28,9 +33,13 @@ const useAssetsState = createGlobalState(() => {
   const defaultLimit = ref(20);
   const defaultOffset = ref(0);
 
-  const setDefaults = (limit: number, offset: number) => {
-    defaultLimit.value = limit;
-    defaultOffset.value = offset;
+  const setDefaults = (limit?: number, offset?: number) => {
+    if (typeof limit === 'number') {
+      defaultLimit.value = limit;
+    }
+    if (typeof offset === 'number') {
+      defaultOffset.value = offset;
+    }
   };
 
   const fetchAssets = async (options: FetchAssetsOptions = {}) => {
@@ -83,8 +92,10 @@ const useAssetsState = createGlobalState(() => {
   };
 });
 
-export function useAssets(defaultLimit = 20, defaultOffset = 0) {
+export function useAssets(options?: UseAssetsOptions) {
   const state = useAssetsState();
-  state.setDefaults(defaultLimit, defaultOffset);
+  if (options) {
+    state.setDefaults(options.defaultLimit, options.defaultOffset);
+  }
   return state;
 }
