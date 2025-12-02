@@ -1,4 +1,4 @@
-declare type Asset = {
+export type Asset = {
   id: number;
   siteId: number | null;
   url: string;
@@ -6,10 +6,10 @@ declare type Asset = {
   alt: string | null;
 };
 
-declare type MultiLanguageAsset = {
+export type MultiLanguageAsset = {
   [siteId: number]: Asset;
 };
 
-declare type AssetsByAssetId = {
+export type AssetsByAssetId = {
   [assetId: number]: MultiLanguageAsset;
 };

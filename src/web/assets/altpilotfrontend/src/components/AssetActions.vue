@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useGlobalState } from '../composables/useGlobalState';
+import type { Asset, MultiLanguageAsset } from '../types/Asset';
 
 const props = withDefaults(
   defineProps<{

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import AssetActions from './AssetActions.vue';
+import AssetActions from '@/components/AssetActions.vue';
 import AssetAltEditor from './AssetAltEditor.vue';
 import { useAssetAltEditor } from '../composables/useAssetAltEditor';
 import { useAssetGeneration } from '../composables/useAssetGeneration';
 import { useGlobalState } from '../composables/useGlobalState';
+import type { Asset, MultiLanguageAsset } from '../types/Asset';
 
 const props = defineProps<{
   asset: MultiLanguageAsset;
@@ -12,9 +13,8 @@ const props = defineProps<{
 
 const { cpTrigger, selectedSiteId } = useGlobalState();
 
-const currentAsset = computed(() => props.asset[selectedSiteId.value] as Asset);
-
 const thisSelectedSiteId = ref(selectedSiteId.value);
+const currentAsset = computed(() => props.asset[thisSelectedSiteId.value] as Asset);
 
 // override when global changes
 watch(selectedSiteId, (newSelectedSiteId) => {

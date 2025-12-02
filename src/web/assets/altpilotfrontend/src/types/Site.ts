@@ -1,4 +1,4 @@
-declare type Site = {
+export type Site = {
   id: number;
   groupId: number;
   handle: string;

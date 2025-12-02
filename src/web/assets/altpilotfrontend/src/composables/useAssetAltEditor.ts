@@ -1,9 +1,10 @@
 import { computed, type Ref, ref, watch } from 'vue';
 import { useGlobalState } from './useGlobalState';
+import type { Asset, MultiLanguageAsset } from '../types/Asset';
 
 export function useAssetAltEditor(asset: MultiLanguageAsset, thisSelectedSiteId: Ref<number>) {
   const { csrfToken } = useGlobalState();
-  const currentAsset = computed(() => asset[thisSelectedSiteId.value]);
+  const currentAsset = computed<Asset | undefined>(() => asset[thisSelectedSiteId.value]);
 
   const altText = ref(currentAsset.value?.alt ?? '');
   const originalAltText = ref(currentAsset.value?.alt ?? '');

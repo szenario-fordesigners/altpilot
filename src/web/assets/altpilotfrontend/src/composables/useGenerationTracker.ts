@@ -2,6 +2,7 @@ import { createGlobalState, useIntervalFn } from '@vueuse/core';
 import { reactive, ref, watch } from 'vue';
 import { useAssets } from './useAssets';
 import { useGlobalState } from './useGlobalState';
+import type { Asset } from '../types/Asset';
 
 type GenerationStatus = 'waiting' | 'running' | 'finished' | 'failed' | 'missing' | 'unknown';
 
