@@ -22,6 +22,17 @@ class AltTextGenerator extends Component
         $openAiService = $plugin->openAiService;
         $urlReachabilityChecker = $plugin->urlReachabilityChecker;
         $imageUtilityService = $plugin->imageUtilityService;
+        $sitesService = Craft::$app->getSites();
+
+        /** @var \craft\models\Site|null $site */
+        $site = null;
+        if ($asset->siteId !== null) {
+            $site = $sitesService->getSiteById((int) $asset->siteId);
+        }
+
+        if ($site === null) {
+            $site = $sitesService->getPrimarySite();
+        }
 
         // Try to get public URL first (cheaper, faster)
         // Transform logic is handled internally by getAssetPublicUrl()
@@ -30,7 +41,7 @@ class AltTextGenerator extends Component
         if ($publicUrl !== null) {
             // Check if the URL is actually reachable from the internet
             if ($urlReachabilityChecker->isReachable($publicUrl)) {
-                return $openAiService->generateAltText($publicUrl);
+                return $openAiService->generateAltText($publicUrl, $asset, $site);
             }
 
             Craft::info('Public URL exists but is not reachable, falling back to base64 encoding for asset: ' . $asset->id, "alt-pilot");
@@ -41,6 +52,6 @@ class AltTextGenerator extends Component
         // Fall back to base64 encoding if no public URL available or not reachable
         // Transform logic is handled internally by assetToBase64()
         $base64Image = $imageUtilityService->assetToBase64($asset);
-        return $openAiService->generateAltText($base64Image);
+        return $openAiService->generateAltText($base64Image, $asset, $site);
     }
 }

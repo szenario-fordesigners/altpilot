@@ -1,4 +1,4 @@
-import { computed, type Ref, ref } from 'vue';
+import { computed, type Ref, ref, watch } from 'vue';
 import { useGlobalState } from './useGlobalState';
 import { useGenerationTracker } from './useGenerationTracker';
 
@@ -20,6 +20,13 @@ export function useAssetGeneration(asset: MultiLanguageAsset, thisSelectedSiteId
     isAssetRunning(currentAsset.value.id, currentAsset.value.siteId ?? null),
   );
   const generationMessage = computed(() => generationState.value?.message ?? null);
+
+  // Clear success message when generation finishes (state is deleted or status is finished)
+  watch([generationState, isGenerationActive], ([state, active]) => {
+    if (!active && (state === null || state?.status === 'finished')) {
+      success.value = null;
+    }
+  });
 
   const triggerQueueRunner = () => {
     if (!cpTrigger.value) {
@@ -53,13 +60,9 @@ export function useAssetGeneration(asset: MultiLanguageAsset, thisSelectedSiteId
     try {
       const payload: Record<string, string> = {
         assetID: currentAsset.value.id.toString(),
+        siteId: thisSelectedSiteId.value.toString(),
+        [csrfToken.value.name]: csrfToken.value.value,
       };
-
-      if (currentAsset.value.siteId) {
-        payload.siteId = currentAsset.value.siteId.toString();
-      }
-
-      payload[csrfToken.value.name] = csrfToken.value.value;
 
       const response = await fetch('/actions/alt-pilot/web/queue', {
         method: 'POST',

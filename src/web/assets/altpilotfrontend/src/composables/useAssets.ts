@@ -14,7 +14,7 @@ type PaginationInfo = {
 };
 
 const useAssetsState = createGlobalState(() => {
-  const assets = ref<AssetsByAssetId>([]);
+  const assets = ref<AssetsByAssetId>({});
   const loading = ref(false);
   const error = ref<string | null>(null);
   const pagination = ref<PaginationInfo | null>(null);
@@ -48,11 +48,11 @@ const useAssetsState = createGlobalState(() => {
       }
 
       const data = await response.json();
-      assets.value = (data.assets ?? []) as Asset[];
+      assets.value = (data.assets ?? {}) as AssetsByAssetId;
       pagination.value = data.pagination ?? null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Unknown error';
-      assets.value = [];
+      assets.value = {};
       pagination.value = null;
     } finally {
       loading.value = false;
@@ -60,12 +60,20 @@ const useAssetsState = createGlobalState(() => {
   };
 
   const replaceAsset = (updatedAsset: Asset) => {
-    const index = assets.value.findIndex((asset) => asset.id === updatedAsset.id);
-    if (index === -1) {
+    const assetId = updatedAsset.id;
+    const siteId = updatedAsset.siteId;
+
+    if (!siteId) {
       return;
     }
 
-    assets.value.splice(index, 1, updatedAsset);
+    // Check if the asset exists in the assets object
+    if (!assets.value[assetId]) {
+      return;
+    }
+
+    // Update the specific site's asset within the MultiLanguageAsset
+    assets.value[assetId][siteId] = updatedAsset;
   };
 
   return {

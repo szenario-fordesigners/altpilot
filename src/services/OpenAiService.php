@@ -5,6 +5,9 @@ namespace szenario\craftaltpilot\services;
 use Craft;
 use OpenAI;
 use OpenAI\Client;
+use craft\elements\Asset;
+use craft\models\Site;
+use Throwable;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
 
@@ -13,6 +16,8 @@ use yii\base\InvalidConfigException;
  */
 class OpenAiService extends Component
 {
+    private const DEFAULT_PROMPT = 'Describe this image in a way suitable for alt text (roughly 150 characters maximum).';
+
     private ?Client $client = null;
 
     /**
@@ -71,14 +76,17 @@ class OpenAiService extends Component
      * Generate alt text for an image using OpenAI Vision API
      *
      * @param string $imageData The base64 data URL or public URL of the image
+     * @param Asset|null $asset The asset currently being processed
+     * @param Site|null $site The site context to derive language metadata from
      * @return string The generated alt text
      * @throws \Exception
      */
-    public function generateAltText(string $imageData): string
+    public function generateAltText(string $imageData, ?Asset $asset = null, ?Site $site = null): string
     {
         $settings = \szenario\craftaltpilot\AltPilot::getInstance()->getSettings();
 
-        $userPrompt = $settings->openAiPrompt ?? 'Describe this image in a way suitable for alt text (roughly 150 characters maximum).';
+        $promptTemplate = $settings->openAiPrompt ?: self::DEFAULT_PROMPT;
+        $userPrompt = $this->preparePrompt($promptTemplate, $asset, $site);
 
         $messages = [
             [
@@ -112,5 +120,26 @@ class OpenAiService extends Component
         }
 
         return trim($response->choices[0]->message->content);
+    }
+
+    /**
+     * Prepare the user prompt by rendering any object template expressions
+     */
+    private function preparePrompt(string $promptTemplate, ?Asset $asset, ?Site $site): string
+    {
+        $template = trim($promptTemplate) ?: self::DEFAULT_PROMPT;
+
+        try {
+            $objectContext = $asset ?? new \stdClass();
+            $renderedPrompt = Craft::$app->getView()->renderObjectTemplate($template, $objectContext, [
+                'asset' => $asset,
+                'site' => $site,
+            ]);
+
+            return $renderedPrompt !== '' ? $renderedPrompt : $template;
+        } catch (Throwable $e) {
+            Craft::warning('Failed to render OpenAI prompt template: ' . $e->getMessage(), 'alt-pilot');
+            return $template;
+        }
     }
 }

@@ -72,7 +72,11 @@ onMounted(() => {
           </div>
         </template>
         <template v-else>
-          <div v-for="asset in assets" :key="asset[state.selectedSiteId.value]!.id" class="h-full">
+          <div
+            v-for="asset in Object.values(assets)"
+            :key="asset[state.selectedSiteId.value]!.id"
+            class="h-full"
+          >
             <AssetCard :asset="asset" />
           </div>
         </template>

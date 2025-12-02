@@ -56,9 +56,8 @@ export const useGenerationTracker = createGlobalState(() => {
         siteId: entry.siteId,
         jobId: entry.jobId,
       })),
+      [csrfToken.value.name]: csrfToken.value.value,
     };
-
-    payload[csrfToken.value.name] = csrfToken.value.value;
 
     try {
       const response = await fetch('/actions/alt-pilot/web/job-status', {

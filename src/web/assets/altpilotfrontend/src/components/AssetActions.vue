@@ -8,7 +8,6 @@ const props = withDefaults(
     isGenerationActive?: boolean;
     isSaving?: boolean;
     canSave?: boolean;
-    cpTrigger?: string | null;
     asset: MultiLanguageAsset;
     thisSelectedSiteId: number;
   }>(),
@@ -17,12 +16,11 @@ const props = withDefaults(
     isGenerationActive: false,
     isSaving: false,
     canSave: true,
-    cpTrigger: null,
     thisSelectedSiteId: 1,
   },
 );
 
-const { sites } = useGlobalState();
+const { sites, cpTrigger } = useGlobalState();
 
 const emit = defineEmits<{
   (event: 'generate'): void;
