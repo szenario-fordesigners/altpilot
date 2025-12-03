@@ -19,4 +19,7 @@ class Settings extends Model
 
     public $generatePerLanguage = true;
 
+    public $averageTokenCount = 5000;
+
+    public $averageRequestDuration = 60;
 }

@@ -111,9 +111,13 @@ class OpenAiService extends Component
             // 'max_completion_tokens' => 300,
         ]);
 
-        $response = $this->chatCompletion($messages, $options);
 
+        $startTime = time();
+        $response = $this->chatCompletion($messages, $options);
         Craft::info('OpenAI API response: ' . json_encode($response), "alt-pilot");
+
+        $this->updateRequestStats($response->usage->totalTokens, time() - $startTime);
+
 
         if (empty($response->choices[0]->message->content)) {
             throw new \Exception('No content returned from OpenAI API');
@@ -139,5 +143,18 @@ class OpenAiService extends Component
             Craft::warning('Failed to render OpenAI prompt template: ' . $e->getMessage(), 'alt-pilot');
             return $promptTemplate;
         }
+    }
+
+
+    private function updateRequestStats(int $tokenCount, float $durationSeconds): void
+    {
+        $settings = \szenario\craftaltpilot\AltPilot::getInstance()->getSettings();
+        $averageTokenCount = $settings->averageTokenCount;
+        $averageRequestDuration = $settings->averageRequestDuration;
+
+        $settings->averageTokenCount = round(($averageTokenCount + $tokenCount) / 2);
+        $settings->averageRequestDuration = round(($averageRequestDuration + $durationSeconds) / 2);
+
+        Craft::$app->getPlugins()->savePluginSettings(\szenario\craftaltpilot\AltPilot::getInstance(), $settings->toArray());
     }
 }
