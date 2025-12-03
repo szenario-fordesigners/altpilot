@@ -80,7 +80,7 @@ class OpenAiService extends Component
     private function chatCompletion(array $messages, array $options = [])
     {
         try {
-            $settings = \szenario\craftaltpilot\AltPilot::getInstance()->getSettings();
+            $settings = AltPilot::getInstance()->getSettings();
 
             $defaultOptions = [
                 'model' => $settings->openAiModel ?? 'gpt-5-nano',
@@ -217,6 +217,16 @@ class OpenAiService extends Component
 
         $intervals = [];
 
+        $this->logThrottle('Starting compute intervals', [
+            'requestResetSeconds' => $requestResetSeconds,
+            'tokenResetSeconds' => $tokenResetSeconds,
+            'requestResetSecondsRaw' => $requestLimit->reset,
+            'tokenResetSecondsRaw' => $tokenLimit->reset,
+            'requestRemaining' => $requestRemaining,
+            'tokenRemaining' => $tokenRemaining,
+            'averageTokenCount' => $averageTokenCount,
+        ]);
+
         if ($requestResetSeconds !== null && $requestResetSeconds > 0) {
             if ($requestRemaining <= 0) {
                 $intervals[] = $requestResetSeconds;
@@ -293,7 +303,7 @@ class OpenAiService extends Component
             return null;
         }
 
-        $rounded = (int) round($value);
+        $rounded = (int) ceil($value);
         return $rounded > 0 ? $rounded : null;
     }
 
