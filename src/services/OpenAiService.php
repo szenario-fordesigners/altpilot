@@ -26,6 +26,9 @@ class OpenAiService extends Component
     private ?Client $client = null;
     private int $nextAllowedRequestTime = 0;
 
+
+    // TODO: REMOVE LOGS AFTER TESTING THIS WITH LIKE 5K IMAGES
+
     /**
      * Get the OpenAI client instance
      *
