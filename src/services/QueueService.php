@@ -46,7 +46,7 @@ class QueueService extends Component
         }
 
         try {
-            $job = new \szenario\craftaltpilot\jobs\AltTextGenerator([
+            $job = new \szenario\craftaltpilot\jobs\AltTextGeneratorJob([
                 'asset' => $asset,
             ]);
             $jobId = Craft::$app->getQueue()->push($job);

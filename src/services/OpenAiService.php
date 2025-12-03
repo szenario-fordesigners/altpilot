@@ -81,7 +81,7 @@ class OpenAiService extends Component
      * @return string The generated alt text
      * @throws \Exception
      */
-    public function generateAltText(string $imageData, ?Asset $asset = null, ?Site $site = null): string
+    public function generateAltTextForImage(string $imageData, ?Asset $asset = null, ?Site $site = null): string
     {
         $settings = \szenario\craftaltpilot\AltPilot::getInstance()->getSettings();
 
@@ -127,19 +127,17 @@ class OpenAiService extends Component
      */
     private function preparePrompt(string $promptTemplate, ?Asset $asset, ?Site $site): string
     {
-        $template = trim($promptTemplate) ?: self::DEFAULT_PROMPT;
-
         try {
             $objectContext = $asset ?? new \stdClass();
-            $renderedPrompt = Craft::$app->getView()->renderObjectTemplate($template, $objectContext, [
+            $renderedPrompt = Craft::$app->getView()->renderObjectTemplate($promptTemplate, $objectContext, [
                 'asset' => $asset,
                 'site' => $site,
             ]);
 
-            return $renderedPrompt !== '' ? $renderedPrompt : $template;
+            return $renderedPrompt !== '' ? $renderedPrompt : $promptTemplate;
         } catch (Throwable $e) {
             Craft::warning('Failed to render OpenAI prompt template: ' . $e->getMessage(), 'alt-pilot');
-            return $template;
+            return $promptTemplate;
         }
     }
 }

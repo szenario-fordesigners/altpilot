@@ -10,7 +10,7 @@ use Exception;
 /**
  * Alt Text Generator queue job
  */
-class AltTextGenerator extends BaseJob
+class AltTextGeneratorJob extends BaseJob
 {
     public Asset $asset;
 
@@ -20,7 +20,7 @@ class AltTextGenerator extends BaseJob
         $altTextGenerator = $plugin->altTextGenerator;
 
         try {
-            $altText = $altTextGenerator->generateAltText($this->asset);
+            $altText = $altTextGenerator->generateAltTextForAsset($this->asset);
 
             $this->asset->alt = $altText;
 
