@@ -44,7 +44,7 @@ export function useAssetGeneration(asset: MultiLanguageAsset, thisSelectedSiteId
     iframe.style.display = 'none';
     iframe.style.width = '0';
     iframe.style.height = '0';
-    iframe.src = cpTrigger.value;
+    iframe.src = `/${cpTrigger.value}`;
     document.body.appendChild(iframe);
 
     setTimeout(() => {

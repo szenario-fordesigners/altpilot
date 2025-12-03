@@ -47,7 +47,7 @@ const currentAsset = computed(() => props.asset[props.thisSelectedSiteId] as Ass
     <a
       v-if="cpTrigger"
       class="button"
-      :href="`${cpTrigger}/assets/edit/${currentAsset.id}?site=${sites.find((site) => site.id === thisSelectedSiteId)?.handle}`"
+      :href="`/${cpTrigger}/assets/edit/${currentAsset.id}?site=${sites.find((site) => site.id === thisSelectedSiteId)?.handle}`"
       target="_blank"
     >
       Control Panel
