@@ -9,6 +9,9 @@ use craft\base\Plugin;
 use craft\elements\Asset;
 use craft\events\DefineMenuItemsEvent;
 use craft\events\RegisterElementActionsEvent;
+use craft\helpers\App;
+use craft\log\MonologTarget;
+use Psr\Log\LogLevel;
 use szenario\craftaltpilot\behaviors\AltTextChecked;
 use szenario\craftaltpilot\elements\actions\GenerateAltPilotElementAction;
 use szenario\craftaltpilot\models\Settings;
@@ -54,6 +57,7 @@ class AltPilot extends Plugin
         parent::init();
 
         $this->attachEventHandlers();
+        $this->registerLogTarget();
 
         // Any code that creates an element query or loads Twig should be deferred until
         // after Craft is fully initialized, to avoid conflicts with other plugins/modules
@@ -122,5 +126,38 @@ class AltPilot extends Plugin
                 ];
             }
         );
+    }
+
+    /**
+     * Register a custom log target for AltPilot plugin messages.
+     */
+    private function registerLogTarget(): void
+    {
+        $log = Craft::$app->getLog();
+        $targets = $log->targets;
+
+        // Check if the target already exists to avoid duplicates
+        $targetExists = false;
+        foreach ($targets as $target) {
+            if ($target instanceof MonologTarget && $target->name === 'alt-pilot') {
+                $targetExists = true;
+                break;
+            }
+        }
+
+        if (!$targetExists) {
+            $target = Craft::createObject([
+                'class' => MonologTarget::class,
+                'name' => 'alt-pilot',
+                'extractExceptionTrace' => !App::devMode(),
+                'allowLineBreaks' => App::devMode(),
+                'level' => App::devMode() ? LogLevel::DEBUG : LogLevel::INFO,
+                'categories' => ['alt-pilot'],
+                'logContext' => App::devMode(),
+            ]);
+
+            $targets[] = $target;
+            $log->targets = $targets;
+        }
     }
 }
