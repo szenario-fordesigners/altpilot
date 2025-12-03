@@ -21,8 +21,6 @@ use szenario\craftaltpilot\services\UrlReachabilityChecker;
 use yii\base\Event;
 use craft\events\RegisterCpNavItemsEvent;
 use craft\web\twig\variables\Cp;
-use craft\events\RegisterUrlRulesEvent;
-use craft\web\UrlManager;
 
 /**
  * AltPilot plugin
