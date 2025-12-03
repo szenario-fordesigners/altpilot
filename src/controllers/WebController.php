@@ -155,6 +155,14 @@ class WebController extends Controller
         return $this->successResponse([], 'Alt text checked status set for ' . $filename);
     }
 
+    public function actionGetPendingAltPilotJobCount(): Response
+    {
+        $this->requireAcceptsJson();
+        return $this->successResponse([
+            'count' => AltPilot::getInstance()->queueService->getPendingAltPilotJobCount(),
+        ]);
+    }
+
     public function actionJobStatus(): Response
     {
         $this->requirePostRequest();

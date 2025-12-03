@@ -37,7 +37,7 @@ class AltTextGeneratorJob extends BaseJob
 
     protected function defaultDescription(): ?string
     {
-        return Craft::t('alt-pilot', '[Asset ID: {id} | Site ID: {siteId}] Generating alt text for {asset}', [
+        return Craft::t('alt-pilot', '[Asset ID: {id} | Site ID: {siteId}] AltPilot: Generating alt text for {asset}', [
             'id' => $this->asset->id,
             'siteId' => $this->asset->siteId,
             'asset' => $this->asset->filename,

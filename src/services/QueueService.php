@@ -65,6 +65,14 @@ class QueueService extends Component
         }
     }
 
+    public function getPendingAltPilotJobCount(): int
+    {
+        $jobs = Craft::$app->getQueue()->getJobInfo();
+        $jobs = array_filter($jobs, fn($job) => $job['status'] !== CraftQueue::STATUS_DONE);
+        $jobs = array_filter($jobs, fn($job) => str_contains($job['description'] ?? '', 'AltPilot'));
+        return count($jobs);
+    }
+
     /**
      * @param array<int, array{assetId:int, siteId: int|null}> $assetsToCheck
      */

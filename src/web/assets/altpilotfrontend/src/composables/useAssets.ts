@@ -55,6 +55,12 @@ const useAssetsState = createGlobalState(() => {
       );
       assets.value = data.assets ?? {};
       pagination.value = data.pagination ?? null;
+
+      const { data: pendingJobCount } = await apiClient.get<{ count: number }>(
+        `/actions/alt-pilot/web/get-pending-alt-pilot-job-count`,
+      );
+
+      console.log('pendingJobCount', pendingJobCount);
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Unknown error';
       assets.value = {};
