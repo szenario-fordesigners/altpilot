@@ -8,15 +8,20 @@ use craft\base\Model;
 use craft\base\Plugin;
 use craft\elements\Asset;
 use craft\events\DefineMenuItemsEvent;
+use craft\events\ModelEvent;
+use craft\events\PluginEvent;
 use craft\events\RegisterElementActionsEvent;
 use craft\helpers\App;
+use craft\helpers\Json;
 use craft\log\MonologTarget;
+use craft\services\Plugins;
 use Psr\Log\LogLevel;
-use szenario\craftaltpilot\behaviors\AltTextChecked;
+use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 use szenario\craftaltpilot\elements\actions\GenerateAltPilotElementAction;
 use szenario\craftaltpilot\models\Settings;
 use szenario\craftaltpilot\services\AltPilotService;
 use szenario\craftaltpilot\services\AltTextGenerator;
+use szenario\craftaltpilot\services\DatabaseService;
 use szenario\craftaltpilot\services\ImageUtilityService;
 use szenario\craftaltpilot\services\OpenAiService;
 use szenario\craftaltpilot\services\QueueService;
@@ -39,16 +44,27 @@ use craft\web\twig\variables\Cp;
  * @property-read ImageUtilityService $imageUtilityService
  * @property-read QueueService $queueService
  * @property-read AltTextGenerator $altTextGenerator
+ * @property-read DatabaseService $databaseService
  */
 class AltPilot extends Plugin
 {
     public string $schemaVersion = '1.0.0';
     public bool $hasCpSettings = true;
+    private array $_previousSettingsSnapshot = [];
+    private bool $_hasStoredSettingsSnapshot = false;
 
     public static function config(): array
     {
         return [
-            'components' => ['openAiService' => OpenAiService::class, 'altPilotService' => AltPilotService::class, 'urlReachabilityChecker' => UrlReachabilityChecker::class, 'imageUtilityService' => ImageUtilityService::class, 'queueService' => QueueService::class, 'altTextGenerator' => AltTextGenerator::class],
+            'components' => [
+                'openAiService' => OpenAiService::class,
+                'altPilotService' => AltPilotService::class,
+                'urlReachabilityChecker' => UrlReachabilityChecker::class,
+                'imageUtilityService' => ImageUtilityService::class,
+                'queueService' => QueueService::class,
+                'altTextGenerator' => AltTextGenerator::class,
+                'databaseService' => DatabaseService::class,
+            ],
         ];
     }
 
@@ -79,53 +95,16 @@ class AltPilot extends Plugin
         ]);
     }
 
-    private function attachEventHandlers(): void
+
+    public function afterInstall(): void
     {
-        // Register event handlers here ...
-        // (see https://craftcms.com/docs/5.x/extend/events.html to get started)
+        parent::afterInstall();
 
-        // Attach AltTextChecked behavior to all Asset elements
-        Event::on(
-            Asset::class,
-            Element::EVENT_INIT,
-            function (Event $event) {
-                /** @var Asset $asset */
-                $asset = $event->sender;
-                $asset->attachBehavior('altTextChecked', AltTextChecked::class);
-            }
-        );
-
-        // register asset dropdown menu item
-        Event::on(
-            Asset::class,
-            Element::EVENT_DEFINE_ACTION_MENU_ITEMS,
-            function (DefineMenuItemsEvent $event) {
-                $this->altPilotService->handleAssetActionMenuItems($event);
-            }
-        );
-
-        // register element action
-        Event::on(
-            Asset::class,
-            Asset::EVENT_REGISTER_ACTIONS,
-            function (RegisterElementActionsEvent $event) {
-                $event->actions[] = GenerateAltPilotElementAction::class;
-            }
-        );
-
-
-        // register control panel section
-        Event::on(
-            Cp::class,
-            Cp::EVENT_REGISTER_CP_NAV_ITEMS,
-            function (RegisterCpNavItemsEvent $event) {
-                $event->navItems[] = [
-                    'url' => 'alt-pilot',
-                    'label' => 'AltPilot',
-                    'icon' => '@mynamespace/path/to/icon.svg',
-                ];
-            }
-        );
+        try {
+            $this->databaseService->initializeDatabase();
+        } catch (\Throwable $exception) {
+            Craft::error('AltPilot database initialization failed: ' . $exception->getMessage(), 'alt-pilot');
+        }
     }
 
     /**
@@ -159,5 +138,154 @@ class AltPilot extends Plugin
             $targets[] = $target;
             $log->targets = $targets;
         }
+    }
+
+    private function calculateSettingsDiff(array $old, array $new): array
+    {
+        $diff = [];
+        $keys = array_unique(array_merge(array_keys($old), array_keys($new)));
+
+        foreach ($keys as $key) {
+            $oldValue = $old[$key] ?? null;
+            $newValue = $new[$key] ?? null;
+
+            if (is_array($oldValue) && is_array($newValue)) {
+                $nestedDiff = $this->calculateSettingsDiff($oldValue, $newValue);
+                if ($nestedDiff !== []) {
+                    $diff[$key] = $nestedDiff;
+                }
+                continue;
+            }
+
+            if ($oldValue !== $newValue) {
+                $diff[$key] = [
+                    'old' => $oldValue,
+                    'new' => $newValue,
+                ];
+            }
+        }
+
+        return $diff;
+    }
+
+
+
+    private function attachEventHandlers(): void
+    {
+        // Register event handlers here ...
+        // (see https://craftcms.com/docs/5.x/extend/events.html to get started)
+
+        // Attach altPilot behavior to all image assets
+        Event::on(
+            Asset::class,
+            Element::EVENT_INIT,
+            function (Event $event) {
+                /** @var Asset $asset */
+                $asset = $event->sender;
+
+
+                if ($asset->kind !== 'image') {
+                    return;
+                }
+
+                Craft::info('AltPilot behavior attached to asset: ' . $asset->id . ' - kind: ' . $asset->kind, 'alt-pilot');
+
+                $asset->attachBehavior('altPilotMetadata', AltPilotMetadata::class);
+            }
+        );
+
+        Event::on(
+            Plugins::class,
+            Plugins::EVENT_BEFORE_SAVE_PLUGIN_SETTINGS,
+            function (PluginEvent $event) {
+                if ($event->plugin !== $this) {
+                    return;
+                }
+
+                $info = Craft::$app->getPlugins()->getStoredPluginInfo($this->handle) ?? [];
+                $this->_hasStoredSettingsSnapshot = array_key_exists('settings', $info);
+                $this->_previousSettingsSnapshot = $info['settings'] ?? [];
+                Craft::info(
+                    'AltPilot captured pre-save settings snapshot: ' . Json::encode($this->_previousSettingsSnapshot),
+                    'alt-pilot'
+                );
+            }
+        );
+
+        Event::on(
+            Plugins::class,
+            Plugins::EVENT_AFTER_SAVE_PLUGIN_SETTINGS,
+            function (PluginEvent $event) {
+                if ($event->plugin !== $this) {
+                    return;
+                }
+
+                $newSettings = $this->getSettings()->toArray();
+                if (!$this->_hasStoredSettingsSnapshot) {
+                    Craft::info('AltPilot settings saved for the first time.', 'alt-pilot');
+                } else {
+                    $diff = $this->calculateSettingsDiff($this->_previousSettingsSnapshot, $newSettings);
+
+                    if ($diff === []) {
+                        Craft::info('AltPilot settings saved; no changes detected.', 'alt-pilot');
+                    } else {
+                        Craft::info('AltPilot settings changed: ' . Json::encode($diff), 'alt-pilot');
+                    }
+                }
+
+                $this->_previousSettingsSnapshot = $newSettings;
+                $this->_hasStoredSettingsSnapshot = true;
+            }
+        );
+
+        // register asset dropdown menu item
+        Event::on(
+            Asset::class,
+            Element::EVENT_DEFINE_ACTION_MENU_ITEMS,
+            function (DefineMenuItemsEvent $event) {
+                $this->altPilotService->handleAssetActionMenuItems($event);
+            }
+        );
+
+        Event::on(
+            Asset::class,
+            Asset::EVENT_AFTER_SAVE,
+            function (ModelEvent $event) {
+                if (!$event->isNew) {
+                    return;
+                }
+
+                $asset = $event->sender;
+                if (!$asset instanceof Asset || !$asset->id || $asset->kind !== 'image') {
+                    return;
+                }
+
+                $this->databaseService->insertSingleAsset(Craft::$app->getDb(), $asset);
+
+
+            }
+        );
+
+        // register element action
+        Event::on(
+            Asset::class,
+            Asset::EVENT_REGISTER_ACTIONS,
+            function (RegisterElementActionsEvent $event) {
+                $event->actions[] = GenerateAltPilotElementAction::class;
+            }
+        );
+
+        // register control panel section
+        Event::on(
+            Cp::class,
+            Cp::EVENT_REGISTER_CP_NAV_ITEMS,
+            function (RegisterCpNavItemsEvent $event) {
+                $event->navItems[] = [
+                    'url' => 'alt-pilot',
+                    'label' => 'AltPilot',
+                    'icon' => '@mynamespace/path/to/icon.svg',
+                ];
+            }
+        );
     }
 }

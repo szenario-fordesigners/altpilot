@@ -122,39 +122,6 @@ class WebController extends Controller
         ];
     }
 
-    public function actionSetAltTextChecked(): Response
-    {
-        $this->requirePostRequest();
-        $this->requireAcceptsJson();
-
-        $assetIdParam = $this->request->getRequiredBodyParam('assetID');
-        $altTextCheckedParam = $this->request->getRequiredBodyParam('altTextChecked');
-
-        $assetId = filter_var($assetIdParam, FILTER_VALIDATE_INT);
-        if ($assetId === false) {
-            return $this->errorResponse('Asset ID must be a valid integer');
-        }
-
-        $altTextChecked = filter_var($altTextCheckedParam, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-        if ($altTextChecked == null) {
-            return $this->errorResponse('Alt text checked status must be a valid boolean');
-        }
-
-        $asset = Craft::$app->assets->getAssetById($assetId);
-        if (!$asset) {
-            return $this->errorResponse('Asset not found', 404);
-        }
-
-        $asset->getBehavior('altTextChecked')->setAltTextChecked($altTextChecked);
-        if (!Craft::$app->elements->saveElement($asset)) {
-            return $this->errorResponse('Failed to save asset', 500);
-        }
-
-        $filename = $asset->filename ?? (string) $asset->id;
-
-        return $this->successResponse([], 'Alt text checked status set for ' . $filename);
-    }
-
     public function actionGetPendingAltPilotJobCount(): Response
     {
         $this->requireAcceptsJson();

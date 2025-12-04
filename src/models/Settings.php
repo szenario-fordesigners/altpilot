@@ -21,5 +21,9 @@ class Settings extends Model
 
     public $averageTokenCount = 5000;
 
-    public $averageRequestDuration = 60;
+    public $averageRequestDuration = 30;
+
+    public $volumeIDs = [];
+
+    public $initialized = false;
 }
