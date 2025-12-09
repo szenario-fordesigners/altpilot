@@ -7,6 +7,8 @@ use craft\elements\Asset;
 use craft\helpers\StringHelper;
 use szenario\craftaltpilot\AltPilot;
 use szenario\craftaltpilot\behaviors\AltPilotMetadata;
+use craft\fieldlayoutelements\assets\AltField;
+use craft\models\FieldLayoutTab;
 use Throwable;
 use yii\base\Component;
 use yii\db\Expression;
@@ -39,6 +41,10 @@ class DatabaseService extends Component
             return;
         }
 
+        foreach ($volumeIds as $volumeId) {
+            $this->ensureAltFieldForVolume((int) $volumeId);
+        }
+
         $sites = Craft::$app->getSites()->getAllSites();
         $batchSize = 250;
         foreach ($sites as $site) {
@@ -55,6 +61,8 @@ class DatabaseService extends Component
                 $this->insertMultipleAssets($db, $assetBatch);
             }
         }
+
+
     }
 
     public function insertSingleAsset(Connection $db, Asset $asset, ?int $status = null): void
@@ -137,6 +145,11 @@ class DatabaseService extends Component
 
         if ($addedVolumes !== []) {
             Craft::info('Volumes added: ' . implode(', ', $addedVolumes), 'alt-pilot');
+
+            foreach ($addedVolumes as $volumeId) {
+                $this->ensureAltFieldForVolume((int) $volumeId);
+            }
+
             $db = Craft::$app->getDb();
             $query = Asset::find()
                 ->siteId('*')
@@ -148,6 +161,8 @@ class DatabaseService extends Component
                 /** @var Asset[] $batch */
                 $this->insertMultipleAssets($db, $batch);
             }
+
+
         }
 
         if ($removedVolumes !== []) {
@@ -213,6 +228,49 @@ class DatabaseService extends Component
         }
     }
 
+
+    private function ensureAltFieldForVolume(int $volumeId): void
+    {
+        $volumesService = Craft::$app->getVolumes();
+        $volume = $volumesService->getVolumeById($volumeId);
+
+        if ($volume === null) {
+            Craft::warning('Unable to ensure alt field for unknown volume ' . $volumeId, 'alt-pilot');
+            return;
+        }
+
+        $fieldLayout = $volume->getFieldLayout();
+        $tabs = $fieldLayout->getTabs();
+
+        if ($tabs === []) {
+            $tabs[] = new FieldLayoutTab([
+                'layout' => $fieldLayout,
+                'name' => Craft::t('app', 'Content'),
+                'elements' => [],
+            ]);
+            $fieldLayout->setTabs($tabs);
+        }
+
+        foreach ($tabs as $tab) {
+            foreach ($tab->getElements() as $element) {
+                if ($element instanceof AltField) {
+                    return;
+                }
+            }
+        }
+
+        $elements = $tabs[0]->getElements();
+        $elements[] = new AltField();
+        $tabs[0]->setElements($elements);
+        $fieldLayout->setTabs($tabs);
+        $volume->setFieldLayout($fieldLayout);
+
+        if (!$volumesService->saveVolume($volume)) {
+            Craft::error('Failed to save volume ' . $volumeId . ' while ensuring alt field.', 'alt-pilot');
+        } else {
+            Craft::info('Ensured alt field is enabled for volume successfully: ' . $volumeId, 'alt-pilot');
+        }
+    }
 
     private function determineInitialStatus(Asset $asset): int
     {
