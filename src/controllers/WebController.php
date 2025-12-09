@@ -5,6 +5,7 @@ namespace szenario\craftaltpilot\controllers;
 use Craft;
 use craft\web\Controller;
 use craft\elements\Asset;
+use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 use craft\db\Query;
 use yii\web\Response;
 use szenario\craftaltpilot\AltPilot;
@@ -135,14 +136,31 @@ class WebController extends Controller
     {
         $this->requireAcceptsJson();
 
-        $counts = (new Query())
+        $rows = (new Query())
             ->select(['status', 'count' => 'COUNT(*)'])
             ->from('{{%altpilot_metadata}}')
             ->groupBy(['status'])
             ->all();
 
+        $counts = [
+            AltPilotMetadata::STATUS_MISSING => 0,
+            AltPilotMetadata::STATUS_AI_GENERATED => 0,
+            AltPilotMetadata::STATUS_MANUAL => 0,
+        ];
+        $total = 0;
+
+        foreach ($rows as $row) {
+            $status = (int) $row['status'];
+            $count = (int) $row['count'];
+            if (isset($counts[$status])) {
+                $counts[$status] = $count;
+                $total += $count;
+            }
+        }
+
         return $this->successResponse([
             'counts' => $counts,
+            'total' => $total,
         ]);
     }
 
