@@ -5,6 +5,7 @@ namespace szenario\craftaltpilot\controllers;
 use Craft;
 use craft\web\Controller;
 use craft\elements\Asset;
+use craft\db\Query;
 use yii\web\Response;
 use szenario\craftaltpilot\AltPilot;
 
@@ -127,6 +128,21 @@ class WebController extends Controller
         $this->requireAcceptsJson();
         return $this->successResponse([
             'count' => AltPilot::getInstance()->queueService->getPendingAltPilotJobCount(),
+        ]);
+    }
+
+    public function actionGetStatusCounts(): Response
+    {
+        $this->requireAcceptsJson();
+
+        $counts = (new Query())
+            ->select(['status', 'count' => 'COUNT(*)'])
+            ->from('{{%altpilot_metadata}}')
+            ->groupBy(['status'])
+            ->all();
+
+        return $this->successResponse([
+            'counts' => $counts,
         ]);
     }
 
