@@ -57,15 +57,15 @@ class DatabaseService extends Component
         }
     }
 
-    public function insertSingleAsset(Connection $db, Asset $asset): void
+    public function insertSingleAsset(Connection $db, Asset $asset, ?int $status = null): void
     {
-        $status = $this->determineInitialStatus($asset);
+        $status ??= $this->determineInitialStatus($asset);
 
         $now = new Expression('NOW()');
 
         try {
             $db->createCommand()->upsert(
-                DatabaseService::TABLE_NAME,
+                self::TABLE_NAME,
                 [
                     'assetId' => $asset->id,
                     'siteId' => $asset->siteId,
@@ -78,6 +78,7 @@ class DatabaseService extends Component
                 [
                     'status' => $status,
                     'dateUpdated' => $now,
+                    'volumeId' => $asset->volumeId,
                 ]
             )->execute();
         } catch (Throwable $exception) {
@@ -164,6 +165,40 @@ class DatabaseService extends Component
         } catch (Throwable $exception) {
             Craft::error(
                 sprintf('Failed to delete metadata for asset %d: %s', $assetId, $exception->getMessage()),
+                'alt-pilot'
+            );
+        }
+    }
+
+    public function deleteMetadataForSite(int $siteId): void
+    {
+        try {
+            $result = Craft::$app->getDb()
+                ->createCommand()
+                ->delete(self::TABLE_NAME, ['siteId' => $siteId])
+                ->execute();
+
+            Craft::info('Deleted ' . $result . ' metadata rows for site ' . $siteId, 'alt-pilot');
+        } catch (Throwable $exception) {
+            Craft::error(
+                sprintf('Failed to delete metadata for site %d: %s', $siteId, $exception->getMessage()),
+                'alt-pilot'
+            );
+        }
+    }
+
+    public function deleteMetadataForVolume(int $volumeId): void
+    {
+        try {
+            $result = Craft::$app->getDb()
+                ->createCommand()
+                ->delete(self::TABLE_NAME, ['volumeId' => $volumeId])
+                ->execute();
+
+            Craft::info('Deleted ' . $result . ' metadata rows for volume ' . $volumeId, 'alt-pilot');
+        } catch (Throwable $exception) {
+            Craft::error(
+                sprintf('Failed to delete metadata for volume %d: %s', $volumeId, $exception->getMessage()),
                 'alt-pilot'
             );
         }

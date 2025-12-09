@@ -5,13 +5,12 @@ namespace szenario\craftaltpilot\behaviors;
 use Craft;
 use craft\db\Query;
 use craft\elements\Asset;
-use craft\helpers\StringHelper;
 use craft\events\ModelEvent;
+use szenario\craftaltpilot\AltPilot;
 use szenario\craftaltpilot\services\DatabaseService;
 use yii\base\Behavior;
 use yii\base\Event;
 use yii\db\Exception;
-use yii\db\Expression;
 
 /**
  * Exposes a `status` attribute on assets and persists it in `altpilot_metadata`.
@@ -77,31 +76,12 @@ class AltPilotMetadata extends Behavior
         }
 
         $status = $this->_status ?? self::STATUS_MISSING;
-        $db = Craft::$app->getDb();
+        AltPilot::getInstance()
+            ->databaseService
+            ->insertSingleAsset(Craft::$app->getDb(), $asset, $status);
 
-        try {
-            $db->createCommand()->upsert(
-                DatabaseService::TABLE_NAME,
-                [
-                    'assetId' => $asset->id,
-                    'siteId' => $asset->siteId,
-                    'volumeId' => $asset->volumeId,
-                    'status' => $status,
-                    'dateCreated' => new Expression('NOW()'),
-                    'dateUpdated' => new Expression('NOW()'),
-                    'uid' => StringHelper::UUID(),
-                ],
-                [
-                    'status' => $status,
-                    'dateUpdated' => new Expression('NOW()'),
-                ]
-            )->execute();
-
-            $this->_status = $status;
-            $this->_loaded = true;
-        } catch (Exception $e) {
-            Craft::error('Failed to save AltPilot metadata for asset ' . $asset->id . ': ' . $e->getMessage(), 'alt-pilot');
-        }
+        $this->_status = $status;
+        $this->_loaded = true;
     }
 
     public function afterDelete(Event $event): void

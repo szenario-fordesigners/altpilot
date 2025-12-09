@@ -8,13 +8,17 @@ use craft\base\Model;
 use craft\base\Plugin;
 use craft\elements\Asset;
 use craft\events\DefineMenuItemsEvent;
+use craft\events\DeleteSiteEvent;
 use craft\events\ModelEvent;
 use craft\events\PluginEvent;
 use craft\events\RegisterElementActionsEvent;
+use craft\events\VolumeEvent;
 use craft\helpers\App;
 use craft\helpers\Json;
 use craft\log\MonologTarget;
+use craft\services\Sites;
 use craft\services\Plugins;
+use craft\services\Volumes;
 use Psr\Log\LogLevel;
 use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 use szenario\craftaltpilot\elements\actions\GenerateAltPilotElementAction;
@@ -263,6 +267,24 @@ class AltPilot extends Plugin
                 $this->databaseService->insertSingleAsset(Craft::$app->getDb(), $asset);
 
 
+            }
+        );
+
+        Event::on(
+            Sites::class,
+            Sites::EVENT_AFTER_DELETE_SITE,
+            function (DeleteSiteEvent $event) {
+                $siteId = (int) $event->site->id;
+                $this->databaseService->deleteMetadataForSite($siteId);
+            }
+        );
+
+        Event::on(
+            Volumes::class,
+            Volumes::EVENT_AFTER_DELETE_VOLUME,
+            function (VolumeEvent $event) {
+                $volumeId = (int) $event->volume->id;
+                $this->databaseService->deleteMetadataForVolume($volumeId);
             }
         );
 

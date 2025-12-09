@@ -81,9 +81,9 @@ class Install extends Migration
         );
 
 
-        // Craft::info('Initializing AltPilot metadata table...', 'alt-pilot');
-        // AltPilot::getInstance()->databaseService->initializeDatabase();
-        // Craft::info('AltPilot metadata table initialized.', 'alt-pilot');
+        Craft::info('Initializing AltPilot metadata table...', 'alt-pilot');
+        AltPilot::getInstance()->databaseService->initializeDatabase();
+        Craft::info('AltPilot metadata table initialized.', 'alt-pilot');
 
         return true;
     }
