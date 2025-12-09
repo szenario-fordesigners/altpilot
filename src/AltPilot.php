@@ -172,7 +172,22 @@ class AltPilot extends Plugin
         return $diff;
     }
 
+    /**
+     * @param mixed $rawVolumeIds
+     * @return int[]
+     */
+    private function normalizeVolumeIds(mixed $rawVolumeIds): array
+    {
+        if ($rawVolumeIds === null || $rawVolumeIds === '' || $rawVolumeIds === []) {
+            return [];
+        }
 
+        $ids = is_array($rawVolumeIds) ? $rawVolumeIds : [$rawVolumeIds];
+        $ids = array_map(static fn($id) => (int) $id, $ids);
+        sort($ids);
+
+        return array_values($ids);
+    }
 
     private function attachEventHandlers(): void
     {
@@ -225,6 +240,7 @@ class AltPilot extends Plugin
                 }
 
                 $newSettings = $this->getSettings()->toArray();
+
                 if (!$this->_hasStoredSettingsSnapshot) {
                     Craft::info('AltPilot settings saved for the first time.', 'alt-pilot');
                 } else {
@@ -234,6 +250,13 @@ class AltPilot extends Plugin
                         Craft::info('AltPilot settings saved; no changes detected.', 'alt-pilot');
                     } else {
                         Craft::info('AltPilot settings changed: ' . Json::encode($diff), 'alt-pilot');
+
+                        $oldVolumeIds = $this->normalizeVolumeIds($this->_previousSettingsSnapshot['volumeIDs'] ?? []);
+                        $newVolumeIds = $this->normalizeVolumeIds($newSettings['volumeIDs'] ?? []);
+
+                        if ($oldVolumeIds !== $newVolumeIds) {
+                            $this->databaseService->handleVolumesChange($oldVolumeIds, $newVolumeIds);
+                        }
                     }
                 }
 
@@ -261,6 +284,11 @@ class AltPilot extends Plugin
 
                 $asset = $event->sender;
                 if (!$asset instanceof Asset || !$asset->id || $asset->kind !== 'image') {
+                    return;
+                }
+
+                $configuredVolumes = $this->normalizeVolumeIds($this->getSettings()->volumeIDs ?? []);
+                if ($configuredVolumes !== [] && !in_array((int) $asset->volumeId, $configuredVolumes, true)) {
                     return;
                 }
 

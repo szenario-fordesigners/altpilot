@@ -10,7 +10,7 @@ use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 use Throwable;
 use yii\base\Component;
 use yii\db\Expression;
-use \yii\db\Connection;
+use yii\db\Connection;
 
 /**
  * Handles metadata table orchestration.
@@ -132,21 +132,30 @@ class DatabaseService extends Component
 
     public function handleVolumesChange(array $oldVolumeIds, array $newVolumeIds): void
     {
-        // we need to find out if a volume has been added or removed
-        $addedVolumes = array_diff($newVolumeIds, $oldVolumeIds);
-        $removedVolumes = array_diff($oldVolumeIds, $newVolumeIds);
-
-        $db = Craft::$app->getDb();
+        $addedVolumes = array_values(array_diff($newVolumeIds, $oldVolumeIds));
+        $removedVolumes = array_values(array_diff($oldVolumeIds, $newVolumeIds));
 
         if ($addedVolumes !== []) {
             Craft::info('Volumes added: ' . implode(', ', $addedVolumes), 'alt-pilot');
+            $db = Craft::$app->getDb();
+            $query = Asset::find()
+                ->siteId('*')
+                ->kind('image')
+                ->volumeId($addedVolumes)
+                ->trashed(false);
 
-
+            foreach ($query->batch(200) as $batch) {
+                /** @var Asset[] $batch */
+                $this->insertMultipleAssets($db, $batch);
+            }
         }
 
         if ($removedVolumes !== []) {
             Craft::info('Volumes removed: ' . implode(', ', $removedVolumes), 'alt-pilot');
-            // $db->createCommand()->delete(self::TABLE_NAME, ['volumeId' => $removedVolumes])->execute();
+            Craft::$app->getDb()
+                ->createCommand()
+                ->delete(self::TABLE_NAME, ['volumeId' => $removedVolumes])
+                ->execute();
         }
     }
 
