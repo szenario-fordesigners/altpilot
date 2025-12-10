@@ -6,6 +6,7 @@ import { useStatusCounts } from '@/composables/useStatusCounts';
 import AssetCard from '@/components/AssetCard.vue';
 import AssetCardSkeleton from '@/components/AssetCardSkeleton.vue';
 import AssetPagination from '@/components/AssetPagination.vue';
+import AltPilotStats from '@/components/AltPilotStats.vue';
 import type { Site } from '@/types/Site';
 
 const { cpTrigger, csrfToken, sites, currentSiteId } = defineProps<{
@@ -57,6 +58,7 @@ onMounted(() => {
 
 <template>
   <div id="altPilotWrapper">
+    <AltPilotStats />
     state.selectedSiteId: {{ state.selectedSiteId.value }}
 
     <p v-if="error" class="text-red-500">Failed to load assets: {{ error }}</p>
