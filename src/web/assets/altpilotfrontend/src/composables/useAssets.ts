@@ -68,7 +68,7 @@ const useAssetsState = createGlobalState(() => {
     const assetId = updatedAsset.id;
     const siteId = updatedAsset.siteId;
 
-    if (!siteId) {
+    if (siteId == null) {
       return;
     }
 

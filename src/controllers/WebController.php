@@ -237,12 +237,6 @@ class WebController extends Controller
     {
         $this->requireAcceptsJson();
 
-        $siteResolution = $this->resolveSiteId('query');
-        if ($siteResolution['error'] !== null) {
-            return $this->errorResponse($siteResolution['error']);
-        }
-        $siteId = $siteResolution['siteId'];
-
         $limitParam = $this->request->getQueryParam('limit', 50);
         $offsetParam = $this->request->getQueryParam('offset', 0);
 
@@ -268,21 +262,54 @@ class WebController extends Controller
             return $this->errorResponse('Offset must be zero or a positive integer');
         }
 
-        $assetQuery = Asset::find()
+        $uniqueAssetQuery = Asset::find()
             ->kind('image')
-            ->siteId($siteId === 'all' ? '*' : $siteId)
+            ->siteId('*')
+            ->unique()
             ->orderBy('dateCreated DESC');
 
-        $total = (clone $assetQuery)->count();
-        $assets = $assetQuery
+        $total = (clone $uniqueAssetQuery)->count();
+        $assetIds = $uniqueAssetQuery
             ->offset($offset)
             ->limit($limit)
+            ->ids();
+
+        $assetIds = array_map('intval', $assetIds);
+
+        if ($assetIds === []) {
+            return $this->successResponse([
+                'assets' => [],
+                'pagination' => [
+                    'limit' => $limit,
+                    'offset' => $offset,
+                    'total' => $total,
+                    'hasMore' => ($offset + $limit) < $total,
+                ],
+            ], 'Assets fetched');
+        }
+
+        $assets = Asset::find()
+            ->kind('image')
+            ->id($assetIds)
+            ->siteId('*')
+            ->fixedOrder()
             ->all();
 
-
         $assetsByAssetId = [];
+
+        foreach ($assetIds as $assetId) {
+            $assetsByAssetId[$assetId] = [];
+        }
+
         foreach ($assets as $asset) {
-            $assetsByAssetId[$asset->id][$asset->siteId] = $asset;
+            $assetId = (int) $asset->id;
+            $siteKey = $asset->siteId;
+
+            if ($siteKey === null || !array_key_exists($assetId, $assetsByAssetId)) {
+                continue;
+            }
+
+            $assetsByAssetId[$assetId][$siteKey] = $this->formatAssetForResponse($asset);
         }
 
         return $this->successResponse([
@@ -294,6 +321,31 @@ class WebController extends Controller
                 'hasMore' => ($offset + $limit) < $total,
             ],
         ], 'Assets fetched');
+    }
+
+    private function formatAssetForResponse(Asset $asset): array
+    {
+        $behavior = $asset->getBehavior('altPilotMetadata');
+        $status = $behavior instanceof AltPilotMetadata
+            ? $behavior->getStatus()
+            : AltPilotMetadata::STATUS_MISSING;
+
+        $url = $asset->getUrl();
+        if (!is_string($url)) {
+            $url = '';
+        }
+
+        $altText = $asset->alt;
+        $normalizedAltText = $altText === null || $altText === '' ? null : (string) $altText;
+
+        return [
+            'id' => (int) $asset->id,
+            'siteId' => $asset->siteId === null ? null : (int) $asset->siteId,
+            'url' => $url,
+            'title' => (string) $asset->title,
+            'alt' => $normalizedAltText,
+            'status' => (int) $status,
+        ];
     }
 
     private function successResponse(array $data = [], ?string $message = null, int $statusCode = 200): Response

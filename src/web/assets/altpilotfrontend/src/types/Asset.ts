@@ -4,6 +4,7 @@ export type Asset = {
   url: string;
   title: string;
   alt: string | null;
+  status: 0 | 1 | 2;
 };
 
 export type MultiLanguageAsset = {

@@ -7,6 +7,7 @@ import AssetCard from '@/components/AssetCard.vue';
 import AssetCardSkeleton from '@/components/AssetCardSkeleton.vue';
 import AssetPagination from '@/components/AssetPagination.vue';
 import AltPilotStats from '@/components/AltPilotStats.vue';
+import AltPilotFilter from '@/components/AltPilotFilter.vue';
 import type { Site } from '@/types/Site';
 
 const { cpTrigger, csrfToken, sites, currentSiteId } = defineProps<{
@@ -59,79 +60,45 @@ onMounted(() => {
 <template>
   <div id="altPilotWrapper">
     <AltPilotStats />
+
+    <AltPilotFilter class="mt-4 h-20 border" />
+
     state.selectedSiteId: {{ state.selectedSiteId.value }}
 
-    <p v-if="error" class="text-red-500">Failed to load assets: {{ error }}</p>
+    <select
+      class=""
+      @change="
+        (event) =>
+          (state.selectedSiteId.value = parseInt((event.target as HTMLSelectElement).value))
+      "
+    >
+      <option v-for="site in sites" :key="site.id" :value="site.id">
+        {{ site.name }} ({{ site.language }})
+      </option>
+    </select>
 
-    <template v-else>
-      <div class="border border-red-500"></div>
-      <!-- v-model="state.selectedSiteId"  -->
-      <select
-        class="border border-green-500"
-        @change="
-          (event) =>
-            (state.selectedSiteId.value = parseInt((event.target as HTMLSelectElement).value))
-        "
-      >
-        <option v-for="site in sites" :key="site.id" :value="site.id">
-          {{ site.name }} ({{ site.language }})
-        </option>
-      </select>
-
-      <section class="my-4 space-y-2 rounded border border-gray-200 p-4">
-        <div class="flex items-center justify-between gap-2">
-          <p class="text-sm font-semibold tracking-wide text-gray-700 uppercase">Status overview</p>
-          <button
-            type="button"
-            class="text-xs font-semibold tracking-wide text-blue-600 uppercase disabled:text-gray-400"
-            :disabled="statusCountsLoading"
-            @click="refetchStatusCounts"
-          >
-            Refresh
-          </button>
+    <div class="grid auto-rows-fr [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))] gap-4">
+      <template v-if="loading">
+        <div v-for="i in ASSET_CARD_LIMIT" :key="`skeleton-${i}`" class="h-full">
+          <AssetCardSkeleton />
         </div>
+      </template>
+      <template v-else>
+        <div
+          v-for="asset in Object.values(assets)"
+          :key="asset[state.selectedSiteId.value]!.id"
+          class="h-full"
+        >
+          <AssetCard :asset="asset" />
+        </div>
+      </template>
+    </div>
 
-        <p v-if="statusCountsError" class="text-sm text-red-500">
-          Failed to load status counts: {{ statusCountsError }}
-        </p>
-        <p v-else-if="statusCountsLoading" class="text-sm text-gray-500">Loading status counts…</p>
-        <p v-else-if="!hasStatusCounts" class="text-sm text-gray-500">No status data yet.</p>
-        <ul v-else class="flex flex-wrap gap-2 text-sm">
-          <li
-            v-for="item in statusCountItems"
-            :key="item.code"
-            class="rounded border border-gray-200 px-3 py-1"
-          >
-            {{ item.label }}: {{ item.count }}
-          </li>
-        </ul>
-      </section>
-
-      <div
-        class="grid auto-rows-fr [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))] gap-4"
-      >
-        <template v-if="loading">
-          <div v-for="i in ASSET_CARD_LIMIT" :key="`skeleton-${i}`" class="h-full">
-            <AssetCardSkeleton />
-          </div>
-        </template>
-        <template v-else>
-          <div
-            v-for="asset in Object.values(assets)"
-            :key="asset[state.selectedSiteId.value]!.id"
-            class="h-full"
-          >
-            <AssetCard :asset="asset" />
-          </div>
-        </template>
-      </div>
-
-      <AssetPagination
-        v-if="!loading"
-        :pagination="pagination"
-        @previous="handlePrevious"
-        @next="handleNext"
-      />
-    </template>
+    <AssetPagination
+      v-if="!loading"
+      :pagination="pagination"
+      @previous="handlePrevious"
+      @next="handleNext"
+    />
   </div>
 </template>

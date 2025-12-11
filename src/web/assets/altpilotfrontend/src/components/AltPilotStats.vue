@@ -2,6 +2,7 @@
 import AltPilotLogo from '@/components/AltPilotLogo.vue';
 import AltPilotStatsItem from '@/components/AltPilotStatsItem.vue';
 import { useStatusCounts } from '@/composables/useStatusCounts';
+import { assetStatus } from '@/utils/assetStatus';
 
 const { total, missingCount, aiGeneratedCount, manualCount } = useStatusCounts();
 </script>
@@ -15,11 +16,11 @@ const { total, missingCount, aiGeneratedCount, manualCount } = useStatusCounts()
 
     <AltPilotStatsItem label="alt-texts (total)" :content="String(total)" />
     <AltPilotStatsItem />
-    <AltPilotStatsItem label="AI-generated" :content="String(aiGeneratedCount)" />
+    <AltPilotStatsItem :label="assetStatus[1]" :content="String(aiGeneratedCount)" />
     <AltPilotStatsItem />
-    <AltPilotStatsItem label="manually" :content="String(manualCount)" />
+    <AltPilotStatsItem :label="assetStatus[2]" :content="String(manualCount)" />
     <AltPilotStatsItem />
-    <AltPilotStatsItem label="missing" :content="String(missingCount)" />
+    <AltPilotStatsItem :label="assetStatus[0]" :content="String(missingCount)" />
     <div class="col-span-1"></div>
   </div>
 </template>
