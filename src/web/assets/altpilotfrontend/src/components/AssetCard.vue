@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import AssetActions from '@/components/AssetActions.vue';
 import { useAssetAltEditor } from '@/composables/useAssetAltEditor';
-import { useAssetGeneration } from '@/composables/useAssetGeneration';
 import { useGlobalState } from '@/composables/useGlobalState';
 import type { Asset, MultiLanguageAsset } from '@/types/Asset';
 import { assetStatus } from '@/utils/assetStatus';
