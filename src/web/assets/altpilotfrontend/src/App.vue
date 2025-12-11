@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import { useAssets } from '@/composables/useAssets';
 import { useGlobalState } from '@/composables/useGlobalState';
 import { useStatusCounts } from '@/composables/useStatusCounts';
@@ -10,11 +10,11 @@ import AltPilotStats from '@/components/AltPilotStats.vue';
 import AltPilotFilter from '@/components/AltPilotFilter.vue';
 import type { Site } from '@/types/Site';
 
-const { cpTrigger, csrfToken, sites, currentSiteId } = defineProps<{
+const { cpTrigger, csrfToken, sites, primarySiteId } = defineProps<{
   cpTrigger: string;
   csrfToken: { name: string; value: string };
   sites: Site[];
-  currentSiteId: number;
+  primarySiteId: number;
 }>();
 
 const state = useGlobalState();
@@ -23,21 +23,13 @@ const state = useGlobalState();
 state.csrfToken.value = csrfToken;
 state.cpTrigger.value = cpTrigger;
 state.sites.value = sites;
-state.currentSiteId.value = currentSiteId;
-state.selectedSiteId.value = currentSiteId;
+state.primarySiteId.value = primarySiteId;
 
 const ASSET_CARD_LIMIT = 20;
-const { assets, loading, error, pagination, fetchAssets } = useAssets({
+const { assets, loading, pagination, fetchAssets } = useAssets({
   defaultLimit: ASSET_CARD_LIMIT,
 });
-const {
-  statusCountItems,
-  loading: statusCountsLoading,
-  error: statusCountsError,
-  fetchStatusCounts,
-  refetchStatusCounts,
-} = useStatusCounts();
-const hasStatusCounts = computed(() => statusCountItems.value.length > 0);
+const { fetchStatusCounts } = useStatusCounts();
 
 const handlePrevious = () => {
   if (!pagination.value) return;
@@ -63,20 +55,6 @@ onMounted(() => {
 
     <AltPilotFilter class="mt-4 h-20 border" />
 
-    state.selectedSiteId: {{ state.selectedSiteId.value }}
-
-    <select
-      class=""
-      @change="
-        (event) =>
-          (state.selectedSiteId.value = parseInt((event.target as HTMLSelectElement).value))
-      "
-    >
-      <option v-for="site in sites" :key="site.id" :value="site.id">
-        {{ site.name }} ({{ site.language }})
-      </option>
-    </select>
-
     <div class="grid auto-rows-fr [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))] gap-4">
       <template v-if="loading">
         <div v-for="i in ASSET_CARD_LIMIT" :key="`skeleton-${i}`" class="h-full">
@@ -84,11 +62,7 @@ onMounted(() => {
         </div>
       </template>
       <template v-else>
-        <div
-          v-for="asset in Object.values(assets)"
-          :key="asset[state.selectedSiteId.value]!.id"
-          class="h-full"
-        >
+        <div v-for="asset in Object.values(assets)" :key="asset[primarySiteId]!.id" class="h-full">
           <AssetCard :asset="asset" />
         </div>
       </template>

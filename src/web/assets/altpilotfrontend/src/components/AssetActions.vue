@@ -10,25 +10,29 @@ const props = withDefaults(
     isSaving?: boolean;
     canSave?: boolean;
     asset: MultiLanguageAsset;
-    thisSelectedSiteId: number;
   }>(),
   {
     isGenerating: false,
     isGenerationActive: false,
     isSaving: false,
     canSave: true,
-    thisSelectedSiteId: 1,
   },
 );
 
-const { sites, cpTrigger } = useGlobalState();
+const { sites, cpTrigger, primarySiteId } = useGlobalState();
 
 const emit = defineEmits<{
   (event: 'generate'): void;
   (event: 'save'): void;
 }>();
 
-const currentAsset = computed(() => props.asset[props.thisSelectedSiteId] as Asset);
+const currentSiteId = computed(() => primarySiteId.value!);
+const currentAsset = computed(() => props.asset[currentSiteId.value] as Asset);
+
+const currentSiteHandle = computed(() => {
+  const siteId = currentAsset.value.siteId ?? currentSiteId.value;
+  return sites.value.find((site) => site.id === siteId)?.handle ?? null;
+});
 </script>
 
 <template>
@@ -47,7 +51,7 @@ const currentAsset = computed(() => props.asset[props.thisSelectedSiteId] as Ass
     <a
       v-if="cpTrigger"
       class="button"
-      :href="`/${cpTrigger}/assets/edit/${currentAsset.id}?site=${sites.find((site) => site.id === thisSelectedSiteId)?.handle}`"
+      :href="`/${cpTrigger}/assets/edit/${currentAsset.id}?site=${currentSiteHandle ?? ''}`"
       target="_blank"
     >
       Control Panel

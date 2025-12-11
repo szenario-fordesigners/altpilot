@@ -164,6 +164,81 @@ class WebController extends Controller
         ]);
     }
 
+    public function actionSaveAltTexts(): Response
+    {
+        $this->requirePostRequest();
+        $this->requireAcceptsJson();
+
+        $assetIdParam = $this->request->getRequiredBodyParam('assetID');
+        $assetId = filter_var($assetIdParam, FILTER_VALIDATE_INT);
+        if ($assetId === false) {
+            return $this->errorResponse('Asset ID must be a valid integer');
+        }
+
+        $altTextsPayload = $this->request->getBodyParam('altTexts');
+        if (!is_array($altTextsPayload) || $altTextsPayload === []) {
+            return $this->errorResponse('altTexts must be a non-empty object or array');
+        }
+
+        $sitesService = Craft::$app->getSites();
+        $validSiteIds = array_map(static fn($site) => (int) $site->id, $sitesService->getAllSites());
+
+        $normalizedAltTexts = [];
+        foreach ($altTextsPayload as $key => $value) {
+            if (is_array($value)) {
+                $siteId = filter_var($value['siteId'] ?? null, FILTER_VALIDATE_INT);
+                $altText = array_key_exists('alt', $value) ? (string) $value['alt'] : null;
+            } else {
+                $siteId = filter_var($key, FILTER_VALIDATE_INT);
+                $altText = $value === null ? null : (string) $value;
+            }
+
+            if ($siteId === false || !in_array($siteId, $validSiteIds, true)) {
+                return $this->errorResponse('Invalid siteId provided in altTexts');
+            }
+
+            $normalizedAltTexts[$siteId] = $altText;
+        }
+
+        $results = [];
+        $elementsService = Craft::$app->getElements();
+
+        foreach ($normalizedAltTexts as $siteId => $altText) {
+            $asset = Craft::$app->assets->getAssetById($assetId, $siteId);
+            if (!$asset) {
+                return $this->errorResponse(sprintf('Asset %d not found for site %d', $assetId, $siteId), 404);
+            }
+
+            $asset->alt = $altText;
+
+            $behavior = $asset->getBehavior('altPilotMetadata');
+            if ($behavior instanceof AltPilotMetadata) {
+                $behavior->setStatus($altText === null || trim($altText) === '' ? AltPilotMetadata::STATUS_MISSING : AltPilotMetadata::STATUS_MANUAL);
+            }
+
+            if (!$elementsService->saveElement($asset)) {
+                return $this->errorResponse(
+                    'Failed to save asset alt text',
+                    400,
+                    [
+                        'siteId' => $siteId,
+                        'errors' => $asset->getErrors(),
+                    ]
+                );
+            }
+
+            $results[] = [
+                'siteId' => (int) $siteId,
+                'alt' => $altText,
+            ];
+        }
+
+        return $this->successResponse([
+            'assetId' => $assetId,
+            'sites' => $results,
+        ], 'Alt texts saved');
+    }
+
     public function actionJobStatus(): Response
     {
         $this->requirePostRequest();

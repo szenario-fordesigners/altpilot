@@ -1,4 +1,4 @@
-import { computed, type Ref, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useGlobalState } from '@/composables/useGlobalState';
 import { useGenerationTracker } from '@/composables/useGenerationTracker';
 import type { Asset, MultiLanguageAsset } from '@/types/Asset';
@@ -11,10 +11,10 @@ type QueueResponse = {
   queueStatus: string | null;
 };
 
-export function useAssetGeneration(asset: MultiLanguageAsset, thisSelectedSiteId: Ref<number>) {
-  const { csrfToken, cpTrigger } = useGlobalState();
+export function useAssetGeneration(asset: MultiLanguageAsset) {
+  const { csrfToken, cpTrigger, primarySiteId } = useGlobalState();
   const { trackAsset, stateForAsset, isAssetRunning } = useGenerationTracker();
-  const currentAsset = computed(() => asset[thisSelectedSiteId.value] as Asset);
+  const currentAsset = computed(() => asset[primarySiteId.value]!);
 
   const generating = ref(false);
   const error = ref<string | null>(null);
@@ -67,7 +67,7 @@ export function useAssetGeneration(asset: MultiLanguageAsset, thisSelectedSiteId
     try {
       const payload: Record<string, string> = {
         assetID: currentAsset.value.id.toString(),
-        siteId: thisSelectedSiteId.value.toString(),
+        siteId: primarySiteId.value!.toString(),
       };
 
       const { data, message } = await apiClient.postJson<QueueResponse>(

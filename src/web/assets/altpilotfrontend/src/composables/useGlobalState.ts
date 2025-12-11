@@ -7,7 +7,6 @@ export const useGlobalState = createGlobalState(() => {
   const csrfToken = ref<{ name: string; value: string } | null>(null);
   const cpTrigger = ref<string | null>(null);
   const sites = ref<Site[]>([]);
-  const currentSiteId = ref<number>(1);
-  const selectedSiteId = ref<number>(1);
-  return { csrfToken, cpTrigger, sites, currentSiteId, selectedSiteId };
+  const primarySiteId = ref<number>(1);
+  return { csrfToken, cpTrigger, sites, primarySiteId };
 });

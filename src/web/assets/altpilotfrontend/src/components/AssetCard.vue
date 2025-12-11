@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import AssetActions from '@/components/AssetActions.vue';
-import AssetAltEditor from '@/components/AssetAltEditor.vue';
 import { useAssetAltEditor } from '@/composables/useAssetAltEditor';
 import { useAssetGeneration } from '@/composables/useAssetGeneration';
 import { useGlobalState } from '@/composables/useGlobalState';
@@ -12,36 +11,29 @@ const props = defineProps<{
   asset: MultiLanguageAsset;
 }>();
 
-const { sites, cpTrigger, selectedSiteId } = useGlobalState();
+const { sites, cpTrigger, primarySiteId } = useGlobalState();
 
-const thisSelectedSiteId = ref(selectedSiteId.value);
-const currentAsset = computed(() => props.asset[thisSelectedSiteId.value] as Asset);
+const currentSiteId = computed(() => primarySiteId.value!);
 
-// override when global changes
-watch(selectedSiteId, (newSelectedSiteId) => {
-  thisSelectedSiteId.value = newSelectedSiteId;
+const currentAsset = computed(() => props.asset[currentSiteId.value] as Asset);
+
+const currentSiteHandle = computed(() => {
+  return sites.value.find((site) => site.id === currentSiteId.value)?.handle ?? null;
 });
 
+const charactersRemaining = (siteId: number) => {
+  const value = altTexts[siteId] ?? '';
+  return 150 - value.length;
+};
+
 const {
-  altText,
+  altTexts,
   hasChanges,
   saving,
   error: saveError,
+  successMessage: saveSuccess,
   save,
-} = useAssetAltEditor(props.asset, thisSelectedSiteId);
-
-const {
-  generating,
-  error: generateError,
-  success: generateSuccess,
-  generationMessage,
-  isGenerationActive,
-  generate,
-} = useAssetGeneration(props.asset, thisSelectedSiteId);
-
-const handleSelectSite = (siteId: number) => {
-  thisSelectedSiteId.value = siteId;
-};
+} = useAssetAltEditor(props.asset);
 </script>
 
 <template>
@@ -60,16 +52,23 @@ const handleSelectSite = (siteId: number) => {
           {{ assetStatus[currentAsset.status] }}
         </div>
         <button
-          class="rounded-full border px-2 transition-colors hover:bg-white hover:text-ap-periwinkle"
+          class="rounded-full border px-2 transition-colors"
+          :class="{
+            'opacity-50': saving || !hasChanges,
+            'hover:bg-white hover:text-ap-periwinkle': !saving && hasChanges,
+          }"
+          :disabled="saving || !hasChanges"
+          @click="save"
         >
-          save
+          <span v-if="saving">saving…</span>
+          <span v-else>save</span>
         </button>
       </div>
     </div>
 
-    <div class="flex flex-col p-3">
+    <div v-if="cpTrigger" class="flex flex-col p-3">
       <a
-        :href="`/${cpTrigger}/assets/edit/${currentAsset.id}?site=${sites.find((site) => site.id === thisSelectedSiteId)?.handle}`"
+        :href="`/${cpTrigger}/assets/edit/${currentAsset.id}?site=${currentSiteHandle ?? ''}`"
         target="_blank"
         class="text-sm text-ap-periwinkle underline"
         >{{ currentAsset.title }}</a
@@ -80,33 +79,17 @@ const handleSelectSite = (siteId: number) => {
       <div v-for="site in sites" :key="site.id" class="mb-4 flex w-full">
         <div class="flex w-full justify-between border-b">
           <div class="text-ap-periwinkle uppercase">{{ site.language }}</div>
-          <div class="text-ap-periwinkle">{{ 150 - (asset[site.id]?.alt?.length || 0) }}</div>
+          <div class="text-ap-periwinkle">{{ charactersRemaining(site.id) }}</div>
         </div>
-        <textarea :value="asset[site.id]?.alt" class="w-full font-mono" rows="4" />
+        <textarea v-model="altTexts[site.id]" class="w-full font-mono" rows="4" />
       </div>
     </div>
 
-    <AssetAltEditor
-      :this-selected-site-id="thisSelectedSiteId"
-      v-model:altText="altText"
-      :title="currentAsset.title"
-      :save-error="saveError"
-      :generate-error="generateError"
-      :generation-message="generationMessage"
-      :generate-success="generateSuccess"
-      @select-site="handleSelectSite"
-    />
-
-    <AssetActions
-      :asset="props.asset"
-      :this-selected-site-id="thisSelectedSiteId"
-      :is-generating="generating"
-      :is-generation-active="isGenerationActive"
-      :is-saving="saving"
-      :can-save="hasChanges"
-      :cp-trigger="cpTrigger"
-      @generate="generate"
-      @save="save"
-    />
+    <div v-if="saveError" class="px-3 text-sm text-red-600">
+      {{ saveError }}
+    </div>
+    <div v-else-if="saveSuccess" class="px-3 text-sm text-green-700">
+      {{ saveSuccess }}
+    </div>
   </div>
 </template>

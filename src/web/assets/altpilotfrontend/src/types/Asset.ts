@@ -1,6 +1,6 @@
 export type Asset = {
   id: number;
-  siteId: number | null;
+  siteId: number;
   url: string;
   title: string;
   alt: string | null;

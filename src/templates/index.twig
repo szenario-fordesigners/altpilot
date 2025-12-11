@@ -11,5 +11,5 @@
 
 
 {% block content %}
-	<div id="altpilot-app" data-props='{{ { cpTrigger: craft.app.config.general.cpTrigger, csrfToken: csrfToken, sites: sites, currentSiteId: craft.app.sites.currentSite.id }|json_encode }}'></div>
+	<div id="altpilot-app" data-props='{{ { cpTrigger: craft.app.config.general.cpTrigger, csrfToken: csrfToken, sites: sites, primarySiteId: craft.app.sites.currentSite.id }|json_encode }}'></div>
 {% endblock %}
