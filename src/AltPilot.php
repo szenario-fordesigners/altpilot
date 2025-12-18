@@ -93,9 +93,12 @@ class AltPilot extends Plugin
 
     protected function settingsHtml(): ?string
     {
+        $phpMaxExecutionTime = (int) ini_get('max_execution_time');
+
         return Craft::$app->view->renderTemplate('alt-pilot/_settings.twig', [
             'plugin' => $this,
             'settings' => $this->getSettings(),
+            'phpMaxExecutionTime' => $phpMaxExecutionTime,
         ]);
     }
 

@@ -54,3 +54,46 @@
     value: settings.generatePerLanguage,
     errors: settings.getErrors('generatePerLanguage'),
 }) }}
+
+
+{{ forms.textField({
+    label: 'Average Token Count'|t('app'),
+    id: 'averageTokenCount',
+    name: 'averageTokenCount',
+    instructions: "The average number of tokens used per request."|t("aialttext"),
+    value: settings.averageTokenCount,
+    errors: settings.getErrors('averageTokenCount'),
+}) }}
+
+{{ forms.textField({
+    label: 'Average Request Duration'|t('app'),
+    id: 'averageRequestDuration',
+    name: 'averageRequestDuration',
+    instructions: "The average duration of a request in seconds."|t("aialttext"),
+    value: settings.averageRequestDuration,
+    errors: settings.getErrors('averageRequestDuration'),
+}) }}
+
+{{ forms.checkboxSelectField({
+    label: 'Volume IDs'|t('app'),
+    id: 'volumeIDs',
+    name: 'volumeIDs',
+    instructions: "The volumes to generate the alt text for."|t("aialttext"),
+    values: settings.volumeIDs ?? [],
+    errors: settings.getErrors('volumeIDs'),
+    options: craft.app.volumes.getAllVolumes()|map(volume => {
+        value: volume.id,
+        label: volume.name
+    }),
+}) }}
+
+{# TODO: make this more prominent #}
+{# phpMaxExecutionTime is injected from settingsHtml in AltPilot.php #}
+{% set phpMaxExecutionTime = phpMaxExecutionTime ?? 0 %}
+{% set phpMaxExecutionTime = phpMaxExecutionTime is numeric ? phpMaxExecutionTime|integer : 0 %}
+	{% if phpMaxExecutionTime != 0 and phpMaxExecutionTime < 120 %}
+		<div class="alert warning"> <p>
+			{{ "PHP max_execution_time is set to {seconds}s. For stable OpenAI requests we recommend at least 120s. Consider increasing it in php.ini or the Craft general config."|t('app', { seconds: phpMaxExecutionTime }) }}
+		</p>
+	</div>
+{% endif %}
