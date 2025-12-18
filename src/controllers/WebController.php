@@ -52,10 +52,20 @@ class WebController extends Controller
 
         Craft::info(sprintf('Alt text generation queued for asset ID: %d on site ID: %d', $assetId, $siteId), "alt-pilot");
 
+        $queueStatus = $result['status'] ?? 'queued';
+        $message = $result['message'] ?? 'Alt text generation queued';
+
+        if ($queueStatus === 'error') {
+            return $this->errorResponse($message, 400, [
+                'jobId' => $result['jobId'] ?? null,
+                'queueStatus' => $queueStatus,
+            ]);
+        }
+
         return $this->successResponse([
             'jobId' => $result['jobId'] ?? null,
-            'queueStatus' => $result['status'] ?? 'queued',
-        ], $result['message'] ?? 'Alt text generation queued');
+            'queueStatus' => $queueStatus,
+        ], $message);
     }
 
     private function resolveSiteId(string $mode = 'body'): array

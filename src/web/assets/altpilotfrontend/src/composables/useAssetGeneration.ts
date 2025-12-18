@@ -1,7 +1,7 @@
-import { computed, ref, watch } from 'vue';
+import { reactive, ref } from 'vue';
 import { useGlobalState } from '@/composables/useGlobalState';
 import { useGenerationTracker } from '@/composables/useGenerationTracker';
-import type { Asset, MultiLanguageAsset } from '@/types/Asset';
+import type { MultiLanguageAsset } from '@/types/Asset';
 import { apiClient } from '@/utils/apiClient';
 
 const HIDDEN_IFRAME_REMOVE_DELAY = 1000;
@@ -12,28 +12,12 @@ type QueueResponse = {
 };
 
 export function useAssetGeneration(asset: MultiLanguageAsset) {
-  const { csrfToken, cpTrigger, primarySiteId } = useGlobalState();
+  const { csrfToken, cpTrigger } = useGlobalState();
   const { trackAsset, stateForAsset, isAssetRunning } = useGenerationTracker();
-  const currentAsset = computed(() => asset[primarySiteId.value]!);
 
-  const generating = ref(false);
-  const error = ref<string | null>(null);
-  const success = ref<string | null>(null);
-
-  const generationState = computed(() =>
-    stateForAsset(currentAsset.value.id, currentAsset.value.siteId ?? null),
-  );
-  const isGenerationActive = computed(() =>
-    isAssetRunning(currentAsset.value.id, currentAsset.value.siteId ?? null),
-  );
-  const generationMessage = computed(() => generationState.value?.message ?? null);
-
-  // Clear success message when generation finishes (state is deleted or status is finished)
-  watch([generationState, isGenerationActive], ([state, active]) => {
-    if (!active && (state === null || state?.status === 'finished')) {
-      success.value = null;
-    }
-  });
+  const generatingBySite = reactive<Record<number, boolean>>({});
+  const errorBySite = reactive<Record<number, string | null>>({});
+  const successBySite = reactive<Record<number, string | null>>({});
 
   const triggerQueueRunner = () => {
     if (!cpTrigger.value) {
@@ -54,20 +38,24 @@ export function useAssetGeneration(asset: MultiLanguageAsset) {
     }, HIDDEN_IFRAME_REMOVE_DELAY);
   };
 
-  const generate = async () => {
+  const generateForSite = async (siteId: number) => {
     if (!csrfToken.value) {
-      error.value = 'CSRF token not available';
+      errorBySite[siteId] = 'CSRF token not available';
       return;
     }
 
-    generating.value = true;
-    error.value = null;
-    success.value = null;
+    if (generatingBySite[siteId]) {
+      return;
+    }
+
+    generatingBySite[siteId] = true;
+    errorBySite[siteId] = null;
+    successBySite[siteId] = null;
 
     try {
       const payload: Record<string, string> = {
-        assetID: currentAsset.value.id.toString(),
-        siteId: primarySiteId.value!.toString(),
+        assetID: asset[siteId]!.id.toString(),
+        siteId: siteId.toString(),
       };
 
       const { data, message } = await apiClient.postJson<QueueResponse>(
@@ -75,28 +63,35 @@ export function useAssetGeneration(asset: MultiLanguageAsset) {
         payload,
       );
 
-      success.value = message || 'Alt text generation queued successfully';
+      successBySite[siteId] = message || 'Alt text generation queued successfully';
+
       trackAsset({
-        assetId: currentAsset.value.id,
-        siteId: currentAsset.value.siteId ?? null,
+        assetId: asset[siteId]!.id,
+        siteId,
         jobId: data.jobId ?? null,
-        message: message,
+        message,
       });
 
       triggerQueueRunner();
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Unknown error';
+      errorBySite[siteId] = err instanceof Error ? err.message : 'Unknown error';
     } finally {
-      generating.value = false;
+      generatingBySite[siteId] = false;
     }
   };
 
+  const isGenerationActive = (siteId: number) =>
+    isAssetRunning(asset[siteId]!.id, siteId) || !!generatingBySite[siteId];
+
+  const generationMessage = (siteId: number) =>
+    stateForAsset(asset[siteId]!.id, siteId)?.message ?? null;
+
   return {
-    generating,
-    error,
-    success,
-    generationMessage,
+    generateForSite,
+    generatingBySite,
+    errorBySite,
+    successBySite,
     isGenerationActive,
-    generate,
+    generationMessage,
   };
 }

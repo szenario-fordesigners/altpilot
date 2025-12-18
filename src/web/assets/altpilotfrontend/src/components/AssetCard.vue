@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useAssetAltEditor } from '@/composables/useAssetAltEditor';
 import { useGlobalState } from '@/composables/useGlobalState';
+import { useAssetGeneration } from '@/composables/useAssetGeneration';
 import type { Asset, MultiLanguageAsset } from '@/types/Asset';
 import { assetStatus } from '@/utils/assetStatus';
 
@@ -32,6 +33,15 @@ const {
   successMessage: saveSuccess,
   save,
 } = useAssetAltEditor(props.asset);
+
+const {
+  generateForSite,
+  generatingBySite,
+  errorBySite,
+  successBySite,
+  isGenerationActive,
+  generationMessage,
+} = useAssetGeneration(props.asset);
 </script>
 
 <template>
@@ -50,9 +60,9 @@ const {
           {{ assetStatus[currentAsset.status] }}
         </div>
         <button
-          class="rounded-full border px-2 transition-colors"
+          class="rounded-full border px-2 transition-all"
           :class="{
-            'opacity-50': saving || !hasChanges,
+            'opacity-0': saving || !hasChanges,
             'hover:bg-white hover:text-ap-periwinkle': !saving && hasChanges,
           }"
           :disabled="saving || !hasChanges"
@@ -64,11 +74,11 @@ const {
       </div>
     </div>
 
-    <div v-if="cpTrigger" class="flex flex-col p-3">
+    <div v-if="cpTrigger" class="flex max-w-full flex-col p-3">
       <a
         :href="`/${cpTrigger}/assets/edit/${currentAsset.id}?site=${currentSiteHandle ?? ''}`"
         target="_blank"
-        class="text-sm text-ap-periwinkle underline"
+        class="w-full overflow-x-hidden text-sm text-ellipsis whitespace-nowrap text-ap-periwinkle underline"
         >{{ currentAsset.title }}</a
       >
     </div>
@@ -78,8 +88,31 @@ const {
         <div class="flex w-full justify-between border-b">
           <div class="text-ap-periwinkle uppercase">{{ site.language }}</div>
           <div class="text-ap-periwinkle">{{ charactersRemaining(site.id) }}</div>
+          <button
+            class="rounded-full border px-2 transition-colors"
+            :class="{
+              'opacity-50': generatingBySite[site.id] || isGenerationActive(site.id),
+              'hover:bg-white hover:text-ap-periwinkle':
+                !generatingBySite[site.id] && !isGenerationActive(site.id),
+            }"
+            :disabled="generatingBySite[site.id] || isGenerationActive(site.id)"
+            @click="generateForSite(site.id)"
+          >
+            <span v-if="generatingBySite[site.id] || isGenerationActive(site.id)">generating…</span>
+            <span v-else>generate</span>
+          </button>
         </div>
         <textarea v-model="altTexts[site.id]" class="w-full font-mono" rows="4" />
+
+        <div v-if="errorBySite[site.id]" class="mt-1 text-sm text-red-600">
+          {{ errorBySite[site.id] }}
+        </div>
+        <div v-else-if="successBySite[site.id]" class="mt-1 text-sm text-green-700">
+          {{ successBySite[site.id] }}
+        </div>
+        <div v-else-if="generationMessage(site.id)" class="mt-1 text-sm text-blue-700">
+          {{ generationMessage(site.id) }}
+        </div>
       </div>
     </div>
 
