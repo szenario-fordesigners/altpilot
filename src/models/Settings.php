@@ -26,4 +26,15 @@ class Settings extends Model
     public $volumeIDs = [];
 
     public $initialized = false;
+
+    /**
+     * @inheritdoc
+     */
+    public function rules(): array
+    {
+        return [
+            [['openAiApiKey'], 'required'],
+            [['openAiApiKey'], 'string'],
+        ];
+    }
 }
