@@ -3,6 +3,7 @@ import { useGlobalState } from '@/composables/useGlobalState';
 import { useGenerationTracker } from '@/composables/useGenerationTracker';
 import type { MultiLanguageAsset } from '@/types/Asset';
 import { apiClient } from '@/utils/apiClient';
+import { useToasts } from '@/composables/useToasts';
 
 const HIDDEN_IFRAME_REMOVE_DELAY = 1000;
 
@@ -14,6 +15,7 @@ type QueueResponse = {
 export function useAssetGeneration(asset: MultiLanguageAsset) {
   const { csrfToken, cpTrigger } = useGlobalState();
   const { trackAsset, stateForAsset, isAssetRunning } = useGenerationTracker();
+  const { toast } = useToasts();
 
   const generatingBySite = reactive<Record<number, boolean>>({});
   const errorBySite = reactive<Record<number, string | null>>({});
@@ -40,7 +42,13 @@ export function useAssetGeneration(asset: MultiLanguageAsset) {
 
   const generateForSite = async (siteId: number) => {
     if (!csrfToken.value) {
-      errorBySite[siteId] = 'CSRF token not available';
+      const msg = 'CSRF token not available';
+      errorBySite[siteId] = msg;
+      toast({
+        title: 'Error',
+        description: msg,
+        type: 'foreground',
+      });
       return;
     }
 
@@ -63,7 +71,14 @@ export function useAssetGeneration(asset: MultiLanguageAsset) {
         payload,
       );
 
-      successBySite[siteId] = message || 'Alt text generation queued successfully';
+      const msg = message || 'Alt text generation queued successfully';
+      successBySite[siteId] = msg;
+
+      toast({
+        title: 'Queued',
+        description: msg,
+        type: 'foreground',
+      });
 
       trackAsset({
         assetId: asset[siteId]!.id,
@@ -74,7 +89,13 @@ export function useAssetGeneration(asset: MultiLanguageAsset) {
 
       triggerQueueRunner();
     } catch (err) {
-      errorBySite[siteId] = err instanceof Error ? err.message : 'Unknown error';
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      errorBySite[siteId] = msg;
+      toast({
+        title: 'Error',
+        description: msg,
+        type: 'foreground',
+      });
     } finally {
       generatingBySite[siteId] = false;
     }

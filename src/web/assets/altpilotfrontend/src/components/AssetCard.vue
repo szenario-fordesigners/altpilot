@@ -25,23 +25,9 @@ const charactersRemaining = (siteId: number) => {
   return 150 - value.length;
 };
 
-const {
-  altTexts,
-  hasChanges,
-  saving,
-  error: saveError,
-  successMessage: saveSuccess,
-  save,
-} = useAssetAltEditor(props.asset);
+const { altTexts, hasChanges, saving, save } = useAssetAltEditor(props.asset);
 
-const {
-  generateForSite,
-  generatingBySite,
-  errorBySite,
-  successBySite,
-  isGenerationActive,
-  generationMessage,
-} = useAssetGeneration(props.asset);
+const { generateForSite, generatingBySite, isGenerationActive } = useAssetGeneration(props.asset);
 </script>
 
 <template>
@@ -103,24 +89,7 @@ const {
           </button>
         </div>
         <textarea v-model="altTexts[site.id]" class="w-full font-mono" rows="4" />
-
-        <div v-if="errorBySite[site.id]" class="mt-1 text-sm text-red-600">
-          {{ errorBySite[site.id] }}
-        </div>
-        <div v-else-if="successBySite[site.id]" class="mt-1 text-sm text-green-700">
-          {{ successBySite[site.id] }}
-        </div>
-        <div v-else-if="generationMessage(site.id)" class="mt-1 text-sm text-blue-700">
-          {{ generationMessage(site.id) }}
-        </div>
       </div>
-    </div>
-
-    <div v-if="saveError" class="px-3 text-sm text-red-600">
-      {{ saveError }}
-    </div>
-    <div v-else-if="saveSuccess" class="px-3 text-sm text-green-700">
-      {{ saveSuccess }}
     </div>
   </div>
 </template>

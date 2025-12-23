@@ -8,6 +8,7 @@ import AssetCardSkeleton from '@/components/AssetCardSkeleton.vue';
 import AssetPagination from '@/components/AssetPagination.vue';
 import AltPilotStats from '@/components/AltPilotStats.vue';
 import AltPilotFilter from '@/components/AltPilotFilter.vue';
+import Toaster from '@/components/AltPilotToaster.vue';
 import type { Site } from '@/types/Site';
 
 const { cpTrigger, csrfToken, sites, primarySiteId } = defineProps<{
@@ -25,7 +26,7 @@ state.cpTrigger.value = cpTrigger;
 state.sites.value = sites;
 state.primarySiteId.value = primarySiteId;
 
-const ASSET_CARD_LIMIT = 20;
+const ASSET_CARD_LIMIT = 30;
 const { assets, loading, pagination, fetchAssets } = useAssets({
   defaultLimit: ASSET_CARD_LIMIT,
 });
@@ -74,5 +75,7 @@ onMounted(() => {
       @previous="handlePrevious"
       @next="handleNext"
     />
+
+    <Toaster />
   </div>
 </template>

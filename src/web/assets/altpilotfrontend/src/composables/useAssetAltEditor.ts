@@ -1,6 +1,7 @@
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import type { Asset, MultiLanguageAsset } from '@/types/Asset';
 import { apiClient } from '@/utils/apiClient';
+import { useToasts } from '@/composables/useToasts';
 
 type AltTextMap = Record<number, string>;
 
@@ -19,6 +20,35 @@ export function useAssetAltEditor(asset: MultiLanguageAsset) {
   const saving = ref(false);
   const error = ref<string | null>(null);
   const successMessage = ref<string | null>(null);
+
+  const { toast } = useToasts();
+
+  // Watch for asset updates (e.g., when generation completes and replaceAsset is called)
+  // Update altTexts when the asset's alt text changes for any site
+  watch(
+    () => {
+      // Create a map of siteId -> alt text for comparison
+      const currentAlts: Record<number, string> = {};
+      Object.values(asset).forEach((localized: Asset) => {
+        currentAlts[localized.siteId] = localized.alt ?? '';
+      });
+      return currentAlts;
+    },
+    (newAlts, oldAlts) => {
+      // Only update if the alt text actually changed
+      Object.entries(newAlts).forEach(([siteIdStr, newAlt]) => {
+        const siteId = Number(siteIdStr);
+        const oldAlt = oldAlts?.[siteId] ?? '';
+        if (newAlt !== oldAlt) {
+          // Update both altTexts and originalAltTexts to reflect the new generated value
+          // This ensures the UI updates and there are no "unsaved changes" for the new generation
+          altTexts[siteId] = newAlt;
+          originalAltTexts[siteId] = newAlt;
+        }
+      });
+    },
+    { deep: true },
+  );
 
   const hasChanges = computed(() => {
     const keys = new Set([...Object.keys(originalAltTexts), ...Object.keys(altTexts)]);
@@ -52,6 +82,11 @@ export function useAssetAltEditor(asset: MultiLanguageAsset) {
     const assetId = anyAsset?.id;
     if (!assetId) {
       error.value = 'Asset ID missing';
+      toast({
+        title: 'Error',
+        description: error.value,
+        type: 'foreground',
+      });
       saving.value = false;
       return;
     }
@@ -74,8 +109,18 @@ export function useAssetAltEditor(asset: MultiLanguageAsset) {
       });
 
       successMessage.value = 'Alt texts saved';
+      toast({
+        title: 'Saved',
+        description: successMessage.value,
+        type: 'foreground',
+      });
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Unknown error';
+      toast({
+        title: 'Error',
+        description: error.value,
+        type: 'foreground',
+      });
     } finally {
       saving.value = false;
     }

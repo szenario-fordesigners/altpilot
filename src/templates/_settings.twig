@@ -3,6 +3,13 @@
 
 {% import '_includes/forms.twig' as forms %}
 
+	<div class="alert warning"> <p>
+		This plugin relies on Craft's queue system to process alt text generation. For production environments, we strongly recommend using a CRON-based or daemonized queue runner instead of the default HTTP-triggered queue. See the
+		<a href="https://craftcms.com/docs/5.x/system/queue.html#queue-runners" target="_blank" rel="noopener">Craft queue documentation</a>
+		for setup instructions.
+	</p>
+</div>
+
 {{ forms.autosuggestField({
     label: "OpenAI API Key"|t("aialttext"),
     instructions: "The API key from your Open AI account"|t("aialttext"),

@@ -2,6 +2,7 @@ import { createGlobalState, useIntervalFn } from '@vueuse/core';
 import { reactive, ref, watch } from 'vue';
 import { useAssets } from '@/composables/useAssets';
 import { useGlobalState } from '@/composables/useGlobalState';
+import { useToasts } from '@/composables/useToasts';
 import type { Asset } from '@/types/Asset';
 import { apiClient } from '@/utils/apiClient';
 
@@ -42,6 +43,7 @@ export const useGenerationTracker = createGlobalState(() => {
   const lastError = ref<string | null>(null);
   const { csrfToken } = useGlobalState();
   const { replaceAsset } = useAssets();
+  const { toast } = useToasts();
 
   const pollQueue = async () => {
     if (!csrfToken.value) {
@@ -80,6 +82,13 @@ export const useGenerationTracker = createGlobalState(() => {
         if (item.status === 'finished' && item.asset) {
           replaceAsset(item.asset as Asset);
           const message = item.message ?? 'Alt text updated';
+
+          toast({
+            title: 'Generated',
+            description: message,
+            type: 'foreground',
+          });
+
           if (existing) {
             existing.status = 'finished';
             existing.message = message;
@@ -100,6 +109,13 @@ export const useGenerationTracker = createGlobalState(() => {
 
         if (item.status === 'missing') {
           const message = item.message ?? 'Asset not found';
+
+          toast({
+            title: 'Error',
+            description: message,
+            type: 'foreground', // technically an error, but reka-ui only has foreground/background
+          });
+
           if (existing) {
             existing.status = 'missing';
             existing.message = message;
@@ -116,6 +132,16 @@ export const useGenerationTracker = createGlobalState(() => {
             trackedAssets.delete(key);
           }, 2500);
           return;
+        }
+
+        if (item.status === 'failed') {
+          const message = item.message ?? 'Generation failed';
+
+          toast({
+            title: 'Error',
+            description: message,
+            type: 'foreground',
+          });
         }
 
         if (!existing) {
