@@ -219,7 +219,11 @@ class WebController extends Controller
                 return $this->errorResponse(sprintf('Asset %d not found for site %d', $assetId, $siteId), 404);
             }
 
+            // Explicitly set the siteId to ensure correct site context when saving
+            $asset->siteId = $siteId;
             $asset->alt = $altText;
+
+            Craft::info(sprintf('Saving alt text for asset ID: %d, site ID: %d, alt text: %s', $assetId, $siteId, $altText), "alt-pilot");
 
             $behavior = $asset->getBehavior('altPilotMetadata');
             if ($behavior instanceof AltPilotMetadata) {
@@ -227,15 +231,20 @@ class WebController extends Controller
             }
 
             if (!$elementsService->saveElement($asset)) {
+                $errors = $asset->getErrors();
+                Craft::error(sprintf('Failed to save asset alt text for asset ID: %d, site ID: %d. Errors: %s', $assetId, $siteId, json_encode($errors)), "alt-pilot");
                 return $this->errorResponse(
                     'Failed to save asset alt text',
                     400,
                     [
+                        'assetId' => $assetId,
                         'siteId' => $siteId,
-                        'errors' => $asset->getErrors(),
+                        'errors' => $errors,
                     ]
                 );
             }
+
+            Craft::info(sprintf('Successfully saved alt text for asset ID: %d, site ID: %d', $assetId, $siteId), "alt-pilot");
 
             $results[] = [
                 'siteId' => (int) $siteId,
