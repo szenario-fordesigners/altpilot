@@ -27,11 +27,20 @@ const charactersRemaining = (siteId: number) => {
 
 const { altTexts, hasChanges, saving, save } = useAssetAltEditor(props.asset);
 
-const { generateForSite, generatingBySite, isGenerationActive } = useAssetGeneration(props.asset);
+const { generateForSite, generatingBySite, isGenerationActive, isGenerationFinished } =
+  useAssetGeneration(props.asset);
+
+const anyGenerationFinished = computed(() => {
+  return sites.value.some((site) => isGenerationFinished(site.id));
+});
 </script>
 
 <template>
-  <div class="flex h-full flex-col items-start gap-2 bg-ap-lavender-mist">
+  <div class="relative flex h-full flex-col items-start gap-2 overflow-hidden bg-ap-lavender-mist">
+    <div
+      v-if="anyGenerationFinished"
+      class="asset-card-pulse pointer-events-none absolute inset-0 z-50 bg-ap-periwinkle/30"
+    ></div>
     <div class="flex h-22 w-full flex-col gap-0 bg-ap-periwinkle">
       <img
         class="aspect-[4/3] h-full w-1/2 object-cover"

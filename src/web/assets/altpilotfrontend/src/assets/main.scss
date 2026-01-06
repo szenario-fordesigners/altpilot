@@ -1,4 +1,14 @@
 #altPilotWrapper {
   font-family: 'Arial', sans-serif;
   color: black;
+
+  .asset-card-pulse {
+    animation: pulse 0.75s infinite;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
 }

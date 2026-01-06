@@ -123,7 +123,7 @@ export const useGenerationTracker = createGlobalState(() => {
           }
           setTimeout(() => {
             trackedAssets.delete(key);
-          }, 1500);
+          }, 2000);
           return;
         }
 
@@ -183,7 +183,7 @@ export const useGenerationTracker = createGlobalState(() => {
           // Allow consumers to show the final status message for a short time before clearing.
           setTimeout(() => {
             trackedAssets.delete(key);
-          }, 1500);
+          }, 2000);
         }
       });
 

@@ -104,6 +104,9 @@ export function useAssetGeneration(asset: MultiLanguageAsset) {
   const isGenerationActive = (siteId: number) =>
     isAssetRunning(asset[siteId]!.id, siteId) || !!generatingBySite[siteId];
 
+  const isGenerationFinished = (siteId: number) =>
+    stateForAsset(asset[siteId]!.id, siteId)?.status === 'finished';
+
   const generationMessage = (siteId: number) =>
     stateForAsset(asset[siteId]!.id, siteId)?.message ?? null;
 
@@ -113,6 +116,7 @@ export function useAssetGeneration(asset: MultiLanguageAsset) {
     errorBySite,
     successBySite,
     isGenerationActive,
+    isGenerationFinished,
     generationMessage,
   };
 }
