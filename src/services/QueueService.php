@@ -33,6 +33,17 @@ class QueueService extends Component
                 $jobSiteId = isset($matches[2]) ? (int) $matches[2] : $asset->siteId;
 
                 if ($jobAssetId === $asset->id && $jobSiteId === $asset->siteId) {
+                    $jobStatus = $job['status'] ?? null;
+                    $jobStatusInt = is_numeric($jobStatus) ? (int) $jobStatus : null;
+
+                    // If the job is failed, allow creating a new one (user can retry)
+                    if ($jobStatusInt === CraftQueue::STATUS_FAILED) {
+                        Craft::info(sprintf('Existing job for %s on site ID: %d is failed, allowing new job creation', $asset->filename ?? $asset->id, $asset->siteId), 'alt-pilot');
+                        // Continue to create a new job
+                        continue;
+                    }
+
+                    // For active jobs (waiting, running), skip creating a duplicate
                     $message = sprintf('Job for %s on site ID: %d already in queue, skipping', $asset->filename ?? $asset->id, $asset->siteId);
                     Craft::info($message, 'alt-pilot');
                     return [
@@ -87,14 +98,41 @@ class QueueService extends Component
 
             $job = $this->findJobForAsset($indexedJobs, $assetId, $siteId);
             if ($job !== null) {
-                $results[] = [
+                $status = $this->mapJobStatus($job['status'] ?? null);
+
+                // For failed jobs, prioritize the error field which contains the actual error message
+                // For other statuses, use progressLabel or description
+                if ($status === 'failed') {
+                    $message = $job['error'] ?? $job['progressLabel'] ?? $job['description'] ?? null;
+                } else {
+                    $message = $job['progressLabel'] ?? $job['description'] ?? null;
+                }
+
+                // Extract error information for failed jobs
+                $errorInfo = null;
+                if ($status === 'failed') {
+                    $errorInfo = $this->extractErrorInfo($job, $message);
+                    // Use the extracted error message if available
+                    if ($errorInfo !== null && isset($errorInfo['message'])) {
+                        $message = $errorInfo['message'];
+                    }
+                }
+
+                $result = [
                     'assetId' => $assetId,
                     'siteId' => $siteId,
                     'jobId' => (string) ($job['id'] ?? ''),
-                    'status' => $this->mapJobStatus($job['status'] ?? null),
-                    'message' => $job['progressLabel'] ?? $job['description'] ?? null,
+                    'status' => $status,
+                    'message' => $message,
                     'progress' => $job['progress'] ?? null,
                 ];
+
+                // Add error information if available
+                if ($errorInfo !== null) {
+                    $result['error'] = $errorInfo;
+                }
+
+                $results[] = $result;
                 continue;
             }
 
@@ -162,5 +200,40 @@ class QueueService extends Component
             CraftQueue::STATUS_FAILED => 'failed',
             default => 'unknown',
         };
+    }
+
+    /**
+     * Extract error information from a failed job, including OpenAI-specific error codes
+     *
+     * @param array $job The job information array
+     * @param string|null $message The error message
+     * @return array|null Error information with code, type, and user-friendly message
+     */
+    private function extractErrorInfo(array $job, ?string $message): ?array
+    {
+        if ($message === null) {
+            return null;
+        }
+
+        // Try to extract OpenAI error code from message
+        // Format: "message [OPENAI_ERROR_CODE:error_code]"
+        if (preg_match('/\[OPENAI_ERROR_CODE:([^\]]+)\]/', $message, $matches)) {
+            $errorCode = $matches[1];
+            // Remove the error code marker from the message
+            $cleanMessage = preg_replace('/\s*\[OPENAI_ERROR_CODE:[^\]]+\]\s*/', '', $message);
+
+            return [
+                'code' => $errorCode,
+                'type' => 'openai_error',
+                'message' => $cleanMessage,
+            ];
+        }
+
+        // Return generic error info if no specific pattern matches
+        return [
+            'code' => 'unknown',
+            'type' => 'generic_error',
+            'message' => $message,
+        ];
     }
 }

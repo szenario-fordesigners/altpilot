@@ -28,6 +28,7 @@ use szenario\craftaltpilot\services\AltTextGenerator;
 use szenario\craftaltpilot\services\DatabaseService;
 use szenario\craftaltpilot\services\ImageUtilityService;
 use szenario\craftaltpilot\services\OpenAiService;
+use szenario\craftaltpilot\services\OpenAiErrorService;
 use szenario\craftaltpilot\services\QueueService;
 use szenario\craftaltpilot\services\UrlReachabilityChecker;
 use yii\base\Event;
@@ -43,6 +44,7 @@ use craft\web\twig\variables\Cp;
  * @copyright szenario
  * @license https://craftcms.github.io/license/ Craft License
  * @property-read OpenAiService $openAiService
+ * @property-read OpenAiErrorService $openAiErrorService
  * @property-read AltPilotService $altPilotService
  * @property-read UrlReachabilityChecker $urlReachabilityChecker
  * @property-read ImageUtilityService $imageUtilityService
@@ -62,6 +64,7 @@ class AltPilot extends Plugin
         return [
             'components' => [
                 'openAiService' => OpenAiService::class,
+                'openAiErrorService' => OpenAiErrorService::class,
                 'altPilotService' => AltPilotService::class,
                 'urlReachabilityChecker' => UrlReachabilityChecker::class,
                 'imageUtilityService' => ImageUtilityService::class,

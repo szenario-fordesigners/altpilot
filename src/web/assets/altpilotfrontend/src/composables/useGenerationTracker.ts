@@ -16,6 +16,12 @@ type TrackedAsset = {
   message: string | null;
 };
 
+type ErrorInfo = {
+  code?: string | null;
+  type?: string | null;
+  message?: string | null;
+};
+
 type StatusResponse = {
   assetId: number;
   siteId: number | null;
@@ -24,6 +30,7 @@ type StatusResponse = {
   message?: string | null;
   asset?: Asset | null;
   progress?: number | null;
+  error?: ErrorInfo | null;
 };
 
 type JobStatusResponse = {
@@ -37,6 +44,19 @@ const makeKey = (assetId: number, siteId?: number | null) =>
 const ACTIVE_STATUSES: GenerationStatus[] = ['waiting', 'running'];
 
 const queuePollInterval = 1000;
+
+/**
+ * Get a user-friendly error message for a failed job
+ */
+const getErrorMessageForFailedJob = (item: StatusResponse): string => {
+  // If the backend provided a specific error message (sanitized and user-friendly), use it
+  if (item.error?.message) {
+    return item.error.message;
+  }
+
+  // Fallback to the general message
+  return item.message ?? 'Generation failed';
+};
 
 export const useGenerationTracker = createGlobalState(() => {
   const trackedAssets = reactive(new Map<string, TrackedAsset>());
@@ -135,11 +155,11 @@ export const useGenerationTracker = createGlobalState(() => {
         }
 
         if (item.status === 'failed') {
-          const message = item.message ?? 'Generation failed';
+          const errorMessage = getErrorMessageForFailedJob(item);
 
           toast({
             title: 'Error',
-            description: message,
+            description: errorMessage,
             type: 'foreground',
           });
         }

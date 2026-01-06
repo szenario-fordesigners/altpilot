@@ -5,12 +5,14 @@ namespace szenario\craftaltpilot\services;
 use Craft;
 use OpenAI;
 use OpenAI\Client;
+
 use craft\elements\Asset;
 use craft\models\Site;
 use Throwable;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
 use \szenario\craftaltpilot\AltPilot;
+
 
 /**
  * Open Ai Service service
@@ -21,6 +23,7 @@ class OpenAiService extends Component
 
     private ?Client $client = null;
     private ?OpenAiRateLimiter $rateLimiter = null;
+    private ?OpenAiErrorService $errorService = null;
 
 
     // TODO: REMOVE LOGS AFTER TESTING THIS WITH LIKE 5K IMAGES
@@ -56,6 +59,15 @@ class OpenAiService extends Component
         return $this->rateLimiter;
     }
 
+    private function getErrorService(): OpenAiErrorService
+    {
+        if ($this->errorService === null) {
+            $this->errorService = AltPilot::getInstance()->openAiErrorService;
+        }
+
+        return $this->errorService;
+    }
+
     /**
      * Send a chat completion request to OpenAI
      *
@@ -81,8 +93,7 @@ class OpenAiService extends Component
 
             return $response;
         } catch (\Exception $e) {
-            Craft::error('OpenAI API error: ' . $e->getMessage(), __METHOD__);
-            throw $e;
+            throw $this->getErrorService()->handleException($e);
         }
     }
 
@@ -129,26 +140,54 @@ class OpenAiService extends Component
         $this->getRateLimiter()->throttleIfNeeded();
 
         $startTime = time();
-        $response = $this->chatCompletion($messages, $options);
-        Craft::info('OpenAI API response: ' . json_encode($response), "alt-pilot");
 
-        $durationSeconds = time() - $startTime;
-        $stats = $this->updateRequestStats($response->usage->totalTokens, $durationSeconds);
-
-        $this->getRateLimiter()->scheduleNextRequestDelay(
-            $response->meta()->tokenLimit,
-            $response->meta()->requestLimit,
-            $stats['averageTokenCount'],
-            $stats['averageRequestDuration'],
-            $durationSeconds
-        );
-
-
-        if (empty($response->choices[0]->message->content)) {
-            throw new \Exception('No content returned from OpenAI API');
+        try {
+            $response = $this->chatCompletion($messages, $options);
+        } catch (\Exception $e) {
+            throw $this->getErrorService()->handleException($e);
         }
 
-        return trim($response->choices[0]->message->content);
+        // Validate response and check for errors
+        $this->getErrorService()->validateResponse($response);
+
+        // Extract content
+        $content = $this->getErrorService()->extractContent($response);
+
+        $durationSeconds = time() - $startTime;
+
+        // Safely access usage and meta information (only for object responses)
+        $tokenCount = 0;
+        if (is_object($response)) {
+            if (isset($response->usage) && isset($response->usage->totalTokens)) {
+                $tokenCount = $response->usage->totalTokens;
+            }
+        } elseif (is_array($response) && isset($response['usage']['total_tokens'])) {
+            $tokenCount = (int) $response['usage']['total_tokens'];
+        }
+
+        $stats = $this->updateRequestStats($tokenCount, $durationSeconds);
+
+        // Safely access meta information for rate limiting (only for object responses with meta method)
+        if (is_object($response) && method_exists($response, 'meta')) {
+            try {
+                $meta = $response->meta();
+                $tokenLimit = $meta->tokenLimit ?? null;
+                $requestLimit = $meta->requestLimit ?? null;
+
+                $this->getRateLimiter()->scheduleNextRequestDelay(
+                    $tokenLimit,
+                    $requestLimit,
+                    $stats['averageTokenCount'],
+                    $stats['averageRequestDuration'],
+                    $durationSeconds
+                );
+            } catch (\Exception $e) {
+                // Log but don't fail if meta information is unavailable
+                Craft::warning('Could not access response meta information: ' . $e->getMessage(), __METHOD__);
+            }
+        }
+
+        return trim($content);
     }
 
     /**
