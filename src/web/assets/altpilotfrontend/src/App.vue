@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { useAssets } from '@/composables/useAssets';
 import { useGlobalState } from '@/composables/useGlobalState';
 import { useStatusCounts } from '@/composables/useStatusCounts';
@@ -28,7 +28,7 @@ state.sites.value = sites;
 state.primarySiteId.value = primarySiteId;
 
 const ASSET_CARD_LIMIT = 30;
-const { assets, loading, pagination, fetchAssets } = useAssets({
+const { assets, assetIds, loading, pagination, fetchAssets } = useAssets({
   defaultLimit: ASSET_CARD_LIMIT,
 });
 const { fetchStatusCounts } = useStatusCounts();
@@ -59,6 +59,10 @@ const handlePageChange = (page: number) => {
   fetchAssets({ offset: newOffset, limit: pagination.value.limit });
 };
 
+const sortedAssets = computed(() => {
+  return assetIds.value.map((id) => assets.value[id]).filter((asset) => asset !== undefined);
+});
+
 onMounted(() => {
   fetchAssets();
   fetchStatusCounts();
@@ -69,7 +73,7 @@ onMounted(() => {
   <div id="altPilotWrapper">
     <AltPilotStats />
 
-    <AltPilotFilter class="mt-4 h-20 border" />
+    <AltPilotFilter class="mt-4" />
 
     <div class="grid auto-rows-fr [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))] gap-4">
       <template v-if="loading">
@@ -78,8 +82,8 @@ onMounted(() => {
         </div>
       </template>
       <template v-else>
-        <div v-for="asset in Object.values(assets)" :key="asset[primarySiteId]!.id" class="h-full">
-          <AssetCard :asset="asset" @click-image="openLightbox" />
+        <div v-for="id in assetIds" :key="id" class="h-full">
+          <AssetCard v-if="assets[id]" :asset="assets[id]" @click-image="openLightbox" />
         </div>
       </template>
     </div>
@@ -96,7 +100,7 @@ onMounted(() => {
     <AssetLightbox
       v-model:open="lightboxOpen"
       :initial-asset-id="initialLightboxAssetId"
-      :assets="Object.values(assets)"
+      :assets="sortedAssets"
       :primary-site-id="primarySiteId"
     />
   </div>

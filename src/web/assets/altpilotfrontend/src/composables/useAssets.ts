@@ -6,6 +6,7 @@ import type { Asset, AssetsByAssetId } from '@/types/Asset';
 type FetchAssetsOptions = {
   limit?: number;
   offset?: number;
+  sort?: string;
 };
 
 type PaginationInfo = {
@@ -17,47 +18,57 @@ type PaginationInfo = {
 
 type AssetsResponse = {
   assets: AssetsByAssetId;
+  assetIds: number[];
   pagination: PaginationInfo | null;
 };
 
 type UseAssetsOptions = {
   defaultLimit?: number;
   defaultOffset?: number;
+  defaultSort?: string;
 };
 
 const useAssetsState = createGlobalState(() => {
   const assets = ref<AssetsByAssetId>({});
+  const assetIds = ref<number[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
   const pagination = ref<PaginationInfo | null>(null);
   const defaultLimit = ref(20);
   const defaultOffset = ref(0);
+  const defaultSort = ref('dateCreated');
 
-  const setDefaults = (limit?: number, offset?: number) => {
+  const setDefaults = (limit?: number, offset?: number, sort?: string) => {
     if (typeof limit === 'number') {
       defaultLimit.value = limit;
     }
     if (typeof offset === 'number') {
       defaultOffset.value = offset;
     }
+    if (typeof sort === 'string') {
+      defaultSort.value = sort;
+    }
   };
 
   const fetchAssets = async (options: FetchAssetsOptions = {}) => {
     const limit = options.limit ?? defaultLimit.value;
     const offset = options.offset ?? defaultOffset.value;
+    const sort = options.sort ?? defaultSort.value;
 
     loading.value = true;
     error.value = null;
 
     try {
       const { data } = await apiClient.get<AssetsResponse>(
-        `/actions/alt-pilot/web/get-all-assets?limit=${limit}&offset=${offset}&siteId=all`,
+        `/actions/alt-pilot/web/get-all-assets?limit=${limit}&offset=${offset}&sort=${sort}&siteId=all`,
       );
       assets.value = data.assets ?? {};
+      assetIds.value = data.assetIds ?? [];
       pagination.value = data.pagination ?? null;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Unknown error';
       assets.value = {};
+      assetIds.value = [];
       pagination.value = null;
     } finally {
       loading.value = false;
@@ -83,9 +94,11 @@ const useAssetsState = createGlobalState(() => {
 
   return {
     assets,
+    assetIds,
     loading,
     error,
     pagination,
+    sort: defaultSort,
     fetchAssets,
     setDefaults,
     replaceAsset,
@@ -95,7 +108,7 @@ const useAssetsState = createGlobalState(() => {
 export function useAssets(options?: UseAssetsOptions) {
   const state = useAssetsState();
   if (options) {
-    state.setDefaults(options.defaultLimit, options.defaultOffset);
+    state.setDefaults(options.defaultLimit, options.defaultOffset, options.defaultSort);
   }
   return state;
 }

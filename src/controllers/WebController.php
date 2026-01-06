@@ -356,11 +356,26 @@ class WebController extends Controller
             return $this->errorResponse('Offset must be zero or a positive integer');
         }
 
+        $sortParam = $this->request->getQueryParam('sort', 'dateCreated');
+
+        switch ($sortParam) {
+            case 'dateUpdated':
+                $orderBy = 'dateUpdated DESC';
+                break;
+            case 'filename':
+                $orderBy = 'filename ASC';
+                break;
+            case 'dateCreated':
+            default:
+                $orderBy = 'dateCreated DESC';
+                break;
+        }
+
         $uniqueAssetQuery = Asset::find()
             ->kind('image')
             ->siteId('*')
             ->unique()
-            ->orderBy('dateCreated DESC');
+            ->orderBy($orderBy);
 
         $total = (clone $uniqueAssetQuery)->count();
         $assetIds = $uniqueAssetQuery
@@ -408,6 +423,7 @@ class WebController extends Controller
 
         return $this->successResponse([
             'assets' => $assetsByAssetId,
+            'assetIds' => array_values($assetIds),
             'pagination' => [
                 'limit' => $limit,
                 'offset' => $offset,
