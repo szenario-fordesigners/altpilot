@@ -10,6 +10,10 @@ const props = defineProps<{
   asset: MultiLanguageAsset;
 }>();
 
+const emit = defineEmits<{
+  (e: 'click-image', id: number): void;
+}>();
+
 const { sites, cpTrigger, primarySiteId } = useGlobalState();
 
 const currentSiteId = computed(() => primarySiteId.value!);
@@ -43,9 +47,10 @@ const anyGenerationFinished = computed(() => {
     ></div>
     <div class="flex h-22 w-full flex-col gap-0 bg-ap-periwinkle">
       <img
-        class="aspect-[4/3] h-full w-1/2 object-cover"
+        class="aspect-[4/3] h-full w-1/2 cursor-pointer object-cover"
         :src="currentAsset.url"
         :alt="currentAsset.title"
+        @click="emit('click-image', currentAsset.id)"
       />
 
       <div

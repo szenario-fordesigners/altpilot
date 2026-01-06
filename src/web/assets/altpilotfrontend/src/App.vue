@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useAssets } from '@/composables/useAssets';
 import { useGlobalState } from '@/composables/useGlobalState';
 import { useStatusCounts } from '@/composables/useStatusCounts';
 import AssetCard from '@/components/AssetCard.vue';
+import AssetLightbox from '@/components/AssetLightbox.vue';
 import AssetCardSkeleton from '@/components/AssetCardSkeleton.vue';
 import AssetPagination from '@/components/AssetPagination.vue';
 import AltPilotStats from '@/components/AltPilotStats.vue';
@@ -31,6 +32,14 @@ const { assets, loading, pagination, fetchAssets } = useAssets({
   defaultLimit: ASSET_CARD_LIMIT,
 });
 const { fetchStatusCounts } = useStatusCounts();
+
+const lightboxOpen = ref(false);
+const initialLightboxAssetId = ref<number | null>(null);
+
+const openLightbox = (assetId: number) => {
+  initialLightboxAssetId.value = assetId;
+  lightboxOpen.value = true;
+};
 
 const handlePrevious = () => {
   if (!pagination.value) return;
@@ -70,7 +79,7 @@ onMounted(() => {
       </template>
       <template v-else>
         <div v-for="asset in Object.values(assets)" :key="asset[primarySiteId]!.id" class="h-full">
-          <AssetCard :asset="asset" />
+          <AssetCard :asset="asset" @click-image="openLightbox" />
         </div>
       </template>
     </div>
@@ -84,5 +93,11 @@ onMounted(() => {
     />
 
     <Toaster />
+    <AssetLightbox
+      v-model:open="lightboxOpen"
+      :initial-asset-id="initialLightboxAssetId"
+      :assets="Object.values(assets)"
+      :primary-site-id="primarySiteId"
+    />
   </div>
 </template>
