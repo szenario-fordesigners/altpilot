@@ -44,6 +44,12 @@ const handleNext = () => {
   fetchAssets({ offset: newOffset, limit: pagination.value.limit });
 };
 
+const handlePageChange = (page: number) => {
+  if (!pagination.value) return;
+  const newOffset = (page - 1) * pagination.value.limit;
+  fetchAssets({ offset: newOffset, limit: pagination.value.limit });
+};
+
 onMounted(() => {
   fetchAssets();
   fetchStatusCounts();
@@ -74,6 +80,7 @@ onMounted(() => {
       :pagination="pagination"
       @previous="handlePrevious"
       @next="handleNext"
+      @page-change="handlePageChange"
     />
 
     <Toaster />

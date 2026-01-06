@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 type PaginationInfo = {
   limit: number;
@@ -15,12 +15,24 @@ const props = defineProps<{
 const emit = defineEmits<{
   previous: [];
   next: [];
+  'page-change': [page: number];
 }>();
 
 const currentPage = computed(() => {
   if (!props.pagination) return 1;
   return Math.floor(props.pagination.offset / props.pagination.limit) + 1;
 });
+
+const pageInput = ref(1);
+
+// Update input when prop changes (e.g. via Next button)
+watch(
+  currentPage,
+  (val) => {
+    pageInput.value = val;
+  },
+  { immediate: true },
+);
 
 const totalPages = computed(() => {
   if (!props.pagination) return 1;
@@ -44,6 +56,20 @@ const handleNext = () => {
   if (!props.pagination || !canGoNext.value) return;
   emit('next');
 };
+
+const handleInput = () => {
+  if (!props.pagination) return;
+  let page = pageInput.value;
+
+  if (page < 1) page = 1;
+  if (page > totalPages.value) page = totalPages.value;
+
+  pageInput.value = page;
+
+  if (page !== currentPage.value) {
+    emit('page-change', page);
+  }
+};
 </script>
 
 <template>
@@ -56,10 +82,18 @@ const handleNext = () => {
       Previous
     </button>
 
-    <span class="text-sm">
-      Page {{ currentPage }} of {{ totalPages }}
-      <span v-if="pagination.total" class="text-gray-600"> ({{ pagination.total }} total) </span>
-    </span>
+    <div class="flex items-center gap-2">
+      <input
+        v-model.number="pageInput"
+        @change="handleInput"
+        @keyup.enter="handleInput"
+        type="number"
+        min="1"
+        :max="totalPages"
+        class="w-16 rounded border border-gray-300 px-2 py-1 text-center"
+      />
+      <span class="text-sm"> / {{ totalPages }} </span>
+    </div>
 
     <button
       @click="handleNext"
