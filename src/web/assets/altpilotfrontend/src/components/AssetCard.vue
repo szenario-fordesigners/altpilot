@@ -45,7 +45,7 @@ const anyGenerationFinished = computed(() => {
       v-if="anyGenerationFinished"
       class="asset-card-pulse pointer-events-none absolute inset-0 z-50 bg-ap-periwinkle/30"
     ></div>
-    <div class="flex h-22 w-full flex-col gap-0 bg-ap-periwinkle">
+    <div class="flex h-32 w-full flex-col gap-0 bg-ap-periwinkle">
       <img
         class="aspect-[4/3] h-full w-1/2 cursor-pointer object-cover"
         :src="currentAsset.url"

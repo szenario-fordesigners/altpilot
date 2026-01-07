@@ -7,6 +7,7 @@ type FetchAssetsOptions = {
   limit?: number;
   offset?: number;
   sort?: string;
+  query?: string;
 };
 
 type PaginationInfo = {
@@ -26,6 +27,7 @@ type UseAssetsOptions = {
   defaultLimit?: number;
   defaultOffset?: number;
   defaultSort?: string;
+  defaultQuery?: string;
 };
 
 const useAssetsState = createGlobalState(() => {
@@ -37,8 +39,9 @@ const useAssetsState = createGlobalState(() => {
   const defaultLimit = ref(20);
   const defaultOffset = ref(0);
   const defaultSort = ref('dateCreated');
+  const defaultQuery = ref('');
 
-  const setDefaults = (limit?: number, offset?: number, sort?: string) => {
+  const setDefaults = (limit?: number, offset?: number, sort?: string, query?: string) => {
     if (typeof limit === 'number') {
       defaultLimit.value = limit;
     }
@@ -48,19 +51,25 @@ const useAssetsState = createGlobalState(() => {
     if (typeof sort === 'string') {
       defaultSort.value = sort;
     }
+    if (typeof query === 'string') {
+      defaultQuery.value = query;
+    }
   };
 
   const fetchAssets = async (options: FetchAssetsOptions = {}) => {
     const limit = options.limit ?? defaultLimit.value;
     const offset = options.offset ?? defaultOffset.value;
     const sort = options.sort ?? defaultSort.value;
+    const query = options.query ?? defaultQuery.value;
 
     loading.value = true;
     error.value = null;
 
     try {
       const { data } = await apiClient.get<AssetsResponse>(
-        `/actions/alt-pilot/web/get-all-assets?limit=${limit}&offset=${offset}&sort=${sort}&siteId=all`,
+        `/actions/alt-pilot/web/get-all-assets?limit=${limit}&offset=${offset}&sort=${sort}&query=${encodeURIComponent(
+          query,
+        )}&siteId=all`,
       );
       assets.value = data.assets ?? {};
       assetIds.value = data.assetIds ?? [];
@@ -99,6 +108,7 @@ const useAssetsState = createGlobalState(() => {
     error,
     pagination,
     sort: defaultSort,
+    query: defaultQuery,
     fetchAssets,
     setDefaults,
     replaceAsset,
@@ -108,7 +118,12 @@ const useAssetsState = createGlobalState(() => {
 export function useAssets(options?: UseAssetsOptions) {
   const state = useAssetsState();
   if (options) {
-    state.setDefaults(options.defaultLimit, options.defaultOffset, options.defaultSort);
+    state.setDefaults(
+      options.defaultLimit,
+      options.defaultOffset,
+      options.defaultSort,
+      options.defaultQuery,
+    );
   }
   return state;
 }

@@ -1,7 +1,20 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue';
+import { useDebounceFn } from '@vueuse/core';
 import { useAssets } from '@/composables/useAssets';
 
-const { sort, fetchAssets } = useAssets();
+const { sort, fetchAssets, query } = useAssets();
+
+const searchQuery = ref(query.value || '');
+
+const debouncedSearch = useDebounceFn((val: string) => {
+  query.value = val;
+  fetchAssets({ offset: 0 });
+}, 500);
+
+watch(searchQuery, (newVal) => {
+  debouncedSearch(newVal);
+});
 
 const sortOptions = [
   { value: 'dateUpdated', label: 'Last edited' },
@@ -35,7 +48,32 @@ const setSort = (value: string) => {
       </ul>
     </div>
 
-    <div>search</div>
-    <div>search</div>
+    <div class="col-span-2">
+      <div class="relative w-full">
+        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+          <svg
+            class="h-6 w-6"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 20 20"
+          >
+            <path
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+            />
+          </svg>
+        </div>
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search..."
+          class="block w-full rounded-xl border border-black p-4 pl-10 focus:outline-none"
+        />
+      </div>
+    </div>
   </div>
 </template>

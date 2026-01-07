@@ -358,6 +358,8 @@ class WebController extends Controller
 
         $sortParam = $this->request->getQueryParam('sort', 'dateCreated');
 
+        $queryParam = $this->request->getQueryParam('query');
+
         switch ($sortParam) {
             case 'dateUpdated':
                 $orderBy = 'dateUpdated DESC';
@@ -376,6 +378,10 @@ class WebController extends Controller
             ->siteId('*')
             ->unique()
             ->orderBy($orderBy);
+
+        if ($queryParam !== null && $queryParam !== '') {
+            $uniqueAssetQuery->search($queryParam);
+        }
 
         $total = (clone $uniqueAssetQuery)->count();
         $assetIds = $uniqueAssetQuery

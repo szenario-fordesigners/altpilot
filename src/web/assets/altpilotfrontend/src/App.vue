@@ -75,7 +75,7 @@ onMounted(() => {
 
     <AltPilotFilter class="mt-4" />
 
-    <div class="grid auto-rows-fr [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))] gap-4">
+    <div class="grid grid-cols-4 gap-4">
       <template v-if="loading">
         <div v-for="i in ASSET_CARD_LIMIT" :key="`skeleton-${i}`" class="h-full">
           <AssetCardSkeleton />
