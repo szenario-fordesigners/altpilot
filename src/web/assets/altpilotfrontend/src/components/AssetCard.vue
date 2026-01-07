@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useAssetAltEditor } from '@/composables/useAssetAltEditor';
 import { useGlobalState } from '@/composables/useGlobalState';
 import { useAssetGeneration } from '@/composables/useAssetGeneration';
+import { useStorage } from '@vueuse/core';
 import type { Asset, MultiLanguageAsset } from '@/types/Asset';
 import { assetStatus } from '@/utils/assetStatus';
+import OverwriteConfirmationDialog from '@/components/OverwriteConfirmationDialog.vue';
 
 const props = defineProps<{
   asset: MultiLanguageAsset;
@@ -15,6 +17,9 @@ const emit = defineEmits<{
 }>();
 
 const { sites, cpTrigger, primarySiteId } = useGlobalState();
+const suppressOverwriteWarning = useStorage('altpilot-suppress-overwrite-warning', false);
+const confirmationOpen = ref(false);
+const pendingGenerationSiteId = ref<number | null>(null);
 
 const currentSiteId = computed(() => primarySiteId.value!);
 
@@ -42,6 +47,29 @@ const { generateForSite, generatingBySite, isGenerationActive, isGenerationFinis
 const anyGenerationFinished = computed(() => {
   return sites.value.some((site) => isGenerationFinished(site.id));
 });
+
+const handleGenerateClick = (siteId: number) => {
+  const currentText = altTexts[siteId] ?? '';
+
+  if (currentText.trim() === '' || suppressOverwriteWarning.value) {
+    generateForSite(siteId);
+    return;
+  }
+
+  pendingGenerationSiteId.value = siteId;
+  confirmationOpen.value = true;
+};
+
+const handleConfirmOverwrite = () => {
+  if (pendingGenerationSiteId.value !== null) {
+    generateForSite(pendingGenerationSiteId.value);
+    pendingGenerationSiteId.value = null;
+  }
+};
+
+const handleCancelOverwrite = () => {
+  pendingGenerationSiteId.value = null;
+};
 </script>
 
 <template>
@@ -106,7 +134,7 @@ const anyGenerationFinished = computed(() => {
                 !generatingBySite[site.id] && !isGenerationActive(site.id),
             }"
             :disabled="generatingBySite[site.id] || isGenerationActive(site.id)"
-            @click="generateForSite(site.id)"
+            @click="handleGenerateClick(site.id)"
           >
             <svg
               class="regenerate-icon"
@@ -124,6 +152,13 @@ const anyGenerationFinished = computed(() => {
         <textarea v-model="altTexts[site.id]" class="w-full font-mono" rows="4" />
       </div>
     </div>
+
+    <OverwriteConfirmationDialog
+      v-model:open="confirmationOpen"
+      :site-name="sites.find((s) => s.id === pendingGenerationSiteId)?.language ?? ''"
+      @confirm="handleConfirmOverwrite"
+      @cancel="handleCancelOverwrite"
+    />
   </div>
 </template>
 
