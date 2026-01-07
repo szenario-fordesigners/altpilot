@@ -80,7 +80,7 @@ onUnmounted(() => {
     <DialogPortal>
       <DialogOverlay class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-opacity" />
       <DialogContent
-        class="fixed top-1/2 left-1/2 z-50 flex w-full max-w-7xl -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center p-4 outline-none"
+        class="fixed top-1/2 left-1/2 z-50 flex w-full max-w-7xl -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center p-4 shadow-none outline-none"
       >
         <DialogTitle class="sr-only"> Asset Preview </DialogTitle>
         <DialogDescription class="sr-only"> Preview of the selected asset </DialogDescription>

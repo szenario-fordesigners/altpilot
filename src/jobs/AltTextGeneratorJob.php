@@ -6,6 +6,7 @@ use Craft;
 use craft\elements\Asset;
 use craft\queue\BaseJob;
 use Exception;
+use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 use szenario\craftaltpilot\exceptions\OpenAiErrorException;
 
 /**
@@ -24,6 +25,11 @@ class AltTextGeneratorJob extends BaseJob
             $altText = $altTextGenerator->generateAltTextForAsset($this->asset);
 
             $this->asset->alt = $altText;
+
+            $behavior = $this->asset->getBehavior('altPilotMetadata');
+            if ($behavior instanceof AltPilotMetadata) {
+                $behavior->setStatus(AltPilotMetadata::STATUS_AI_GENERATED);
+            }
 
             if (!Craft::$app->elements->saveElement($this->asset, true)) {
                 throw new Exception('Failed to save alt text for asset: ' . ($this->asset->filename ?? ('Asset #' . $this->asset->id)));

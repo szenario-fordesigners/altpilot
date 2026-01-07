@@ -132,6 +132,13 @@ class QueueService extends Component
                     $result['error'] = $errorInfo;
                 }
 
+                if ($status === 'finished') {
+                    $asset = Craft::$app->assets->getAssetById($assetId, $siteId);
+                    if ($asset) {
+                        $result['asset'] = $this->formatAsset($asset);
+                    }
+                }
+
                 $results[] = $result;
                 continue;
             }
@@ -141,12 +148,37 @@ class QueueService extends Component
                 'assetId' => $assetId,
                 'siteId' => $siteId,
                 'status' => $asset ? 'finished' : 'missing',
-                'asset' => $asset ? $asset->toArray([], [], true) : null,
+                'asset' => $asset ? $this->formatAsset($asset) : null,
                 'message' => $asset ? 'Alt text updated' : 'Asset could not be found',
             ];
         }
 
         return $results;
+    }
+
+    private function formatAsset(Asset $asset): array
+    {
+        $behavior = $asset->getBehavior('altPilotMetadata');
+        $status = $behavior instanceof \szenario\craftaltpilot\behaviors\AltPilotMetadata
+            ? $behavior->getStatus()
+            : \szenario\craftaltpilot\behaviors\AltPilotMetadata::STATUS_MISSING;
+
+        $url = $asset->getUrl();
+        if (!is_string($url)) {
+            $url = '';
+        }
+
+        $altText = $asset->alt;
+        $normalizedAltText = $altText === null || $altText === '' ? null : (string) $altText;
+
+        return [
+            'id' => (int) $asset->id,
+            'siteId' => $asset->siteId === null ? null : (int) $asset->siteId,
+            'url' => $url,
+            'title' => (string) $asset->title,
+            'alt' => $normalizedAltText,
+            'status' => (int) $status,
+        ];
     }
 
     private function indexJobsByAsset(): array

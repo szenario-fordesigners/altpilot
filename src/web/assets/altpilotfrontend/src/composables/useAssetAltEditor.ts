@@ -105,7 +105,18 @@ export function useAssetAltEditor(asset: MultiLanguageAsset) {
 
       Object.entries(altTexts).forEach(([siteIdString, value]) => {
         const siteId = Number(siteIdString);
-        originalAltTexts[siteId] = value;
+
+        // Only update if the value actually changed from the original
+        if (originalAltTexts[siteId] !== value) {
+          originalAltTexts[siteId] = value;
+
+          // Update the asset status locally
+          if (asset[siteId]) {
+            const newStatus = value.trim() === '' ? 0 : 2; // 0 = Missing, 2 = Manual
+            asset[siteId].status = newStatus;
+            asset[siteId].alt = value;
+          }
+        }
       });
 
       successMessage.value = 'Alt texts saved';

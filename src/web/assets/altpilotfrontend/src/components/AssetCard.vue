@@ -24,6 +24,11 @@ const currentSiteHandle = computed(() => {
   return sites.value.find((site) => site.id === currentSiteId.value)?.handle ?? null;
 });
 
+const isAssetStatusMissing = computed(() => {
+  const isMissing = Object.values(props.asset).some((asset) => asset.status === 0);
+  return isMissing;
+});
+
 const charactersRemaining = (siteId: number) => {
   const value = altTexts[siteId] ?? '';
   return 150 - value.length;
@@ -45,7 +50,10 @@ const anyGenerationFinished = computed(() => {
       v-if="anyGenerationFinished"
       class="asset-card-pulse pointer-events-none absolute inset-0 z-50 bg-ap-periwinkle/30"
     ></div>
-    <div class="flex h-32 w-full flex-col gap-0 bg-ap-periwinkle">
+    <div
+      class="flex h-32 w-full flex-col gap-0"
+      :class="[isAssetStatusMissing ? 'bg-ap-red' : 'bg-ap-periwinkle']"
+    >
       <img
         class="aspect-[4/3] h-full w-1/2 cursor-pointer object-cover"
         :src="currentAsset.url"
@@ -57,7 +65,7 @@ const anyGenerationFinished = computed(() => {
         class="flex h-full w-1/2 flex-col items-end justify-between p-2 text-end text-xl text-white"
       >
         <div>
-          {{ assetStatus[currentAsset.status] }}
+          {{ isAssetStatusMissing ? assetStatus[0] : '' }}
         </div>
         <button
           class="rounded-full border px-2 transition-all"
@@ -87,7 +95,7 @@ const anyGenerationFinished = computed(() => {
       <div v-for="site in sites" :key="site.id" class="mb-4 flex w-full">
         <div class="flex w-full justify-between border-b">
           <div class="text-ap-periwinkle uppercase">
-            {{ site.language }} ({{ assetStatus[currentAsset.status] }})
+            {{ site.language }} ({{ assetStatus[props.asset[site.id]?.status ?? 0] }})
           </div>
           <div class="text-ap-periwinkle">{{ charactersRemaining(site.id) }}</div>
           <button
@@ -123,8 +131,5 @@ const anyGenerationFinished = computed(() => {
 .regenerate-icon {
   width: 1rem;
   height: 1rem;
-
-  /* mirror the icon */
-  transform: scaleX(-1);
 }
 </style>

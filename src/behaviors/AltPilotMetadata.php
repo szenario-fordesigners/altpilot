@@ -31,6 +31,11 @@ class AltPilotMetadata extends Behavior
      */
     private bool $_loaded = false;
 
+    /**
+     * @var bool Whether the status has been explicitly set during this request.
+     */
+    private bool $_statusExplicitlySet = false;
+
 
     /**
      * @inheritdoc
@@ -38,6 +43,7 @@ class AltPilotMetadata extends Behavior
     public function events(): array
     {
         return [
+            Asset::EVENT_BEFORE_SAVE => 'beforeSave',
             Asset::EVENT_AFTER_SAVE => 'afterSave',
             Asset::EVENT_AFTER_DELETE => 'afterDelete',
         ];
@@ -62,6 +68,34 @@ class AltPilotMetadata extends Behavior
     {
         $this->_status = $value;
         $this->_loaded = true;
+        $this->_statusExplicitlySet = true;
+    }
+
+    /**
+     * Handles logic before the asset saves.
+     */
+    public function beforeSave(ModelEvent $event): void
+    {
+        $asset = $this->owner;
+
+        if (!$asset instanceof Asset) {
+            return;
+        }
+
+        // If status was explicitly set, don't overwrite it
+        if ($this->_statusExplicitlySet) {
+            return;
+        }
+
+        // If alt text changed, update status automatically
+        if ($asset->isAttributeDirty('alt')) {
+            $altText = $asset->alt;
+            $status = ($altText === null || trim($altText) === '')
+                ? self::STATUS_MISSING
+                : self::STATUS_MANUAL;
+
+            $this->setStatus($status);
+        }
     }
 
     /**
