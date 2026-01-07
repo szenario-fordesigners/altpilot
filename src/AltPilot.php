@@ -3,6 +3,7 @@
 namespace szenario\craftaltpilot;
 
 use Craft;
+use Psr\Log\LogLevel;
 use craft\base\Element;
 use craft\base\Model;
 use craft\base\Plugin;
@@ -11,15 +12,18 @@ use craft\events\DefineMenuItemsEvent;
 use craft\events\DeleteSiteEvent;
 use craft\events\ModelEvent;
 use craft\events\PluginEvent;
+use craft\events\RegisterComponentTypesEvent;
+use craft\events\RegisterCpNavItemsEvent;
 use craft\events\RegisterElementActionsEvent;
 use craft\events\VolumeEvent;
 use craft\helpers\App;
 use craft\helpers\Json;
 use craft\log\MonologTarget;
-use craft\services\Sites;
+use craft\services\Dashboard;
 use craft\services\Plugins;
+use craft\services\Sites;
 use craft\services\Volumes;
-use Psr\Log\LogLevel;
+use craft\web\twig\variables\Cp;
 use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 use szenario\craftaltpilot\elements\actions\GenerateAltPilotElementAction;
 use szenario\craftaltpilot\models\Settings;
@@ -27,13 +31,13 @@ use szenario\craftaltpilot\services\AltPilotService;
 use szenario\craftaltpilot\services\AltTextGenerator;
 use szenario\craftaltpilot\services\DatabaseService;
 use szenario\craftaltpilot\services\ImageUtilityService;
-use szenario\craftaltpilot\services\OpenAiService;
 use szenario\craftaltpilot\services\OpenAiErrorService;
+use szenario\craftaltpilot\services\OpenAiService;
 use szenario\craftaltpilot\services\QueueService;
+use szenario\craftaltpilot\services\StatusService;
 use szenario\craftaltpilot\services\UrlReachabilityChecker;
+use szenario\craftaltpilot\widgets\AltPilotWidget;
 use yii\base\Event;
-use craft\events\RegisterCpNavItemsEvent;
-use craft\web\twig\variables\Cp;
 
 /**
  * AltPilot plugin
@@ -51,6 +55,7 @@ use craft\web\twig\variables\Cp;
  * @property-read QueueService $queueService
  * @property-read AltTextGenerator $altTextGenerator
  * @property-read DatabaseService $databaseService
+ * @property-read StatusService $statusService
  */
 class AltPilot extends Plugin
 {
@@ -71,6 +76,7 @@ class AltPilot extends Plugin
                 'queueService' => QueueService::class,
                 'altTextGenerator' => AltTextGenerator::class,
                 'databaseService' => DatabaseService::class,
+                'statusService' => StatusService::class,
             ],
         ];
     }
@@ -343,5 +349,8 @@ class AltPilot extends Plugin
                 ];
             }
         );
+        Event::on(Dashboard::class, Dashboard::EVENT_REGISTER_WIDGET_TYPES, function (RegisterComponentTypesEvent $event) {
+            $event->types[] = AltPilotWidget::class;
+        });
     }
 }

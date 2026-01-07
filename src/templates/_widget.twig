@@ -1,0 +1,12 @@
+<div class="altpilot-widget">
+	<h1>Alt Pilot Widget</h1>
+
+	{# Raw settings, if you still want them #}
+	{# {% set settings = plugin('alt-pilot').settings %} #}
+
+	<p>
+		<strong>Status counts (from StatusService):</strong>
+	</p>
+	<pre>{{ statusCounts|json_encode }}</pre>
+
+</div>

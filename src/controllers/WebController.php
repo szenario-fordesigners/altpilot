@@ -146,32 +146,9 @@ class WebController extends Controller
     {
         $this->requireAcceptsJson();
 
-        $rows = (new Query())
-            ->select(['status', 'count' => 'COUNT(*)'])
-            ->from('{{%altpilot_metadata}}')
-            ->groupBy(['status'])
-            ->all();
+        $statusCounts = AltPilot::getInstance()->statusService->getStatusCounts();
 
-        $counts = [
-            AltPilotMetadata::STATUS_MISSING => 0,
-            AltPilotMetadata::STATUS_AI_GENERATED => 0,
-            AltPilotMetadata::STATUS_MANUAL => 0,
-        ];
-        $total = 0;
-
-        foreach ($rows as $row) {
-            $status = (int) $row['status'];
-            $count = (int) $row['count'];
-            if (isset($counts[$status])) {
-                $counts[$status] = $count;
-                $total += $count;
-            }
-        }
-
-        return $this->successResponse([
-            'counts' => $counts,
-            'total' => $total,
-        ]);
+        return $this->successResponse($statusCounts);
     }
 
     public function actionSaveAltTexts(): Response

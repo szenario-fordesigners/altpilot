@@ -26,7 +26,6 @@ const STATUS_LABELS: Record<number, string> = {
 };
 
 const DEFAULT_STATUS_ORDER = [0, 1, 2] as const;
-type StatusCode = (typeof DEFAULT_STATUS_ORDER)[number];
 
 const useStatusCountsState = createGlobalState(() => {
   const statusCounts = ref<Record<number, number>>(
