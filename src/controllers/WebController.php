@@ -353,20 +353,28 @@ class WebController extends Controller
         $uniqueAssetQuery = Asset::find()
             ->kind('image')
             ->siteId('*')
-            ->unique()
             ->orderBy($orderBy);
 
         if ($queryParam !== null && $queryParam !== '') {
             $uniqueAssetQuery->search($queryParam);
+            // Fetch all IDs first to manually deduplicate, avoiding unique() search bug
+            $allIds = $uniqueAssetQuery->ids();
+            $uniqueIds = array_values(array_unique(array_map('intval', $allIds)));
+
+            $total = count($uniqueIds);
+            $assetIds = array_slice($uniqueIds, $offset, $limit);
+        } else {
+            // For standard listing, DB-level unique is safe and efficient
+            $uniqueAssetQuery->unique();
+
+            $total = (clone $uniqueAssetQuery)->count();
+            $assetIds = $uniqueAssetQuery
+                ->offset($offset)
+                ->limit($limit)
+                ->ids();
+
+            $assetIds = array_map('intval', $assetIds);
         }
-
-        $total = (clone $uniqueAssetQuery)->count();
-        $assetIds = $uniqueAssetQuery
-            ->offset($offset)
-            ->limit($limit)
-            ->ids();
-
-        $assetIds = array_map('intval', $assetIds);
 
         if ($assetIds === []) {
             return $this->successResponse([

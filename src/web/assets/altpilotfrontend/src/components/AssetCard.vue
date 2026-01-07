@@ -99,7 +99,7 @@ const anyGenerationFinished = computed(() => {
           </div>
           <div class="text-ap-periwinkle">{{ charactersRemaining(site.id) }}</div>
           <button
-            class="rounded-full border p-1 transition-colors"
+            class="mb-1 rounded-full border p-1 transition-colors"
             :class="{
               'opacity-50': generatingBySite[site.id] || isGenerationActive(site.id),
               'hover:bg-white hover:text-ap-periwinkle':

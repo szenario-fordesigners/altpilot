@@ -38,6 +38,7 @@ use szenario\craftaltpilot\services\StatusService;
 use szenario\craftaltpilot\services\UrlReachabilityChecker;
 use szenario\craftaltpilot\widgets\AltPilotWidget;
 use yii\base\Event;
+use craft\events\RegisterElementSearchableAttributesEvent;
 
 /**
  * AltPilot plugin
@@ -352,5 +353,14 @@ class AltPilot extends Plugin
         Event::on(Dashboard::class, Dashboard::EVENT_REGISTER_WIDGET_TYPES, function (RegisterComponentTypesEvent $event) {
             $event->types[] = AltPilotWidget::class;
         });
+
+        // register alt text for search index
+        Event::on(
+            Asset::class,
+            Asset::EVENT_REGISTER_SEARCHABLE_ATTRIBUTES,
+            function (RegisterElementSearchableAttributesEvent $e) {
+                $e->attributes[] = 'alt';
+            }
+        );
     }
 }
