@@ -12,11 +12,12 @@ import AltPilotFilter from '@/components/AltPilotFilter.vue';
 import Toaster from '@/components/AltPilotToaster.vue';
 import type { Site } from '@/types/Site';
 
-const { cpTrigger, csrfToken, sites, primarySiteId } = defineProps<{
+const { cpTrigger, csrfToken, sites, primarySiteId, hasSelectedVolumes } = defineProps<{
   cpTrigger: string;
   csrfToken: { name: string; value: string };
   sites: Site[];
   primarySiteId: number;
+  hasSelectedVolumes: boolean;
 }>();
 
 const state = useGlobalState();
@@ -26,6 +27,7 @@ state.csrfToken.value = csrfToken;
 state.cpTrigger.value = cpTrigger;
 state.sites.value = sites;
 state.primarySiteId.value = primarySiteId;
+state.hasSelectedVolumes.value = hasSelectedVolumes;
 
 const ASSET_CARD_LIMIT = 30;
 const { assets, assetIds, loading, pagination, fetchAssets } = useAssets({
@@ -71,6 +73,20 @@ onMounted(() => {
 
 <template>
   <div id="altPilotWrapper">
+    <div
+      v-if="!hasSelectedVolumes"
+      class="mb-6 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-yellow-800"
+    >
+      <p>
+        No volumes selected. Please configure the
+        <a
+          :href="`/${cpTrigger}/settings/plugins/alt-pilot`"
+          class="font-bold underline hover:text-yellow-900"
+          >settings</a
+        >.
+      </p>
+    </div>
+
     <AltPilotStats />
 
     <AltPilotFilter class="mt-4" />

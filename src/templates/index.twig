@@ -10,6 +10,9 @@
 {% set sites = craft.app.getSites().getAllSites() %}
 
 
+{% set settings = craft.app.plugins.getPlugin('alt-pilot').getSettings() %}
+{% set hasSelectedVolumes = settings.volumeIDs|length > 0 %}
+
 {% block content %}
-	<div id="altpilot-app" data-props='{{ { cpTrigger: craft.app.config.general.cpTrigger, csrfToken: csrfToken, sites: sites, primarySiteId: craft.app.sites.currentSite.id }|json_encode }}'></div>
+	<div id="altpilot-app" data-props='{{ { cpTrigger: craft.app.config.general.cpTrigger, csrfToken: csrfToken, sites: sites, primarySiteId: craft.app.sites.currentSite.id, hasSelectedVolumes: hasSelectedVolumes }|json_encode }}'></div>
 {% endblock %}

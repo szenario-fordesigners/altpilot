@@ -350,10 +350,19 @@ class WebController extends Controller
                 break;
         }
 
+        $settings = AltPilot::getInstance()->getSettings();
+        $volumeIds = $settings->volumeIDs;
+
         $uniqueAssetQuery = Asset::find()
             ->kind('image')
             ->siteId('*')
             ->orderBy($orderBy);
+
+        if (!empty($volumeIds)) {
+            $uniqueAssetQuery->volumeId($volumeIds);
+        } else {
+            $uniqueAssetQuery->volumeId('*');
+        }
 
         if ($queryParam !== null && $queryParam !== '') {
             $uniqueAssetQuery->search($queryParam);

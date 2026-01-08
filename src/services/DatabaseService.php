@@ -251,24 +251,38 @@ class DatabaseService extends Component
             $fieldLayout->setTabs($tabs);
         }
 
+        $hasAltField = false;
         foreach ($tabs as $tab) {
             foreach ($tab->getElements() as $element) {
                 if ($element instanceof AltField) {
-                    return;
+                    $hasAltField = true;
+                    break 2;
                 }
             }
         }
 
-        $elements = $tabs[0]->getElements();
-        $elements[] = new AltField();
-        $tabs[0]->setElements($elements);
-        $fieldLayout->setTabs($tabs);
-        $volume->setFieldLayout($fieldLayout);
+        $isDirty = false;
 
-        if (!$volumesService->saveVolume($volume)) {
-            Craft::error('Failed to save volume ' . $volumeId . ' while ensuring alt field.', 'alt-pilot');
-        } else {
-            Craft::info('Ensured alt field is enabled for volume successfully: ' . $volumeId, 'alt-pilot');
+        if (!$hasAltField) {
+            $elements = $tabs[0]->getElements();
+            $elements[] = new AltField();
+            $tabs[0]->setElements($elements);
+            $fieldLayout->setTabs($tabs);
+            $volume->setFieldLayout($fieldLayout);
+            $isDirty = true;
+        }
+
+        if ($volume->altTranslationMethod !== 'language') {
+            $volume->altTranslationMethod = 'language';
+            $isDirty = true;
+        }
+
+        if ($isDirty) {
+            if (!$volumesService->saveVolume($volume)) {
+                Craft::error('Failed to save volume ' . $volumeId . ' while ensuring alt field.', 'alt-pilot');
+            } else {
+                Craft::info('Ensured alt field is enabled for volume successfully: ' . $volumeId, 'alt-pilot');
+            }
         }
     }
 

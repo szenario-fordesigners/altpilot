@@ -8,5 +8,6 @@ export const useGlobalState = createGlobalState(() => {
   const cpTrigger = ref<string | null>(null);
   const sites = ref<Site[]>([]);
   const primarySiteId = ref<number>(1);
-  return { csrfToken, cpTrigger, sites, primarySiteId };
+  const hasSelectedVolumes = ref<boolean>(true);
+  return { csrfToken, cpTrigger, sites, primarySiteId, hasSelectedVolumes };
 });

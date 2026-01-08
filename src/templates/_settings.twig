@@ -3,105 +3,95 @@
 
 {% import '_includes/forms.twig' as forms %}
 
-	<div class="alert warning"> <p>
-		This plugin relies on Craft's queue system to process alt text generation. For production environments, we strongly recommend using a CRON-based or daemonized queue runner instead of the default HTTP-triggered queue. See the
-		<a href="https://craftcms.com/docs/5.x/system/queue.html#queue-runners" target="_blank" rel="noopener">Craft queue documentation</a>
+	<div class="pane" style="background-color: var(--yellow-050); border-color: var(--yellow-300);"> <p class="warning with-icon">
+		This plugin relies on Craft's queue system to process alt text generation. For production
+																environments, we strongly recommend using a CRON-based or daemonized queue runner instead of
+																the default HTTP-triggered queue. See the
+		<a href="https://craftcms.com/docs/5.x/system/queue.html#queue-runners" target="_blank" rel="noopener">
+			Craft queue documentation
+		</a>
 		for setup instructions.
 	</p>
 </div>
 
 {{ forms.autosuggestField({
-    label: "OpenAI API Key"|t("aialttext"),
-    instructions: "The API key from your Open AI account"|t("aialttext"),
-    id: "openAiApiKey",
-    name: "openAiApiKey",
-    suggestEnvVars: true,
-    value: settings.openAiApiKey,
-    errors: settings.getErrors("openAiApiKey"),
-    required: true,
+	label: "OpenAI API Key"|t("aialttext"),
+	instructions: "The API key from your Open AI account"|t("aialttext"),
+	id: "openAiApiKey",
+	name: "openAiApiKey",
+	suggestEnvVars: true,
+	value: settings.openAiApiKey,
+	errors: settings.getErrors("openAiApiKey"),
+	required: true,
+}) }}
+
+
+{{ forms.checkboxSelectField({
+	label: 'Volumes'|t('app'),
+	id: 'volumeIDs',
+	name: 'volumeIDs',
+	instructions: "The volumes to generate the alt text for."|t("aialttext"),
+	values: settings.volumeIDs ?? [],
+	errors: settings.getErrors('volumeIDs'),
+	options: craft.app.volumes.getAllVolumes()|map(volume => {
+		value: volume.id,
+		label: volume.name
+	}),
 }) }}
 
 {{ forms.textareaField({
-    label: 'Prompt'|t('app'),
-    id: 'openAiPrompt',
-    name: 'openAiPrompt',
-    instructions: "The text prompt which will be sent to OpenAI with the image to generate the response, supports simple Asset Model and Site Model property values using `{asset.property}` and `{site.property}`"|t("aialttext"),
-    value: settings.openAiPrompt,
-    placeholder: "Describe the image provided, make it suitable for an alt text description (roughly 150 characters maximum). Consider transparency within the image if supported by the file type, e.g. don't suggest it has a dark background if it is transparent. Do not add a prefix of any kind (e.g. alt text: AI content) so the value is suitable for the alt text attribute value of the image. Output in {site.language}",
-    errors: settings.getErrors('openAiPrompt'),
+	label: 'Prompt'|t('app'),
+	id: 'openAiPrompt',
+	name: 'openAiPrompt',
+	instructions: "The prompt which will be sent to OpenAI alongside the image to generate an alt text."|t("aialttext"),
+	value: settings.openAiPrompt,
+	placeholder: "Your OpenAI prompt goes here...",
+	rows: 8,
+	errors: settings.getErrors('openAiPrompt'),
 }) }}
 
 {{ forms.selectField({
-    label: 'Open AI Model'|t('app'),
-    id: 'openAiModel',
-    name: 'openAiModel',
-    instructions: "The OpenAI model used to generate the response. We strongly recommend to use GPT-5 Nano. Using other models may lead to extraordinary costs and lower quality. For details, take a look at the calculator at the bottom of the [OpenAI pricing page](https://openai.com/api/pricing/#trigger_2L7BlliZjpyN3nKgx6ujVA). To find out which models are capable of vision OpenAI suggest to look [on the models page](https://platform.openai.com/docs/models)"|t("aialttext"),
-    value: settings.openAiModel,
-    errors: settings.getErrors('openAiModel'),
-    options: [
-        {value: 'gpt-5-nano', label: 'GPT-5 Nano — Fastest and cheapest option'},
-        {value: 'gpt-4o-mini', label: 'GPT-4o Mini — Alternative to  GPT-5 Nano while being a non-reasoning model'},
-        {value: 'gpt-4o', label: 'GPT-4o — Highest quality for complex images (better accuracy, more expensive)'},
-    ],
-}) }}
-
-{{ forms.lightswitchField({
-    label: 'Generate on Upload'|t('app'),
-    id: 'generateOnUpload',
-    name: 'generateOnUpload',
-    instructions: "Generate the alt text when an image is uploaded. If disabled, ???"|t("aialttext"),
-    value: settings.generateOnUpload,
-    errors: settings.getErrors('generateOnUpload'),
-}) }}
-
-{{ forms.lightswitchField({
-    label: 'Generate per Language'|t('app'),
-    id: 'generatePerLanguage',
-    name: 'generatePerLanguage',
-    instructions: "Generate the alt text for each language. If disabled, the alt text will be generated for the default language only."|t("aialttext"),
-    value: settings.generatePerLanguage,
-    errors: settings.getErrors('generatePerLanguage'),
+	label: 'Open AI Model'|t('app'),
+	id: 'openAiModel',
+	name: 'openAiModel',
+	instructions: "The OpenAI model used to generate the response. We strongly recommend to use GPT-5 Nano. Using other models may lead to extraordinary costs and lower quality. For details, take a look at the calculator at the bottom of the [OpenAI pricing page](https://openai.com/api/pricing/#trigger_2L7BlliZjpyN3nKgx6ujVA). To find out which models are capable of vision OpenAI suggest to look [on the models page](https://platform.openai.com/docs/models)"|t("aialttext"),
+	value: settings.openAiModel,
+	errors: settings.getErrors('openAiModel'),
+	options: [
+		{value: 'gpt-5-nano', label: 'GPT-5 Nano — Fastest and cheapest option'},
+		{value: 'gpt-4o-mini', label: 'GPT-4o Mini — Alternative to  GPT-5 Nano while being a non-reasoning model'},
+		{value: 'gpt-4o', label: 'GPT-4o — Highest quality for complex images (better accuracy, more expensive)'},
+	],
 }) }}
 
 
-{{ forms.textField({
-    label: 'Average Token Count'|t('app'),
-    id: 'averageTokenCount',
-    name: 'averageTokenCount',
-    instructions: "The average number of tokens used per request."|t("aialttext"),
-    value: settings.averageTokenCount,
-    errors: settings.getErrors('averageTokenCount'),
-}) }}
-
-{{ forms.textField({
-    label: 'Average Request Duration'|t('app'),
-    id: 'averageRequestDuration',
-    name: 'averageRequestDuration',
-    instructions: "The average duration of a request in seconds."|t("aialttext"),
-    value: settings.averageRequestDuration,
-    errors: settings.getErrors('averageRequestDuration'),
-}) }}
-
-{{ forms.checkboxSelectField({
-    label: 'Volume IDs'|t('app'),
-    id: 'volumeIDs',
-    name: 'volumeIDs',
-    instructions: "The volumes to generate the alt text for."|t("aialttext"),
-    values: settings.volumeIDs ?? [],
-    errors: settings.getErrors('volumeIDs'),
-    options: craft.app.volumes.getAllVolumes()|map(volume => {
-        value: volume.id,
-        label: volume.name
-    }),
-}) }}
-
-{# TODO: make this more prominent #}
 {# phpMaxExecutionTime is injected from settingsHtml in AltPilot.php #}
 {% set phpMaxExecutionTime = phpMaxExecutionTime ?? 0 %}
 {% set phpMaxExecutionTime = phpMaxExecutionTime is numeric ? phpMaxExecutionTime|integer : 0 %}
-	{% if phpMaxExecutionTime != 0 and phpMaxExecutionTime < 120 %}
-		<div class="alert warning"> <p>
+{% if phpMaxExecutionTime != 0 and phpMaxExecutionTime < 120 %}
+	<div class="pane" style="background-color: var(--yellow-050); border-color: var(--yellow-300);">
+		<p class="warning with-icon">
 			{{ "PHP max_execution_time is set to {seconds}s. For stable OpenAI requests we recommend at least 120s. Consider increasing it in php.ini or the Craft general config."|t('app', { seconds: phpMaxExecutionTime }) }}
 		</p>
 	</div>
 {% endif %}
+
+<h2>internals</h2>
+
+{{ forms.textField({
+	label: 'Average Token Count'|t('app'),
+	id: 'averageTokenCount',
+	name: 'averageTokenCount',
+	instructions: "The average number of tokens used per request."|t("aialttext"),
+	value: settings.averageTokenCount,
+	errors: settings.getErrors('averageTokenCount'),
+}) }}
+
+{{ forms.textField({
+	label: 'Average Request Duration'|t('app'),
+	id: 'averageRequestDuration',
+	name: 'averageRequestDuration',
+	instructions: "The average duration of a request in seconds."|t("aialttext"),
+	value: settings.averageRequestDuration,
+	errors: settings.getErrors('averageRequestDuration'),
+}) }}
