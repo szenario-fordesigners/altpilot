@@ -14,28 +14,37 @@ use szenario\craftaltpilot\exceptions\OpenAiErrorException;
  */
 class AltTextGeneratorJob extends BaseJob
 {
-    public Asset $asset;
+    public int $assetId;
+    public ?int $siteId = null;
+    public string $filename = '';
 
     public function execute($queue): void
     {
+        $asset = Craft::$app->elements->getElementById($this->assetId, Asset::class, $this->siteId);
+
+        if (!$asset) {
+            Craft::warning(sprintf('Asset %d (site %d) not found for AltTextGeneratorJob', $this->assetId, $this->siteId ?? 0), 'alt-pilot');
+            return;
+        }
+
         $plugin = \szenario\craftaltpilot\AltPilot::getInstance();
         $altTextGenerator = $plugin->altTextGenerator;
 
         try {
-            $altText = $altTextGenerator->generateAltTextForAsset($this->asset);
+            $altText = $altTextGenerator->generateAltTextForAsset($asset);
 
-            $this->asset->alt = $altText;
+            $asset->alt = $altText;
 
-            $behavior = $this->asset->getBehavior('altPilotMetadata');
+            $behavior = $asset->getBehavior('altPilotMetadata');
             if ($behavior instanceof AltPilotMetadata) {
                 $behavior->setStatus(AltPilotMetadata::STATUS_AI_GENERATED);
             }
 
-            if (!Craft::$app->elements->saveElement($this->asset, true)) {
-                throw new Exception('Failed to save alt text for asset: ' . ($this->asset->filename ?? ('Asset #' . $this->asset->id)));
+            if (!Craft::$app->elements->saveElement($asset, true)) {
+                throw new Exception('Failed to save alt text for asset: ' . ($asset->filename ?? ('Asset #' . $asset->id)));
             }
 
-            Craft::info(sprintf('Alt text saved for %s on site ID: %d', $this->asset->filename ?? $this->asset->id, $this->asset->siteId ?? 0), 'alt-pilot');
+            Craft::info(sprintf('Alt text saved for %s on site ID: %d', $asset->filename ?? $asset->id, $asset->siteId ?? 0), 'alt-pilot');
         } catch (OpenAiErrorException $e) {
             // Re-throw with error details in message for queue system to capture
             // The message is already sanitized and user-friendly from OpenAiService
@@ -47,8 +56,8 @@ class AltTextGeneratorJob extends BaseJob
             // Log error without exposing API keys (message is already sanitized)
             $logMessage = sprintf(
                 'OpenAI API error generating alt text for %s on site ID: %s - %s (Code: %s, Type: %s, HTTP: %d)',
-                $this->asset->filename ?? $this->asset->id,
-                $this->asset->siteId ?? 'N/A',
+                $asset->filename ?? $asset->id,
+                $asset->siteId ?? 'N/A',
                 $e->getMessage(),
                 $e->errorCode ?? 'unknown',
                 $e->errorType ?? 'unknown',
@@ -61,7 +70,7 @@ class AltTextGeneratorJob extends BaseJob
             throw new Exception($enhancedMessage, $e->getCode());
         } catch (Exception $e) {
             // Re-throw generic exceptions (db errors, etc)
-            Craft::error(sprintf('Error generating alt text for %s on site ID: %s - %s', $this->asset->filename ?? $this->asset->id, $this->asset->siteId ?? 'N/A', $e->getMessage()), 'alt-pilot');
+            Craft::error(sprintf('Error generating alt text for %s on site ID: %s - %s', $asset->filename ?? $asset->id, $asset->siteId ?? 'N/A', $e->getMessage()), 'alt-pilot');
             throw $e;
         }
     }
@@ -69,9 +78,9 @@ class AltTextGeneratorJob extends BaseJob
     protected function defaultDescription(): ?string
     {
         return Craft::t('alt-pilot', '[Asset ID: {id} | Site ID: {siteId}] AltPilot: Generating alt text for {asset}', [
-            'id' => $this->asset->id,
-            'siteId' => $this->asset->siteId,
-            'asset' => $this->asset->filename,
+            'id' => $this->assetId,
+            'siteId' => $this->siteId,
+            'asset' => $this->filename,
         ]);
     }
 }

@@ -295,19 +295,25 @@ class AltPilot extends Plugin
                     return;
                 }
 
+                Craft::info('Asset after save event triggered', 'alt-pilot');
+
                 $asset = $event->sender;
                 if (!$asset instanceof Asset || !$asset->id || $asset->kind !== 'image') {
                     return;
                 }
+
+                Craft::info('Asset after save event triggered: ' . $asset->id . ' - kind: ' . $asset->kind, 'alt-pilot');
 
                 $configuredVolumes = $this->normalizeVolumeIds($this->getSettings()->volumeIDs ?? []);
                 if ($configuredVolumes !== [] && !in_array((int) $asset->volumeId, $configuredVolumes, true)) {
                     return;
                 }
 
+                Craft::info('Asset after save event triggered: ' . $asset->id . ' - kind: ' . $asset->kind . ' - volumeId: ' . $asset->volumeId, 'alt-pilot');
+
                 $this->databaseService->insertSingleAsset(Craft::$app->getDb(), $asset);
 
-
+                $this->queueService->safelyCreateJob($asset);
             }
         );
 
