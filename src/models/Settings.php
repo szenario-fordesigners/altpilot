@@ -13,7 +13,13 @@ class Settings extends Model
     public $openAiApiKey = '';
     public $openAiModel = 'gpt-5-nano';
 
-    public $openAiPrompt = 'Describe the image provided, make it suitable for an alt text description (roughly 150 characters maximum). Consider transparency within the image if supported by the file type, e.g. don\'t suggest it has a dark background if it is transparent. Do not add a prefix of any kind (e.g. alt text: AI content) so the value is suitable for the alt text attribute value of the image. When describing a person do not assume their gender. Output in {site.language}';
+    public $openAiPrompt = 'You are an expert in semantic image analysis for web accessibility.
+1. Describe the primary subject, specific action, and setting efficiently.
+2. Use precise nouns (e.g., "Persian cat" instead of "cat").
+3. Include visible text ONLY if it is prominent and essential to the meaning of the image.
+4. Strictly limit the output to a maximum of 150 characters.
+5. Return ONLY the raw description string. No filler.
+6. Output in {{ craft.app.i18n.getLocaleById(craft.app.language).displayName }}';
 
     public $averageTokenCount = 5000;
 
