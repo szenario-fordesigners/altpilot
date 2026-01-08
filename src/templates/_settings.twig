@@ -4,13 +4,20 @@
 {% import '_includes/forms.twig' as forms %}
 
 	<div class="pane" style="background-color: var(--yellow-050); border-color: var(--yellow-300);"> <p class="warning with-icon">
-		This plugin relies on Craft's queue system to process alt text generation. For production
-																environments, we strongly recommend using a CRON-based or daemonized queue runner instead of
-																the default HTTP-triggered queue. See the
+		This plugin relies on Craft's queue system to process alt text generation. For production environments, we strongly recommend using a CRON-based or daemonized queue runner instead of the default HTTP-triggered queue. See the
 		<a href="https://craftcms.com/docs/5.x/system/queue.html#queue-runners" target="_blank" rel="noopener">
 			Craft queue documentation
 		</a>
 		for setup instructions.
+	</p>
+
+</div>
+
+<div class="pane" style="background-color: var(--blue-050); border-color: var(--blue-300);">
+	<p class="notice with-icon">
+		You can also manage alt text generation via console commands. Enter
+		<code>php craft alt-pilot</code>
+		to see the available commands.
 	</p>
 </div>
 
@@ -94,4 +101,4 @@
 	instructions: "The average duration of a request in seconds."|t("aialttext"),
 	value: settings.averageRequestDuration,
 	errors: settings.getErrors('averageRequestDuration'),
-}) }}
+}) }}</p>
