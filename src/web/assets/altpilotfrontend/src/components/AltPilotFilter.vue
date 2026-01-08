@@ -3,9 +3,10 @@ import { ref, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 import { useAssets } from '@/composables/useAssets';
 
-const { sort, fetchAssets, query } = useAssets();
+const { sort, fetchAssets, query, filter } = useAssets();
 
 const searchQuery = ref(query.value || '');
+// filter is now handled by useAssets
 
 const debouncedSearch = useDebounceFn((val: string) => {
   query.value = val;
@@ -15,6 +16,17 @@ const debouncedSearch = useDebounceFn((val: string) => {
 watch(searchQuery, (newVal) => {
   debouncedSearch(newVal);
 });
+
+const filterOptions = [
+  { value: 'all', label: 'All' },
+  { value: 'missing', label: 'Missing' },
+];
+
+const setFilter = (value: string) => {
+  if (filter.value === value) return;
+  filter.value = value;
+  fetchAssets({ offset: 0 });
+};
 
 const sortOptions = [
   { value: 'dateUpdated', label: 'Last edited' },
@@ -32,7 +44,20 @@ const setSort = (value: string) => {
 
 <template>
   <div class="my-4 grid grid-cols-4 gap-4">
-    <div>filter</div>
+    <div>
+      <h3 class="mb-1">Filter</h3>
+      <ul class="space-y-0">
+        <li v-for="option in filterOptions" :key="option.value">
+          <button
+            @click="setFilter(option.value)"
+            class="w-full text-left text-sm"
+            :class="filter === option.value ? 'underline' : ''"
+          >
+            {{ option.label }}
+          </button>
+        </li>
+      </ul>
+    </div>
     <div class="flex flex-col items-start">
       <h3 class="mb-1">Sorting</h3>
       <ul class="space-y-0">

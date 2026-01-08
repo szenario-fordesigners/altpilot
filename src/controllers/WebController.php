@@ -6,9 +6,10 @@ use Craft;
 use craft\web\Controller;
 use craft\elements\Asset;
 use szenario\craftaltpilot\behaviors\AltPilotMetadata;
-use craft\db\Query;
+use szenario\craftaltpilot\services\DatabaseService;
 use yii\web\Response;
 use szenario\craftaltpilot\AltPilot;
+use yii\db\Query;
 
 /**
  * Alt Pilot Web controller
@@ -334,8 +335,8 @@ class WebController extends Controller
         }
 
         $sortParam = $this->request->getQueryParam('sort', 'dateCreated');
-
         $queryParam = $this->request->getQueryParam('query');
+        $filterParam = $this->request->getQueryParam('filter', 'all');
 
         switch ($sortParam) {
             case 'dateUpdated':
@@ -357,6 +358,28 @@ class WebController extends Controller
             ->kind('image')
             ->siteId('*')
             ->orderBy($orderBy);
+
+        if ($filterParam === 'missing') {
+            $uniqueAssetQuery->andWhere([
+                'or',
+                [
+                    'exists',
+                    (new Query())
+                        ->select('assetId')
+                        ->from(DatabaseService::TABLE_NAME)
+                        ->where('[[assetId]] = [[elements.id]]')
+                        ->andWhere(['status' => AltPilotMetadata::STATUS_MISSING])
+                ],
+                [
+                    'not exists',
+                    (new Query())
+                        ->select('assetId')
+                        ->from(DatabaseService::TABLE_NAME)
+                        ->where('[[assetId]] = [[elements.id]]')
+                ]
+            ]);
+        }
+
 
         if (!empty($volumeIds)) {
             $uniqueAssetQuery->volumeId($volumeIds);

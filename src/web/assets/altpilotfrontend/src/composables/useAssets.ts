@@ -8,6 +8,7 @@ type FetchAssetsOptions = {
   offset?: number;
   sort?: string;
   query?: string;
+  filter?: string;
 };
 
 type PaginationInfo = {
@@ -28,6 +29,7 @@ type UseAssetsOptions = {
   defaultOffset?: number;
   defaultSort?: string;
   defaultQuery?: string;
+  defaultFilter?: string;
 };
 
 const useAssetsState = createGlobalState(() => {
@@ -40,8 +42,15 @@ const useAssetsState = createGlobalState(() => {
   const defaultOffset = ref(0);
   const defaultSort = ref('dateCreated');
   const defaultQuery = ref('');
+  const defaultFilter = ref('all');
 
-  const setDefaults = (limit?: number, offset?: number, sort?: string, query?: string) => {
+  const setDefaults = (
+    limit?: number,
+    offset?: number,
+    sort?: string,
+    query?: string,
+    filter?: string,
+  ) => {
     if (typeof limit === 'number') {
       defaultLimit.value = limit;
     }
@@ -54,6 +63,9 @@ const useAssetsState = createGlobalState(() => {
     if (typeof query === 'string') {
       defaultQuery.value = query;
     }
+    if (typeof filter === 'string') {
+      defaultFilter.value = filter;
+    }
   };
 
   const fetchAssets = async (options: FetchAssetsOptions = {}) => {
@@ -61,13 +73,14 @@ const useAssetsState = createGlobalState(() => {
     const offset = options.offset ?? defaultOffset.value;
     const sort = options.sort ?? defaultSort.value;
     const query = options.query ?? defaultQuery.value;
+    const filter = options.filter ?? defaultFilter.value;
 
     loading.value = true;
     error.value = null;
 
     try {
       const { data } = await apiClient.get<AssetsResponse>(
-        `/actions/alt-pilot/web/get-all-assets?limit=${limit}&offset=${offset}&sort=${sort}&query=${encodeURIComponent(
+        `/actions/alt-pilot/web/get-all-assets?limit=${limit}&offset=${offset}&sort=${sort}&filter=${filter}&query=${encodeURIComponent(
           query,
         )}&siteId=all`,
       );
@@ -109,6 +122,7 @@ const useAssetsState = createGlobalState(() => {
     pagination,
     sort: defaultSort,
     query: defaultQuery,
+    filter: defaultFilter,
     fetchAssets,
     setDefaults,
     replaceAsset,
@@ -123,6 +137,7 @@ export function useAssets(options?: UseAssetsOptions) {
       options.defaultOffset,
       options.defaultSort,
       options.defaultQuery,
+      options.defaultFilter,
     );
   }
   return state;
