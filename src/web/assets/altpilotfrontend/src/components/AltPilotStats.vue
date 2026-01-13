@@ -1,10 +1,15 @@
 <script setup lang="ts">
+import { useIntervalFn } from '@vueuse/core';
 import AltPilotLogo from '@/components/AltPilotLogo.vue';
 import AltPilotStatsItem from '@/components/AltPilotStatsItem.vue';
 import { useStatusCounts } from '@/composables/useStatusCounts';
 import { assetStatus } from '@/utils/assetStatus';
 
-const { total, missingCount, aiGeneratedCount, manualCount } = useStatusCounts();
+const { total, missingCount, aiGeneratedCount, manualCount, fetchStatusCounts } = useStatusCounts();
+
+useIntervalFn(() => {
+  fetchStatusCounts();
+}, 60000);
 </script>
 
 <template>

@@ -1,6 +1,7 @@
 import { createGlobalState, useIntervalFn } from '@vueuse/core';
 import { reactive, ref, watch } from 'vue';
 import { useAssets } from '@/composables/useAssets';
+import { useStatusCounts } from '@/composables/useStatusCounts';
 import { useGlobalState } from '@/composables/useGlobalState';
 import { useToasts } from '@/composables/useToasts';
 import type { Asset } from '@/types/Asset';
@@ -63,6 +64,7 @@ export const useGenerationTracker = createGlobalState(() => {
   const lastError = ref<string | null>(null);
   const { csrfToken } = useGlobalState();
   const { replaceAsset } = useAssets();
+  const { fetchStatusCounts } = useStatusCounts();
   const { toast } = useToasts();
 
   const pollQueue = async () => {
@@ -108,6 +110,8 @@ export const useGenerationTracker = createGlobalState(() => {
             description: message,
             type: 'foreground',
           });
+
+          fetchStatusCounts();
 
           if (existing) {
             existing.status = 'finished';

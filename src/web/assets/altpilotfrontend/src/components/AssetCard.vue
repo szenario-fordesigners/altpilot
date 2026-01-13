@@ -119,7 +119,7 @@ const handleCancelOverwrite = () => {
       >
     </div>
 
-    <div class="flex p-3">
+    <div class="flex w-full p-3">
       <div v-for="site in sites" :key="site.id" class="mb-4 flex w-full">
         <div class="flex w-full justify-between border-b">
           <div class="text-ap-periwinkle uppercase">
