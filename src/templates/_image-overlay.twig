@@ -1,0 +1,78 @@
+<div id="craft-alt-checker-overlay" style="display: none; position: fixed; z-index: 2147483647; pointer-events: none;">
+	<div style="background: rgba(0,0,0,0.9); backdrop-filter: blur(4px); color: white; padding: 6px 10px; border-radius: 4px; font-family: system-ui, sans-serif; font-size: 12px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+		<span id="craft-alt-text-display" style="font-style: italic; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #eee;"></span>
+		<a id="craft-alt-edit-btn" href="#" target="_blank" style="pointer-events: auto; background: #d0021b; color: white; text-decoration: none; padding: 4px 8px; border-radius: 3px; font-weight: bold; font-size: 11px; white-space: nowrap;">
+			Edit
+		</a>
+	</div>
+</div>
+
+<script>
+	(function () {
+const overlay = document.getElementById('craft-alt-checker-overlay');
+const txt = document.getElementById('craft-alt-text-display');
+const btn = document.getElementById('craft-alt-edit-btn');
+let activeImg = null;
+const warnIcon = String.fromCodePoint(0x26A0);
+const editIcon = String.fromCodePoint(0x270E);
+const searchIcon = String.fromCodePoint(0x1F50D);
+
+// Find all tagged images
+const images = document.querySelectorAll('img[data-cp-check-enabled="true"]');
+
+images.forEach(img => {
+img.addEventListener('mouseenter', (e) => {
+activeImg = img;
+updateOverlay(img);
+});
+
+img.addEventListener('mouseleave', (e) => {
+// Slight delay to allow moving mouse to the edit button if it overlaps?
+// Actually, since we position the overlay ON the image, we just hide when leaving the image
+// BUT we need to be careful if the overlay covers the mouse.
+// Simplified: Hide immediately.
+overlay.style.display = 'none';
+activeImg = null;
+});
+});
+
+// Keep overlay visible if we hover over the overlay itself (if needed)
+overlay.addEventListener('mouseenter', () => overlay.style.display = 'block');
+overlay.addEventListener('mouseleave', () => overlay.style.display = 'none');
+
+function updateOverlay(img) {
+const url = img.getAttribute('data-cp-edit-url');
+const type = img.getAttribute('data-cp-edit-type'); // direct vs search
+const alt = img.getAttribute('data-cp-alt-text');
+
+// Update Text
+if (! alt) {
+txt.innerText = warnIcon + ' EMPTY ALT';
+txt.style.color = '#ff4d4d';
+} else {
+txt.innerText = 'ALT: ' + alt;
+txt.style.color = '#eee';
+}
+
+// Update Button
+btn.href = url;
+btn.innerText = (type === 'direct') ? (editIcon + ' Edit') : (searchIcon + ' Search');
+
+// Position Overlay
+const rect = img.getBoundingClientRect();
+
+// Show it
+overlay.style.display = 'block';
+const overlayRect = overlay.getBoundingClientRect();
+
+// Place overlay in the bottom-right corner of the image
+// Use a small inset to avoid touching edges
+const inset = 6;
+const top = rect.bottom - overlayRect.height - inset;
+const left = rect.right - overlayRect.width - inset;
+
+overlay.style.top = top + 'px';
+overlay.style.left = left + 'px';
+}
+})();
+</script>

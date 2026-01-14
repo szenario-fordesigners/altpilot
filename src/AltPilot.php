@@ -15,6 +15,7 @@ use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterCpNavItemsEvent;
 use craft\events\RegisterElementActionsEvent;
+use craft\events\RegisterElementSearchableAttributesEvent;
 use craft\events\VolumeEvent;
 use craft\helpers\App;
 use craft\helpers\Json;
@@ -31,6 +32,7 @@ use szenario\craftaltpilot\models\Settings;
 use szenario\craftaltpilot\services\AltPilotService;
 use szenario\craftaltpilot\services\AltTextGenerator;
 use szenario\craftaltpilot\services\DatabaseService;
+use szenario\craftaltpilot\services\ImageReverseLookupService;
 use szenario\craftaltpilot\services\ImageUtilityService;
 use szenario\craftaltpilot\services\OpenAiErrorService;
 use szenario\craftaltpilot\services\OpenAiService;
@@ -39,7 +41,8 @@ use szenario\craftaltpilot\services\StatusService;
 use szenario\craftaltpilot\services\UrlReachabilityChecker;
 use szenario\craftaltpilot\widgets\AltPilotWidget;
 use yii\base\Event;
-use craft\events\RegisterElementSearchableAttributesEvent;
+use craft\web\View;
+use craft\events\TemplateEvent;
 
 /**
  * AltPilot plugin
@@ -58,6 +61,7 @@ use craft\events\RegisterElementSearchableAttributesEvent;
  * @property-read AltTextGenerator $altTextGenerator
  * @property-read DatabaseService $databaseService
  * @property-read StatusService $statusService
+ * @property-read ImageReverseLookupService $imageReverseLookupService
  */
 class AltPilot extends Plugin
 {
@@ -79,6 +83,7 @@ class AltPilot extends Plugin
                 'altTextGenerator' => AltTextGenerator::class,
                 'databaseService' => DatabaseService::class,
                 'statusService' => StatusService::class,
+                'imageReverseLookupService' => ImageReverseLookupService::class,
             ],
         ];
     }
@@ -381,6 +386,16 @@ class AltPilot extends Plugin
             Asset::EVENT_REGISTER_SEARCHABLE_ATTRIBUTES,
             function (RegisterElementSearchableAttributesEvent $e) {
                 $e->attributes[] = 'alt';
+            }
+        );
+
+
+        // register alt text preview in the frontend
+        Event::on(
+            View::class,
+            View::EVENT_AFTER_RENDER_PAGE_TEMPLATE,
+            function (TemplateEvent $event) {
+                $this->imageReverseLookupService->getImageControlPanelUrl($event);
             }
         );
     }
