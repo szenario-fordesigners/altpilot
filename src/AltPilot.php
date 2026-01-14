@@ -18,6 +18,7 @@ use craft\events\RegisterElementActionsEvent;
 use craft\events\VolumeEvent;
 use craft\helpers\App;
 use craft\helpers\Json;
+use craft\helpers\UrlHelper;
 use craft\log\MonologTarget;
 use craft\services\Dashboard;
 use craft\services\Plugins;
@@ -121,6 +122,12 @@ class AltPilot extends Plugin
             $this->databaseService->initializeDatabase();
         } catch (\Throwable $exception) {
             Craft::error('AltPilot database initialization failed: ' . $exception->getMessage(), 'alt-pilot');
+        }
+
+        // Redirect to the control panel settings page if we're in a web context
+        if (Craft::$app->getRequest()->getIsConsoleRequest() === false && Craft::$app->getRequest()->getIsCpRequest()) {
+            $settingsUrl = UrlHelper::cpUrl('settings/plugins/' . $this->handle);
+            Craft::$app->getResponse()->redirect($settingsUrl)->send();
         }
     }
 
@@ -311,9 +318,17 @@ class AltPilot extends Plugin
 
                 Craft::info('Asset after save event triggered: ' . $asset->id . ' - kind: ' . $asset->kind . ' - volumeId: ' . $asset->volumeId, 'alt-pilot');
 
-                $this->databaseService->insertSingleAsset(Craft::$app->getDb(), $asset);
+                // Iterate over all sites and enqueue jobs for each
+                // This ensures we cover all languages even if propagation hasn't finished yet
+                $sites = Craft::$app->getSites()->getAllSites();
 
-                $this->queueService->safelyCreateJob($asset);
+                foreach ($sites as $site) {
+                    $siteAsset = clone $asset;
+                    $siteAsset->siteId = $site->id;
+
+                    $this->databaseService->insertSingleAsset(Craft::$app->getDb(), $siteAsset);
+                    $this->queueService->safelyCreateJob($siteAsset);
+                }
             }
         );
 

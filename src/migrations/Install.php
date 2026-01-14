@@ -80,13 +80,6 @@ class Install extends Migration
             'CASCADE'
         );
 
-
-        // redirect to the control panel settings page
-
-        // Craft::info('Initializing AltPilot metadata table...', 'alt-pilot');
-        // AltPilot::getInstance()->databaseService->initializeDatabase();
-        // Craft::info('AltPilot metadata table initialized.', 'alt-pilot');
-
         return true;
     }
 
