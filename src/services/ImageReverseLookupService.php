@@ -55,7 +55,7 @@ class ImageReverseLookupService extends Component
                 $result = $lookupCache[$cacheKey];
             } else {
                 // Run the lookup logic
-                $result = $this->resolveAssetUrl($filename, $currentAlt);
+                $result = $this->resolveAssetUrl($filename, $currentAlt, $src);
                 $lookupCache[$cacheKey] = $result;
             }
 
@@ -142,7 +142,7 @@ class ImageReverseLookupService extends Component
         );
     }
 
-    private function resolveAssetUrl($filename, $altText)
+    private function resolveAssetUrl($filename, $altText, $src = null)
     {
         // A. Try Exact Filename Match
         $candidates = Asset::find()->filename($filename)->all();
@@ -168,8 +168,30 @@ class ImageReverseLookupService extends Component
             // Perfect: Only one file exists with this name.
             $targetAssetId = $candidates[0]->id;
         } elseif (count($candidates) > 1) {
-            // Ambiguous: Multiple files. Try to filter by Alt Text.
-            if (!empty($altText)) {
+            // Ambiguous: Multiple files.
+            // 1) Try to disambiguate by matching the asset URL path to the img src path
+            if ($src) {
+                $srcPath = parse_url($src, PHP_URL_PATH);
+                $pathMatches = array_filter($candidates, function ($asset) use ($srcPath) {
+                    try {
+                        $assetUrl = $asset->getUrl();
+                        if (!$assetUrl) {
+                            return false;
+                        }
+                        $assetPath = parse_url($assetUrl, PHP_URL_PATH);
+                        return $assetPath === $srcPath;
+                    } catch (\Throwable $e) {
+                        return false;
+                    }
+                });
+
+                if (count($pathMatches) === 1) {
+                    $targetAssetId = reset($pathMatches)->id;
+                }
+            }
+
+            // 2) If still ambiguous, try to filter by Alt Text.
+            if (!$targetAssetId && !empty($altText)) {
                 $filtered = array_filter($candidates, function ($asset) use ($altText) {
                     return trim($asset->alt) === trim($altText);
                 });
