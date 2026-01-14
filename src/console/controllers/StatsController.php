@@ -18,9 +18,6 @@ class StatsController extends Controller
      */
     public function actionIndex(): int
     {
-        $this->stdout("Updating statistics...\n");
-        AltPilot::getInstance()->databaseService->initializeDatabase();
-
         $statusService = AltPilot::getInstance()->statusService;
         $queueService = AltPilot::getInstance()->queueService;
 
@@ -31,9 +28,9 @@ class StatsController extends Controller
         $this->stdout("Total Assets in Metadata: " . $counts['total'] . "\n");
         foreach ($counts['counts'] as $status => $count) {
             $label = match ($status) {
-                AltPilotMetadata::STATUS_MISSING => 'Missing',
                 AltPilotMetadata::STATUS_AI_GENERATED => 'AI Generated',
                 AltPilotMetadata::STATUS_MANUAL => 'Manual',
+                AltPilotMetadata::STATUS_MISSING => 'Missing',
                 default => 'Unknown',
             };
             $this->stdout("  - $label: $count\n");
