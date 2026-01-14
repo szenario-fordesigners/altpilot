@@ -66,6 +66,7 @@ class AltPilotMetadata extends Behavior
      */
     public function setStatus(int $value): void
     {
+        Craft::info("AltPilotMetadata: setStatus called with value $value", 'alt-pilot');
         $this->_status = $value;
         $this->_loaded = true;
         $this->_statusExplicitlySet = true;
@@ -77,6 +78,7 @@ class AltPilotMetadata extends Behavior
     public function beforeSave(ModelEvent $event): void
     {
         $asset = $this->owner;
+        Craft::info("AltPilotMetadata: beforeSave for asset " . $asset->id, 'alt-pilot');
 
         if (!$asset instanceof Asset) {
             return;
@@ -84,16 +86,19 @@ class AltPilotMetadata extends Behavior
 
         // If status was explicitly set, don't overwrite it
         if ($this->_statusExplicitlySet) {
+            Craft::info("AltPilotMetadata: Status explicitly set to " . $this->_status . ", skipping auto-detection", 'alt-pilot');
             return;
         }
 
         // If alt text changed, update status automatically
         if ($asset->isAttributeDirty('alt')) {
             $altText = $asset->alt;
+            Craft::info("AltPilotMetadata: Alt text dirty. New value: '$altText'", 'alt-pilot');
             $status = ($altText === null || trim($altText) === '')
                 ? self::STATUS_MISSING
                 : self::STATUS_MANUAL;
 
+            Craft::info("AltPilotMetadata: Auto-setting status to $status", 'alt-pilot');
             $this->setStatus($status);
         }
     }
@@ -104,12 +109,15 @@ class AltPilotMetadata extends Behavior
     public function afterSave(ModelEvent $event): void
     {
         $asset = $this->owner;
+        Craft::info("AltPilotMetadata: afterSave for asset " . $asset->id, 'alt-pilot');
 
         if (!$asset instanceof Asset || !$asset->id || !$asset->siteId) {
             return;
         }
 
-        $status = $this->_status ?? self::STATUS_MISSING;
+        $status = $this->getStatus();
+        Craft::info("AltPilotMetadata: Persisting status $status to DB", 'alt-pilot');
+
         AltPilot::getInstance()
             ->databaseService
             ->insertSingleAsset(Craft::$app->getDb(), $asset, $status);
