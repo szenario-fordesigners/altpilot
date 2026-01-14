@@ -21,6 +21,14 @@ const { cpTrigger, csrfToken, sites, primarySiteId, hasSelectedVolumes } = defin
 }>();
 
 const state = useGlobalState();
+const { fetchAssets, query } = useAssets();
+
+// Check for query param in URL (e.g. from deep link)
+const urlParams = new URLSearchParams(window.location.search);
+const queryParam = urlParams.get('query');
+if (queryParam) {
+  query.value = queryParam;
+}
 
 // set the csrf token and cp trigger in the global state
 state.csrfToken.value = csrfToken;
@@ -30,7 +38,7 @@ state.primarySiteId.value = primarySiteId;
 state.hasSelectedVolumes.value = hasSelectedVolumes;
 
 const ASSET_CARD_LIMIT = 30;
-const { assets, assetIds, loading, pagination, fetchAssets } = useAssets({
+const { assets, assetIds, loading, pagination } = useAssets({
   defaultLimit: ASSET_CARD_LIMIT,
 });
 const { fetchStatusCounts } = useStatusCounts();

@@ -388,7 +388,11 @@ class WebController extends Controller
         }
 
         if ($queryParam !== null && $queryParam !== '') {
-            $uniqueAssetQuery->search($queryParam);
+            if (preg_match('/^id:(\d+)$/', $queryParam, $matches)) {
+                $uniqueAssetQuery->id($matches[1]);
+            } else {
+                $uniqueAssetQuery->search($queryParam);
+            }
             // Fetch all IDs first to manually deduplicate, avoiding unique() search bug
             $allIds = $uniqueAssetQuery->ids();
             $uniqueIds = array_values(array_unique(array_map('intval', $allIds)));

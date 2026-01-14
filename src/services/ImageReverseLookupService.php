@@ -214,7 +214,7 @@ class ImageReverseLookupService extends Component
             $assetAlt = $asset ? (string) $asset->alt : null;
             return [
                 'type' => 'direct',
-                'url' => UrlHelper::cpUrl('assets/edit/' . $targetAssetId),
+                'url' => UrlHelper::cpUrl('alt-pilot', ['query' => 'id:' . $targetAssetId]),
                 'alt' => $assetAlt,
             ];
         } else {
