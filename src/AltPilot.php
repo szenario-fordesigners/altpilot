@@ -26,6 +26,8 @@ use craft\services\Plugins;
 use craft\services\Sites;
 use craft\services\Volumes;
 use craft\web\twig\variables\Cp;
+use craft\events\RegisterUserPermissionsEvent;
+use craft\services\UserPermissions;
 use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 use szenario\craftaltpilot\elements\actions\GenerateAltPilotElementAction;
 use szenario\craftaltpilot\models\Settings;
@@ -307,6 +309,10 @@ class AltPilot extends Plugin
                     return;
                 }
 
+                if (!Craft::$app->getRequest()->getIsConsoleRequest() && !Craft::$app->getUser()->checkPermission('accessAltPilot')) {
+                    return;
+                }
+
                 Craft::info('Asset after save event triggered', 'alt-pilot');
 
                 $asset = $event->sender;
@@ -360,6 +366,9 @@ class AltPilot extends Plugin
             Asset::class,
             Asset::EVENT_REGISTER_ACTIONS,
             function (RegisterElementActionsEvent $event) {
+                if (!Craft::$app->getUser()->checkPermission('accessAltPilot')) {
+                    return;
+                }
                 $event->actions[] = GenerateAltPilotElementAction::class;
             }
         );
@@ -369,6 +378,10 @@ class AltPilot extends Plugin
             Cp::class,
             Cp::EVENT_REGISTER_CP_NAV_ITEMS,
             function (RegisterCpNavItemsEvent $event) {
+                if (!Craft::$app->getUser()->checkPermission('accessAltPilot')) {
+                    return;
+                }
+
                 $event->navItems[] = [
                     'url' => 'alt-pilot',
                     'label' => 'AltPilot',
@@ -389,6 +402,19 @@ class AltPilot extends Plugin
             }
         );
 
+
+        // register user permissions
+        Event::on(
+            UserPermissions::class,
+            UserPermissions::EVENT_REGISTER_PERMISSIONS,
+            function (RegisterUserPermissionsEvent $event) {
+                $event->permissions['AltPilot'] = [
+                    'accessAltPilot' => [
+                        'label' => 'Access AltPilot',
+                    ],
+                ];
+            }
+        );
 
         // register alt text preview in the frontend
         Event::on(

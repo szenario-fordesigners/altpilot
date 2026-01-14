@@ -7,6 +7,7 @@ use craft\web\Controller;
 use craft\elements\Asset;
 use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 use szenario\craftaltpilot\services\DatabaseService;
+use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 use szenario\craftaltpilot\AltPilot;
 use yii\db\Query;
@@ -18,6 +19,19 @@ class WebController extends Controller
 {
     public $defaultAction = 'queue';
     protected array|int|bool $allowAnonymous = self::ALLOW_ANONYMOUS_NEVER;
+
+    public function beforeAction($action): bool
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+
+        if (!Craft::$app->getUser()->checkPermission('accessAltPilot')) {
+            throw new ForbiddenHttpException('User is not permitted to perform this action');
+        }
+
+        return true;
+    }
 
     /**
      * alt-pilot/alt-pilot-web action

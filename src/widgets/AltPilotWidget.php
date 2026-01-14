@@ -37,6 +37,9 @@ class AltPilotWidget extends Widget
 
     public function getBodyHtml(): ?string
     {
+        if (!Craft::$app->getUser()->checkPermission('accessAltPilot')) {
+            return '';
+        }
 
         Craft::$app->getView()->registerAssetBundle(AltPilotWidgetAsset::class);
 
