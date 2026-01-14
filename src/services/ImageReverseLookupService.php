@@ -16,7 +16,7 @@ use craft\web\View;
  */
 class ImageReverseLookupService extends Component
 {
-    public function getImageControlPanelUrl(TemplateEvent $event)
+    public function handleImageOverlay(TemplateEvent $event)
     {
         if (!$this->shouldShow()) {
             return null;

@@ -21,6 +21,8 @@ class Settings extends Model
 5. Return ONLY the raw description string. No filler.
 6. Output in {{ craft.app.i18n.getLocaleById(craft.app.language).displayName }}';
 
+    public $showImageOverlay = true;
+
     public $averageTokenCount = 5000;
 
     public $averageRequestDuration = 30;

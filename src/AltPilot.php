@@ -395,7 +395,11 @@ class AltPilot extends Plugin
             View::class,
             View::EVENT_AFTER_RENDER_PAGE_TEMPLATE,
             function (TemplateEvent $event) {
-                $this->imageReverseLookupService->getImageControlPanelUrl($event);
+                if (!$this->getSettings()->showImageOverlay) {
+                    return;
+                }
+
+                $this->imageReverseLookupService->handleImageOverlay($event);
             }
         );
     }
