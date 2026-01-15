@@ -11,7 +11,7 @@ const searchQuery = ref(query.value || '');
 const debouncedSearch = useDebounceFn((val: string) => {
   query.value = val;
   fetchAssets({ offset: 0 });
-}, 500);
+}, 400);
 
 watch(searchQuery, (newVal) => {
   debouncedSearch(newVal);
@@ -39,6 +39,10 @@ const setSort = (value: string) => {
   sort.value = value;
   // Reset pagination to page 1 (offset 0) when sorting changes
   fetchAssets({ offset: 0 });
+};
+
+const clearSearch = () => {
+  searchQuery.value = '';
 };
 </script>
 
@@ -96,8 +100,31 @@ const setSort = (value: string) => {
           v-model="searchQuery"
           type="text"
           placeholder="Search..."
-          class="block w-full rounded-xl border border-black p-4 pl-10 focus:outline-none"
+          class="block w-full rounded-xl border border-black p-4 pr-10 pl-10 focus:outline-none"
         />
+        <button
+          v-if="searchQuery"
+          @click="clearSearch"
+          type="button"
+          class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+          aria-label="Clear search"
+        >
+          <svg
+            class="h-5 w-5"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 14 14"
+          >
+            <path
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+            />
+          </svg>
+        </button>
       </div>
     </div>
   </div>
