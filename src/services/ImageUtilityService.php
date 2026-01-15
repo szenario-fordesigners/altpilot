@@ -79,7 +79,7 @@ class ImageUtilityService extends Component
             return null;
         }
 
-        $maxSize = 1500;
+        $maxSize = 1024;
 
         // Check if image exceeds max size on either side
         if ($width <= $maxSize && $height <= $maxSize) {
