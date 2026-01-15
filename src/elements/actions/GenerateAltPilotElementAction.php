@@ -39,7 +39,7 @@ class GenerateAltPilotElementAction extends ElementAction
 
     public function performAction(Craft\elements\db\ElementQueryInterface $query): bool
     {
-        if (!Craft::$app->getUser()->checkPermission('accessAltPilot')) {
+        if (!Craft::$app->getUser()->checkPermission('accessPlugin-alt-pilot')) {
             $this->setMessage(Craft::t('alt-pilot', 'You do not have permission to use AltPilot.'));
             return false;
         }

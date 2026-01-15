@@ -37,7 +37,7 @@ class AltPilotWidget extends Widget
 
     public function getBodyHtml(): ?string
     {
-        if (!Craft::$app->getUser()->checkPermission('accessAltPilot')) {
+        if (!Craft::$app->getUser()->checkPermission('accessPlugin-alt-pilot')) {
             return '';
         }
 

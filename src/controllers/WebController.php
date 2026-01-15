@@ -26,7 +26,7 @@ class WebController extends Controller
             return false;
         }
 
-        if (!Craft::$app->getUser()->checkPermission('accessAltPilot')) {
+        if (!Craft::$app->getUser()->checkPermission('accessPlugin-alt-pilot')) {
             throw new ForbiddenHttpException('User is not permitted to perform this action');
         }
 

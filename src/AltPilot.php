@@ -26,8 +26,6 @@ use craft\services\Plugins;
 use craft\services\Sites;
 use craft\services\Volumes;
 use craft\web\twig\variables\Cp;
-use craft\events\RegisterUserPermissionsEvent;
-use craft\services\UserPermissions;
 use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 use szenario\craftaltpilot\elements\actions\GenerateAltPilotElementAction;
 use szenario\craftaltpilot\models\Settings;
@@ -69,6 +67,7 @@ class AltPilot extends Plugin
 {
     public string $schemaVersion = '1.0.0';
     public bool $hasCpSettings = true;
+    public bool $hasCpSection = true;
     private array $_previousSettingsSnapshot = [];
     private bool $_hasStoredSettingsSnapshot = false;
 
@@ -309,7 +308,7 @@ class AltPilot extends Plugin
                     return;
                 }
 
-                if (!Craft::$app->getRequest()->getIsConsoleRequest() && !Craft::$app->getUser()->checkPermission('accessAltPilot')) {
+                if (!Craft::$app->getRequest()->getIsConsoleRequest() && !Craft::$app->getUser()->checkPermission('accessPlugin-alt-pilot')) {
                     return;
                 }
 
@@ -366,29 +365,13 @@ class AltPilot extends Plugin
             Asset::class,
             Asset::EVENT_REGISTER_ACTIONS,
             function (RegisterElementActionsEvent $event) {
-                if (!Craft::$app->getUser()->checkPermission('accessAltPilot')) {
+                if (!Craft::$app->getUser()->checkPermission('accessPlugin-alt-pilot')) {
                     return;
                 }
                 $event->actions[] = GenerateAltPilotElementAction::class;
             }
         );
 
-        // register control panel section
-        Event::on(
-            Cp::class,
-            Cp::EVENT_REGISTER_CP_NAV_ITEMS,
-            function (RegisterCpNavItemsEvent $event) {
-                if (!Craft::$app->getUser()->checkPermission('accessAltPilot')) {
-                    return;
-                }
-
-                $event->navItems[] = [
-                    'url' => 'alt-pilot',
-                    'label' => 'AltPilot',
-                    'icon' => '@mynamespace/path/to/icon.svg',
-                ];
-            }
-        );
         Event::on(Dashboard::class, Dashboard::EVENT_REGISTER_WIDGET_TYPES, function (RegisterComponentTypesEvent $event) {
             $event->types[] = AltPilotWidget::class;
         });
@@ -403,25 +386,16 @@ class AltPilot extends Plugin
         );
 
 
-        // register user permissions
-        Event::on(
-            UserPermissions::class,
-            UserPermissions::EVENT_REGISTER_PERMISSIONS,
-            function (RegisterUserPermissionsEvent $event) {
-                $event->permissions['AltPilot'] = [
-                    'accessAltPilot' => [
-                        'label' => 'Access AltPilot',
-                    ],
-                ];
-            }
-        );
-
         // register alt text preview in the frontend
         Event::on(
             View::class,
             View::EVENT_AFTER_RENDER_PAGE_TEMPLATE,
             function (TemplateEvent $event) {
                 if (!$this->getSettings()->showImageOverlay) {
+                    return;
+                }
+
+                if (!Craft::$app->getUser()->checkPermission('accessPlugin-alt-pilot')) {
                     return;
                 }
 
