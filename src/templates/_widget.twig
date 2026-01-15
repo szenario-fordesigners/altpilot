@@ -21,7 +21,7 @@
 			alt-texts
 		</div>
 		<div class="altpilot-total-count">
-			{{ 8769|number_format(0, ',', '.') }}
+			{{ totalCount|number_format(0, ',', '.') }}
 		</div>
 	</div>
 	<div class="altpilot-flex">
@@ -29,11 +29,11 @@
 			log
 		</div>
 		<div class="altpilot-flex altpilot-log-content">
-			<div>8000</div>
+			<div>{{ aiGeneratedAltTextCount }}</div>
 			<div>AI-generated</div>
-			<div>769</div>
+			<div>{{ manualAltTextCount }}</div>
 			<div>manually</div>
-			<div>5</div>
+			<div>{{ missingAltTextCount }}</div>
 			<div>missing</div>
 		</div>
 	</div>
