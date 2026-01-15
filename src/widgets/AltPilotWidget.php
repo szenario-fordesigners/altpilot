@@ -27,6 +27,11 @@ class AltPilotWidget extends Widget
         return "";
     }
 
+    public static function maxColspan(): ?int
+    {
+        return 2;
+    }
+
     public static function icon(): ?string
     {
         return '<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="alt-pilot-logo-title" viewbox="0 0 612 612" fill="currentColor">

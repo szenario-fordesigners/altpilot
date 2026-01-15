@@ -217,8 +217,29 @@ class AltPilot extends Plugin
 
     private function attachEventHandlers(): void
     {
-        // Register event handlers here ...
-        // (see https://craftcms.com/docs/5.x/extend/events.html to get started)
+        Event::on(
+            Plugins::class,
+            Plugins::EVENT_AFTER_INSTALL_PLUGIN,
+            function (PluginEvent $event) {
+                if ($event->plugin === $this) {
+                    try {
+                        // add widget to dashboard
+                        $widget = Craft::$app->dashboard->createWidget([
+                            'type' => AltPilotWidget::class,
+                            'colspan' => 2,
+                        ]);
+
+                        if (Craft::$app->dashboard->saveWidget($widget)) {
+                            Craft::$app->dashboard->changeWidgetColspan($widget->id, 2);
+                            Craft::info('Widget saved successfully', 'alt-pilot');
+                        }
+                    } catch (\Throwable $e) {
+                        // when installing via CLI, the dashboard is not available and widget install will fail
+                        Craft::warning('Could not save widget: ' . $e->getMessage(), 'alt-pilot');
+                    }
+                }
+            }
+        );
 
         // Attach altPilot behavior to all image assets
         Event::on(
