@@ -10,6 +10,10 @@ const { total, missingCount, aiGeneratedCount, manualCount, fetchStatusCounts } 
 useIntervalFn(() => {
   fetchStatusCounts();
 }, 60000);
+
+const formatNumber = (num: number): string => {
+  return num.toLocaleString('de-DE');
+};
 </script>
 
 <template>
@@ -19,13 +23,13 @@ useIntervalFn(() => {
       <AltPilotLogo class="w-1/2" />
     </div>
 
-    <AltPilotStatsItem label="alt-texts (total)" :content="String(total)" />
+    <AltPilotStatsItem label="alt-texts (total)" :content="formatNumber(total)" />
     <AltPilotStatsItem />
-    <AltPilotStatsItem :label="assetStatus[1]" :content="String(aiGeneratedCount)" />
+    <AltPilotStatsItem :label="assetStatus[1]" :content="formatNumber(aiGeneratedCount)" />
     <AltPilotStatsItem />
-    <AltPilotStatsItem :label="assetStatus[2]" :content="String(manualCount)" />
+    <AltPilotStatsItem :label="assetStatus[2]" :content="formatNumber(manualCount)" />
     <AltPilotStatsItem />
-    <AltPilotStatsItem :label="assetStatus[0]" :content="String(missingCount)" />
+    <AltPilotStatsItem :label="assetStatus[0]" :content="formatNumber(missingCount)" />
     <div class="col-span-1"></div>
   </div>
 </template>
