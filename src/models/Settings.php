@@ -2,7 +2,6 @@
 
 namespace szenario\craftaltpilot\models;
 
-use Craft;
 use craft\base\Model;
 
 /**
@@ -13,7 +12,7 @@ class Settings extends Model
     public $openAiApiKey = '';
     public $openAiModel = 'gpt-5-nano';
 
-    public $openAiPrompt = 'You are an expert in semantic image analysis for web accessibility.
+    public $openAiPrompt = 'You are an expert in semantic image analysis for web accessibility. Your job is to generate alt texts for images.
 1. Describe the primary subject, specific action, and setting efficiently.
 2. Use precise nouns (e.g., "Persian cat" instead of "cat").
 3. Include visible text ONLY if it is prominent and essential to the meaning of the image.
