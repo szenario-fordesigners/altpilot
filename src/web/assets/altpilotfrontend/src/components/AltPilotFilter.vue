@@ -3,7 +3,7 @@ import { ref, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 import { useAssets } from '@/composables/useAssets';
 
-const { sort, fetchAssets, query, filter } = useAssets();
+const { sort, fetchAssets, query, filter, pagination } = useAssets();
 
 const searchQuery = ref(query.value || '');
 // filter is now handled by useAssets
@@ -125,6 +125,9 @@ const clearSearch = () => {
             />
           </svg>
         </button>
+      </div>
+      <div v-if="query && pagination?.total !== undefined" class="mt-2 text-sm text-gray-600">
+        {{ pagination.total }} result{{ pagination.total === 1 ? '' : 's' }} found
       </div>
     </div>
   </div>
