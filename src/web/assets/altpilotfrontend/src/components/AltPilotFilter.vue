@@ -20,6 +20,8 @@ watch(searchQuery, (newVal) => {
 const filterOptions = [
   { value: 'all', label: 'All' },
   { value: 'missing', label: 'Missing' },
+  { value: 'manual', label: 'Manual' },
+  { value: 'ai-generated', label: 'AI Generated' },
 ];
 
 const setFilter = (value: string) => {

@@ -392,6 +392,24 @@ class WebController extends Controller
                         ->where('[[assetId]] = [[elements.id]]')
                 ]
             ]);
+        } elseif ($filterParam === 'manual') {
+            $uniqueAssetQuery->andWhere([
+                'exists',
+                (new Query())
+                    ->select('assetId')
+                    ->from(DatabaseService::TABLE_NAME)
+                    ->where('[[assetId]] = [[elements.id]]')
+                    ->andWhere(['status' => AltPilotMetadata::STATUS_MANUAL])
+            ]);
+        } elseif ($filterParam === 'ai-generated') {
+            $uniqueAssetQuery->andWhere([
+                'exists',
+                (new Query())
+                    ->select('assetId')
+                    ->from(DatabaseService::TABLE_NAME)
+                    ->where('[[assetId]] = [[elements.id]]')
+                    ->andWhere(['status' => AltPilotMetadata::STATUS_AI_GENERATED])
+            ]);
         }
 
 
