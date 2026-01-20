@@ -191,18 +191,35 @@ class OpenAiService extends Component
     }
 
     /**
-     * Prepare the user prompt by rendering any object template expressions
+     * Prepare the user prompt by rendering any object template expressions and prepending context
      */
     private function preparePrompt(string $promptTemplate, ?Asset $asset, ?Site $site): string
     {
         try {
+            $settings = AltPilot::getInstance()->getSettings();
             $objectContext = $asset ?? new \stdClass();
+
+            // Render the main prompt
             $renderedPrompt = Craft::$app->getView()->renderObjectTemplate($promptTemplate, $objectContext, [
                 'asset' => $asset,
                 'site' => $site,
             ]);
 
-            return $renderedPrompt !== '' ? $renderedPrompt : $promptTemplate;
+            $finalPrompt = $renderedPrompt !== '' ? $renderedPrompt : $promptTemplate;
+
+            // Prepend context if provided
+            if (!empty($settings->openAiPromptContext)) {
+                $renderedContext = Craft::$app->getView()->renderObjectTemplate($settings->openAiPromptContext, $objectContext, [
+                    'asset' => $asset,
+                    'site' => $site,
+                ]);
+
+                if (!empty($renderedContext)) {
+                    $finalPrompt = trim($renderedContext) . "\n\n" . $finalPrompt;
+                }
+            }
+
+            return $finalPrompt;
         } catch (Throwable $e) {
             Craft::warning('Failed to render OpenAI prompt template: ' . $e->getMessage(), 'alt-pilot');
             return $promptTemplate;

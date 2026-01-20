@@ -57,6 +57,17 @@
 	errors: settings.getErrors('openAiPrompt'),
 }) }}
 
+{{ forms.textareaField({
+	label: 'Prompt Context'|t('app'),
+	id: 'openAiPromptContext',
+	name: 'openAiPromptContext',
+	instructions: "Optional context about your website/content that will be prepended to the main prompt. Use this to provide domain-specific information (e.g., 'Focus on plant species and Latin names for a gardening website')."|t("altpilot"),
+	value: settings.openAiPromptContext,
+	placeholder: "Add domain-specific context here...",
+	rows: 4,
+	errors: settings.getErrors('openAiPromptContext'),
+}) }}
+
 {{ forms.selectField({
 	label: 'Open AI Model'|t('app'),
 	id: 'openAiModel',

@@ -20,6 +20,8 @@ class Settings extends Model
 5. Return ONLY the raw description string. No filler.
 6. Output in {{ craft.app.i18n.getLocaleById(asset.language).displayName }}';
 
+    public $openAiPromptContext = '';
+
     public $showImageOverlay = true;
 
     public $averageTokenCount = 5000;
@@ -37,7 +39,7 @@ class Settings extends Model
     {
         return [
             [['openAiApiKey'], 'required'],
-            [['openAiApiKey'], 'string'],
+            [['openAiApiKey', 'openAiPromptContext'], 'string'],
         ];
     }
 }
