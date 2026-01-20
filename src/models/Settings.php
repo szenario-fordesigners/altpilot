@@ -18,7 +18,7 @@ class Settings extends Model
 3. Include visible text ONLY if it is prominent and essential to the meaning of the image.
 4. Strictly limit the output to a maximum of 150 characters.
 5. Return ONLY the raw description string. No filler.
-6. Output in {{ craft.app.i18n.getLocaleById(craft.app.language).displayName }}';
+6. Output in {{ craft.app.i18n.getLocaleById(asset.language).displayName }}';
 
     public $showImageOverlay = true;
 
