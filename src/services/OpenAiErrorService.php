@@ -104,10 +104,6 @@ class OpenAiErrorService extends Component
      */
     public function validateResponse(mixed $response): void
     {
-        // Log response type for debugging
-        $responseType = is_object($response) ? get_class($response) : gettype($response);
-        Craft::info('OpenAI API response type: ' . $responseType, 'alt-pilot');
-
         // Check for error in response
         $this->checkResponseForError($response);
 
