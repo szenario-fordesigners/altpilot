@@ -20,7 +20,14 @@ const searchIcon = String.fromCodePoint(0x1F50D);
 // Find all tagged images
 const images = document.querySelectorAll('img[data-cp-check-enabled="true"]');
 
-images.forEach(img => {
+images.forEach(img => { // Add red border for images missing alt text
+if (!alt) {
+img.style.border = '2px solid #ff4d4d';
+img.style.boxSizing = 'border-box';
+} else { // Remove border if alt text is present
+img.style.border = 'none';
+}
+
 img.addEventListener('mouseenter', (e) => {
 activeImg = img;
 updateOverlay(img);
