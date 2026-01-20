@@ -271,10 +271,6 @@ class AltPilot extends Plugin
                 $info = Craft::$app->getPlugins()->getStoredPluginInfo($this->handle) ?? [];
                 $this->_hasStoredSettingsSnapshot = array_key_exists('settings', $info);
                 $this->_previousSettingsSnapshot = $info['settings'] ?? [];
-                Craft::info(
-                    'AltPilot captured pre-save settings snapshot: ' . Json::encode($this->_previousSettingsSnapshot),
-                    'alt-pilot'
-                );
             }
         );
 
@@ -343,7 +339,10 @@ class AltPilot extends Plugin
                 Craft::info('Asset after save event triggered: ' . $asset->id . ' - kind: ' . $asset->kind, 'alt-pilot');
 
                 $configuredVolumes = $this->normalizeVolumeIds($this->getSettings()->volumeIDs ?? []);
-                if ($configuredVolumes !== [] && !in_array((int) $asset->volumeId, $configuredVolumes, true)) {
+
+                Craft::info('Configured volumes: ' . Json::encode($configuredVolumes), 'alt-pilot');
+
+                if ($configuredVolumes === [] || !in_array((int) $asset->volumeId, $configuredVolumes, true)) {
                     return;
                 }
 
