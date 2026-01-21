@@ -113,8 +113,6 @@ class OpenAiService extends Component
         $promptTemplate = $settings->openAiPrompt ?: self::DEFAULT_PROMPT;
         $userPrompt = $this->preparePrompt($promptTemplate, $asset, $site);
 
-        Craft::info('User prompt: ' . $userPrompt, 'alt-pilot');
-
         $messages = [
             [
                 'role' => 'user',

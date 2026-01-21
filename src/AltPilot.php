@@ -13,7 +13,6 @@ use craft\events\DeleteSiteEvent;
 use craft\events\ModelEvent;
 use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
-use craft\events\RegisterCpNavItemsEvent;
 use craft\events\RegisterElementActionsEvent;
 use craft\events\RegisterElementSearchableAttributesEvent;
 use craft\events\VolumeEvent;
@@ -25,7 +24,6 @@ use craft\services\Dashboard;
 use craft\services\Plugins;
 use craft\services\Sites;
 use craft\services\Volumes;
-use craft\web\twig\variables\Cp;
 use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 use szenario\craftaltpilot\elements\actions\GenerateAltPilotElementAction;
 use szenario\craftaltpilot\models\Settings;
@@ -362,6 +360,7 @@ class AltPilot extends Plugin
             }
         );
 
+        // handle site deletion
         Event::on(
             Sites::class,
             Sites::EVENT_AFTER_DELETE_SITE,
@@ -371,6 +370,7 @@ class AltPilot extends Plugin
             }
         );
 
+        // handle volume deletion
         Event::on(
             Volumes::class,
             Volumes::EVENT_AFTER_DELETE_VOLUME,
@@ -392,11 +392,12 @@ class AltPilot extends Plugin
             }
         );
 
+        // register dashboard widget
         Event::on(Dashboard::class, Dashboard::EVENT_REGISTER_WIDGET_TYPES, function (RegisterComponentTypesEvent $event) {
             $event->types[] = AltPilotWidget::class;
         });
 
-        // register alt text for search index
+        // register alt text for search index (for example in the control panel search)
         Event::on(
             Asset::class,
             Asset::EVENT_REGISTER_SEARCHABLE_ATTRIBUTES,
