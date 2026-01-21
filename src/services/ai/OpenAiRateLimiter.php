@@ -1,6 +1,6 @@
 <?php
 
-namespace szenario\craftaltpilot\services;
+namespace szenario\craftaltpilot\services\ai;
 
 use Craft;
 use OpenAI\Responses\Meta\MetaInformationRateLimit;
@@ -209,4 +209,3 @@ class OpenAiRateLimiter
         Craft::info($payload, self::THROTTLE_LOG_CATEGORY);
     }
 }
-

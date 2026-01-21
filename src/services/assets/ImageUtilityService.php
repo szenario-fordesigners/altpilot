@@ -1,6 +1,6 @@
 <?php
 
-namespace szenario\craftaltpilot\services;
+namespace szenario\craftaltpilot\services\assets;
 
 use Craft;
 use yii\base\Component;
@@ -177,7 +177,6 @@ class ImageUtilityService extends Component
                 'upscale' => false,
             ]);
         }
-
 
         Craft::debug('Applying ' . $sizeTransform ? 'sizeTransform' : 'formatTransform' . ' to asset ' . $asset->id, 'alt-pilot');
 

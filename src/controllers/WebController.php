@@ -6,7 +6,7 @@ use Craft;
 use craft\web\Controller;
 use craft\elements\Asset;
 use szenario\craftaltpilot\behaviors\AltPilotMetadata;
-use szenario\craftaltpilot\services\DatabaseService;
+use szenario\craftaltpilot\services\assets\DatabaseService;
 use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 use szenario\craftaltpilot\AltPilot;
@@ -161,7 +161,7 @@ class WebController extends Controller
     {
         $this->requireAcceptsJson();
 
-        $statusCounts = AltPilot::getInstance()->statusService->getStatusCounts();
+        $statusCounts = AltPilot::getInstance()->databaseService->getStatusCounts();
 
         return $this->successResponse($statusCounts);
     }

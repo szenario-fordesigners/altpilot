@@ -7,7 +7,7 @@ use craft\db\Query;
 use craft\elements\Asset;
 use craft\events\ModelEvent;
 use szenario\craftaltpilot\AltPilot;
-use szenario\craftaltpilot\services\DatabaseService;
+use szenario\craftaltpilot\services\assets\DatabaseService;
 use yii\base\Behavior;
 use yii\base\Event;
 use yii\db\Exception;

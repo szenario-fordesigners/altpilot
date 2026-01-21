@@ -1,6 +1,6 @@
 <?php
 
-namespace szenario\craftaltpilot\services;
+namespace szenario\craftaltpilot\services\generation;
 
 use Craft;
 use craft\elements\Asset;
@@ -19,7 +19,6 @@ class QueueService extends Component
         if (empty($settings->openAiApiKey)) {
             return ['status' => "error", 'message' => 'AltPilot OpenAI API key is not set', 'jobId' => null];
         }
-
 
         // check if a job for this asset is already in the queue
         $jobs = Craft::$app->getQueue()->getJobInfo();

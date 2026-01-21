@@ -6,11 +6,13 @@ use Craft;
 use craft\events\TemplateEvent;
 use craft\web\View;
 use szenario\craftaltpilot\AltPilot;
+use szenario\craftaltpilot\services\ui\ImageReverseLookupService;
 use yii\base\Event;
 
 final class OverlayEvents
 {
     private AltPilot $plugin;
+    private ?ImageReverseLookupService $imageReverseLookupService = null;
 
     public function __construct(AltPilot $plugin)
     {
@@ -31,8 +33,17 @@ final class OverlayEvents
                     return;
                 }
 
-                $this->plugin->imageReverseLookupService->handleImageOverlay($event);
+                $this->getImageReverseLookupService()->handleImageOverlay($event);
             }
         );
+    }
+
+    private function getImageReverseLookupService(): ImageReverseLookupService
+    {
+        if ($this->imageReverseLookupService === null) {
+            $this->imageReverseLookupService = new ImageReverseLookupService();
+        }
+
+        return $this->imageReverseLookupService;
     }
 }

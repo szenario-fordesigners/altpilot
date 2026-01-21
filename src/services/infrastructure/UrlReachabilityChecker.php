@@ -1,6 +1,6 @@
 <?php
 
-namespace szenario\craftaltpilot\services;
+namespace szenario\craftaltpilot\services\infrastructure;
 
 use Craft;
 use ILYAGVC\CheckHost\CheckHost;

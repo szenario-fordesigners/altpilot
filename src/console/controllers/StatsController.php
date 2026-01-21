@@ -18,10 +18,10 @@ class StatsController extends Controller
      */
     public function actionIndex(): int
     {
-        $statusService = AltPilot::getInstance()->statusService;
+        $databaseService = AltPilot::getInstance()->databaseService;
         $queueService = AltPilot::getInstance()->queueService;
 
-        $counts = $statusService->getStatusCounts();
+        $counts = $databaseService->getStatusCounts();
         $pendingJobs = $queueService->getPendingAltPilotJobCount();
 
         $this->stdout("AltPilot Statistics:\n", Console::BOLD);

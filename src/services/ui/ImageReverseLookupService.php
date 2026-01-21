@@ -1,6 +1,6 @@
 <?php
 
-namespace szenario\craftaltpilot\services;
+namespace szenario\craftaltpilot\services\ui;
 
 use Craft;
 use yii\base\Component;
@@ -43,8 +43,9 @@ class ImageReverseLookupService extends Component
             $src = $img->getAttribute('src');
             $currentAlt = $img->getAttribute('alt');
 
-            if (!$src)
+            if (!$src) {
                 continue;
+            }
 
             // 1. Get Filename
             $filename = basename(parse_url($src, PHP_URL_PATH));
@@ -98,7 +99,6 @@ class ImageReverseLookupService extends Component
 
                 $event->output = $dom->saveHTML();
             }
-
         }
         libxml_clear_errors();
     }
@@ -133,7 +133,6 @@ class ImageReverseLookupService extends Component
         return (
             $currentUser &&
             $currentUser->can('accessCp') &&
-            // TODO: add alt pilot permissions here
             !$request->getIsConsoleRequest() &&
             !$request->getIsCpRequest() &&
             !$request->getIsPreview() &&
@@ -227,5 +226,4 @@ class ImageReverseLookupService extends Component
             ];
         }
     }
-
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace szenario\craftaltpilot\services;
+namespace szenario\craftaltpilot\services\ai;
 
 use Craft;
 use OpenAI\Exceptions\ErrorException;
@@ -98,7 +98,7 @@ class OpenAiErrorService extends Component
 
     /**
      * Validate the response from OpenAI API
-     * 
+     *
      * @param mixed $response The response object or array
      * @throws OpenAiErrorException If the response is invalid
      */
@@ -193,7 +193,7 @@ class OpenAiErrorService extends Component
 
     /**
      * Extract content from response
-     * 
+     *
      * @param mixed $response
      * @return string
      * @throws OpenAiErrorException
@@ -306,4 +306,3 @@ class OpenAiErrorService extends Component
         return 'OpenAI API error: ' . $errorMessage;
     }
 }
-

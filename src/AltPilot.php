@@ -15,16 +15,10 @@ use szenario\craftaltpilot\events\DashboardEvents;
 use szenario\craftaltpilot\events\OverlayEvents;
 use szenario\craftaltpilot\events\SettingsEvents;
 use szenario\craftaltpilot\models\Settings;
-use szenario\craftaltpilot\services\AltPilotService;
-use szenario\craftaltpilot\services\AltTextGenerator;
-use szenario\craftaltpilot\services\DatabaseService;
-use szenario\craftaltpilot\services\ImageReverseLookupService;
-use szenario\craftaltpilot\services\ImageUtilityService;
-use szenario\craftaltpilot\services\OpenAiErrorService;
-use szenario\craftaltpilot\services\OpenAiService;
-use szenario\craftaltpilot\services\QueueService;
-use szenario\craftaltpilot\services\StatusService;
-use szenario\craftaltpilot\services\UrlReachabilityChecker;
+use szenario\craftaltpilot\services\ai\OpenAiService;
+use szenario\craftaltpilot\services\assets\DatabaseService;
+use szenario\craftaltpilot\services\generation\AltTextGenerator;
+use szenario\craftaltpilot\services\generation\QueueService;
 
 /**
  * AltPilot plugin
@@ -35,15 +29,9 @@ use szenario\craftaltpilot\services\UrlReachabilityChecker;
  * @copyright szenario
  * @license https://craftcms.github.io/license/ Craft License
  * @property-read OpenAiService $openAiService
- * @property-read OpenAiErrorService $openAiErrorService
- * @property-read AltPilotService $altPilotService
- * @property-read UrlReachabilityChecker $urlReachabilityChecker
- * @property-read ImageUtilityService $imageUtilityService
  * @property-read QueueService $queueService
  * @property-read AltTextGenerator $altTextGenerator
  * @property-read DatabaseService $databaseService
- * @property-read StatusService $statusService
- * @property-read ImageReverseLookupService $imageReverseLookupService
  */
 class AltPilot extends Plugin
 {
@@ -56,15 +44,9 @@ class AltPilot extends Plugin
         return [
             'components' => [
                 'openAiService' => OpenAiService::class,
-                'openAiErrorService' => OpenAiErrorService::class,
-                'altPilotService' => AltPilotService::class,
-                'urlReachabilityChecker' => UrlReachabilityChecker::class,
-                'imageUtilityService' => ImageUtilityService::class,
                 'queueService' => QueueService::class,
                 'altTextGenerator' => AltTextGenerator::class,
                 'databaseService' => DatabaseService::class,
-                'statusService' => StatusService::class,
-                'imageReverseLookupService' => ImageReverseLookupService::class,
             ],
         ];
     }

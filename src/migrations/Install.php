@@ -4,8 +4,7 @@ namespace szenario\craftaltpilot\migrations;
 
 use Craft;
 use craft\db\Migration;
-use szenario\craftaltpilot\AltPilot;
-use szenario\craftaltpilot\services\DatabaseService;
+use szenario\craftaltpilot\services\assets\DatabaseService;
 
 /**
  * Install migration.

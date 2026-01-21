@@ -51,7 +51,7 @@ class AltPilotWidget extends Widget
         return Craft::$app->getView()->renderTemplate(
             'alt-pilot/_widget',
             [
-                'statusCounts' => AltPilot::getInstance()->statusService->getStatusCounts(),
+                'statusCounts' => AltPilot::getInstance()->databaseService->getStatusCounts(),
             ]
         );
     }

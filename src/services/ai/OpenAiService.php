@@ -1,18 +1,16 @@
 <?php
 
-namespace szenario\craftaltpilot\services;
+namespace szenario\craftaltpilot\services\ai;
 
 use Craft;
 use OpenAI;
 use OpenAI\Client;
-
 use craft\elements\Asset;
 use craft\models\Site;
 use Throwable;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
-use \szenario\craftaltpilot\AltPilot;
-
+use szenario\craftaltpilot\AltPilot;
 
 /**
  * Open Ai Service service
@@ -24,9 +22,6 @@ class OpenAiService extends Component
     private ?Client $client = null;
     private ?OpenAiRateLimiter $rateLimiter = null;
     private ?OpenAiErrorService $errorService = null;
-
-
-    // TODO: REMOVE LOGS AFTER TESTING THIS WITH LIKE 5K IMAGES
 
     /**
      * Get the OpenAI client instance
@@ -62,7 +57,7 @@ class OpenAiService extends Component
     private function getErrorService(): OpenAiErrorService
     {
         if ($this->errorService === null) {
-            $this->errorService = AltPilot::getInstance()->openAiErrorService;
+            $this->errorService = new OpenAiErrorService();
         }
 
         return $this->errorService;
@@ -135,7 +130,6 @@ class OpenAiService extends Component
         $options = array_merge([
             // 'max_completion_tokens' => 300,
         ]);
-
 
         $this->getRateLimiter()->throttleIfNeeded();
 
@@ -230,7 +224,6 @@ class OpenAiService extends Component
         }
     }
 
-
     private function updateRequestStats(int $tokenCount, float $durationSeconds): array
     {
         $settings = AltPilot::getInstance()->getSettings();
@@ -247,5 +240,4 @@ class OpenAiService extends Component
             'averageRequestDuration' => $settings->averageRequestDuration,
         ];
     }
-
 }
