@@ -113,6 +113,8 @@ class OpenAiService extends Component
         $promptTemplate = $settings->openAiPrompt ?: self::DEFAULT_PROMPT;
         $userPrompt = $this->preparePrompt($promptTemplate, $asset, $site);
 
+        Craft::info('User prompt: ' . $userPrompt, 'alt-pilot');
+
         $messages = [
             [
                 'role' => 'user',
@@ -207,7 +209,7 @@ class OpenAiService extends Component
 
             $finalPrompt = $renderedPrompt !== '' ? $renderedPrompt : $promptTemplate;
 
-            // Prepend context if provided
+            // Integrate context as focus/emphasis if provided
             if (!empty($settings->openAiPromptContext)) {
                 $renderedContext = Craft::$app->getView()->renderObjectTemplate($settings->openAiPromptContext, $objectContext, [
                     'asset' => $asset,
@@ -215,7 +217,11 @@ class OpenAiService extends Component
                 ]);
 
                 if (!empty($renderedContext)) {
-                    $finalPrompt = trim($renderedContext) . "\n\n" . $finalPrompt;
+                    // Add context as instruction 7
+                    $contextFocus = trim($renderedContext);
+                    if (!empty($contextFocus)) {
+                        $finalPrompt .= "\n7. Pay particular attention to: {$contextFocus}";
+                    }
                 }
             }
 

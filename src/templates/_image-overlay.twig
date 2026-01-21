@@ -1,3 +1,10 @@
+<div id="craft-alt-page-search-overlay" style="display: none; position: fixed; z-index: 2147483646; top: 20px; right: 20px; pointer-events: auto;">
+	<a id="craft-alt-page-search-btn" href="#" target="_blank" style="background: #007cba; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; font-family: system-ui, sans-serif; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+		<span id="craft-alt-page-search-icon">🔍</span>
+		<span>Check All Images</span>
+	</a>
+</div>
+
 <div id="craft-alt-checker-overlay" style="display: none; position: fixed; z-index: 2147483647; pointer-events: none;">
 	<div style="background: rgba(0,0,0,0.9); backdrop-filter: blur(4px); color: white; padding: 6px 10px; border-radius: 4px; font-family: system-ui, sans-serif; font-size: 12px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
 		<span id="craft-alt-text-display" style="font-style: italic; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #eee;"></span>
@@ -12,6 +19,8 @@
 const overlay = document.getElementById('craft-alt-checker-overlay');
 const txt = document.getElementById('craft-alt-text-display');
 const btn = document.getElementById('craft-alt-edit-btn');
+const pageSearchOverlay = document.getElementById('craft-alt-page-search-overlay');
+const pageSearchBtn = document.getElementById('craft-alt-page-search-btn');
 let activeImg = null;
 const warnIcon = String.fromCodePoint(0x26A0);
 const editIcon = String.fromCodePoint(0x270E);
@@ -20,8 +29,15 @@ const searchIcon = String.fromCodePoint(0x1F50D);
 // Find all tagged images
 const images = document.querySelectorAll('img[data-cp-check-enabled="true"]');
 
+// Show page-level search button if there are any images
+if (images.length > 0) {
+pageSearchOverlay.style.display = 'block';
+pageSearchBtn.href = generatePageSearchUrl();
+}
+
 images.forEach(img => { // Add red border for images missing alt text
-if (!alt) {
+const alt = img.getAttribute('data-cp-alt-text');
+if (! alt || alt.trim() === '') {
 img.style.border = '2px solid #ff4d4d';
 img.style.boxSizing = 'border-box';
 } else { // Remove border if alt text is present
@@ -53,7 +69,7 @@ const type = img.getAttribute('data-cp-edit-type'); // direct vs search
 const alt = img.getAttribute('data-cp-alt-text');
 
 // Update Text
-if (! alt) {
+if (! alt || alt.trim() === '') {
 txt.innerText = warnIcon + ' EMPTY ALT';
 txt.style.color = '#ff4d4d';
 } else {
@@ -80,6 +96,28 @@ const left = rect.right - overlayRect.width - inset;
 
 overlay.style.top = top + 'px';
 overlay.style.left = left + 'px';
+}
+
+function generatePageSearchUrl() { // Collect all unique filenames from images on the page
+const filenames = new Set();
+
+images.forEach(img => {
+const src = img.getAttribute('src');
+if (src) {
+const filename = src.split('/').pop().split('?')[0]; // Get filename and remove query params
+if (filename) { // Strip common transform suffixes (e.g., image_500x500.jpg -> image.jpg)
+const cleanFilename = filename.replace(/(_\d+x\d+|_thumb|_transform)(\.[a-z0-9]+)$/i, '$2');
+filenames.add(cleanFilename);
+}
+}
+});
+
+// Create search query: filename:"file1.jpg" OR filename:"file2.jpg" OR ...
+const searchTerms = Array.from(filenames).map(filename => `filename:"${filename}"`);
+const searchQuery = searchTerms.join(' OR ');
+
+// Return URL to AltPilot backend with the search query
+return '/admin/alt-pilot?query=' + encodeURIComponent(searchQuery);
 }
 })();
 </script>

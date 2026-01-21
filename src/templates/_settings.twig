@@ -61,7 +61,7 @@
 	label: 'Prompt Context'|t('app'),
 	id: 'openAiPromptContext',
 	name: 'openAiPromptContext',
-	instructions: "Optional context about your website/content that will be prepended to the main prompt. Use this to provide domain-specific information (e.g., 'Focus on plant species and Latin names for a gardening website')."|t("altpilot"),
+	instructions: "Optional context that will be added as instruction #7 to the prompt, focusing attention on specific aspects. Use this to emphasize domain-specific details (e.g., 'plants and botanical details' for a gardening site, or 'medical equipment and procedures' for a healthcare site). This creates a 7th instruction that guides what the AI prioritizes when describing images."|t("altpilot"),
 	value: settings.openAiPromptContext,
 	placeholder: "Add domain-specific context here...",
 	rows: 4,
