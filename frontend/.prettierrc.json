@@ -4,5 +4,5 @@
   "singleQuote": true,
   "printWidth": 100,
   "plugins": ["prettier-plugin-tailwindcss"],
-  "tailwindStylesheet": "./src/web/assets/altpilotfrontend/src/assets/tailwind.css"
+  "tailwindStylesheet": "./src/assets/tailwind.css"
 }

@@ -25,6 +25,27 @@
 			"szenario\\craftaltpilot\\": "src/"
 		}
 	},
+	"archive": {
+		"exclude": [
+			"/.github/**",
+			"/.vscode/**",
+			"/.idea/**",
+			"/frontend/**",
+			"/node_modules/**",
+			"/ecs.php",
+			"/phpstan.neon",
+			"/pnpm-lock.yaml",
+			"/pnpm-workspace.yaml",
+			"/eslint.config.ts",
+			"/tsconfig*.json",
+			"/vite.config.ts",
+			"/package.json",
+			"/.prettierrc.json",
+			"/.editorconfig",
+			"/.gitattributes",
+			"/.gitignore"
+		]
+	},
 	"extra": {
 		"handle": "alt-pilot",
 		"name": "AltPilot",

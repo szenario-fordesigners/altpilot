@@ -4,9 +4,7 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vueDevTools from 'vite-plugin-vue-devtools';
 
-const frontendEntry = fileURLToPath(
-  new URL('./src/web/assets/altpilotfrontend/src/main.ts', import.meta.url),
-);
+const frontendEntry = fileURLToPath(new URL('./src/main.ts', import.meta.url));
 
 const nodeEnv = process.env.NODE_ENV ?? 'production';
 
@@ -15,7 +13,7 @@ export default defineConfig({
   plugins: [vue(), vueDevTools(), tailwindcss()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src/web/assets/altpilotfrontend/src', import.meta.url)),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
   define: {
@@ -35,7 +33,7 @@ export default defineConfig({
         assetFileNames: '[name][extname]',
       },
     },
-    outDir: './src/web/assets/altpilotfrontend/dist',
+    outDir: '../src/web/assets/altpilotfrontend/dist',
     emptyOutDir: true,
 
     sourcemap: true,
