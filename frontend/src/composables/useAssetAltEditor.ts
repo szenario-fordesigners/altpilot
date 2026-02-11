@@ -61,6 +61,20 @@ export function useAssetAltEditor(asset: MultiLanguageAsset) {
     return false;
   });
 
+  const hasSiteChanges = (siteId: number) => {
+    return (altTexts[siteId] ?? '') !== (originalAltTexts[siteId] ?? '');
+  };
+
+  const resetChanges = () => {
+    const keys = new Set([...Object.keys(originalAltTexts), ...Object.keys(altTexts)]);
+    for (const key of keys) {
+      const siteId = Number(key);
+      altTexts[siteId] = originalAltTexts[siteId] ?? '';
+    }
+    error.value = null;
+    successMessage.value = null;
+  };
+
   const normalizeAltTexts = (): Record<number, string> => {
     const normalized: Record<number, string> = {};
     Object.entries(altTexts).forEach(([siteIdString, value]) => {
@@ -140,6 +154,8 @@ export function useAssetAltEditor(asset: MultiLanguageAsset) {
   return {
     altTexts,
     hasChanges,
+    hasSiteChanges,
+    resetChanges,
     saving,
     error,
     successMessage,

@@ -1,21 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { useDebounceFn } from '@vueuse/core';
 import { useAssets } from '@/composables/useAssets';
-
-const { sort, fetchAssets, query, filter, pagination } = useAssets();
-
-const searchQuery = ref(query.value || '');
-// filter is now handled by useAssets
-
-const debouncedSearch = useDebounceFn((val: string) => {
-  query.value = val;
-  fetchAssets({ offset: 0 });
-}, 400);
-
-watch(searchQuery, (newVal) => {
-  debouncedSearch(newVal);
-});
+import { useGlobalState } from '@/composables/useGlobalState';
+const { sites } = useGlobalState();
+const { sort, fetchAssets, filter, pagination } = useAssets();
 
 const filterOptions = [
   { value: 'all', label: 'All' },
@@ -43,93 +30,52 @@ const setSort = (value: string) => {
   fetchAssets({ offset: 0 });
 };
 
-const clearSearch = () => {
-  searchQuery.value = '';
+const onSortChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement | null;
+  if (!target) return;
+  setSort(target.value);
 };
 </script>
 
 <template>
-  <div class="my-4 grid grid-cols-4 gap-4">
-    <div>
-      <h3 class="mb-1">Filter</h3>
-      <ul class="space-y-0">
-        <li v-for="option in filterOptions" :key="option.value">
-          <button
-            @click="setFilter(option.value)"
-            class="w-full text-left text-sm"
-            :class="filter === option.value ? 'underline' : ''"
-          >
-            {{ option.label }}
-          </button>
-        </li>
-      </ul>
-    </div>
-    <div class="flex flex-col items-start">
-      <h3 class="mb-1">Sorting</h3>
-      <ul class="space-y-0">
-        <li v-for="option in sortOptions" :key="option.value">
-          <button
-            @click="setSort(option.value)"
-            class="w-full text-left text-sm"
-            :class="sort === option.value ? 'underline' : ''"
-          >
-            {{ option.label }}
-          </button>
-        </li>
-      </ul>
-    </div>
-
-    <div class="col-span-2">
-      <div class="relative w-full">
-        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          <svg
-            class="h-6 w-6"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 20 20"
-          >
-            <path
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-            />
-          </svg>
+  <div class="my-4">
+    <div class="grid grid-cols-1 gap-4 grid-cols-[25%_max-content_max-content] items-end">
+      <div>
+        <div class="text-xs text-ap-dark-green">
+          showing alt-texts
         </div>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search..."
-          class="block w-full rounded-xl border border-black p-4 pr-10 pl-10 focus:outline-none"
-        />
-        <button
-          v-if="searchQuery"
-          @click="clearSearch"
-          type="button"
-          class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 focus:outline-none"
-          aria-label="Clear search"
-        >
-          <svg
-            class="h-5 w-5"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 14 14"
-          >
-            <path
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
-            />
-          </svg>
-        </button>
+        <div class="text-base text-ap-dark-green">
+          for {{ pagination?.total }} images / in {{ sites.length }} languages
+        </div>
       </div>
-      <div v-if="query && pagination?.total !== undefined" class="mt-2 text-sm text-gray-600">
-        {{ pagination.total }} result{{ pagination.total === 1 ? '' : 's' }} found
+
+
+      <div>
+        <p class="mb-1 text-[12px] leading-[1.2] text-ap-dark-green">filter</p>
+        <ul class="flex flex-wrap gap-2">
+          <li v-for="option in filterOptions" :key="option.value">
+            <button type="button" @click="setFilter(option.value)"
+              class="rounded-full border border-ap-dark-green px-3 py-1 text-xs leading-none" :class="filter === option.value ? 'bg-ap-light-green text-black' : 'bg-white text-ap-dark-green'
+                ">
+              {{ option.label }}
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="ml-4">
+        <p class="mb-1 text-[12px] leading-[1.2] text-ap-dark-green">sort by</p>
+        <div class="relative">
+          <select
+            class="w-full appearance-none rounded-full border border-ap-dark-green py-1 pl-3 pr-8 text-xs leading-[1.2] text-ap-dark-green focus:outline-none focus:ring-1 focus:ring-ap-dark-green"
+            :value="sort" @change="onSortChange">
+            <option v-for="option in sortOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+          <span
+            class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-ap-dark-green">▼</span>
+        </div>
       </div>
     </div>
   </div>

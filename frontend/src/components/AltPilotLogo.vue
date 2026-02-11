@@ -12,9 +12,3 @@
     />
   </svg>
 </template>
-
-<style scoped>
-svg {
-  fill: #000;
-}
-</style>

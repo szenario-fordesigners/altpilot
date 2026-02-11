@@ -7,8 +7,7 @@ import AssetCard from '@/components/AssetCard.vue';
 import AssetLightbox from '@/components/AssetLightbox.vue';
 import AssetCardSkeleton from '@/components/AssetCardSkeleton.vue';
 import AssetPagination from '@/components/AssetPagination.vue';
-import AltPilotStats from '@/components/AltPilotStats.vue';
-import AltPilotFilter from '@/components/AltPilotFilter.vue';
+import AltPilotHeader from '@/components/AltPilotHeader.vue';
 import Toaster from '@/components/AltPilotToaster.vue';
 import type { Site } from '@/types/Site';
 
@@ -37,7 +36,7 @@ state.sites.value = sites;
 state.primarySiteId.value = primarySiteId;
 state.hasSelectedVolumes.value = hasSelectedVolumes;
 
-const ASSET_CARD_LIMIT = 30;
+const ASSET_CARD_LIMIT = 24;
 const { assets, assetIds, loading, pagination } = useAssets({
   defaultLimit: ASSET_CARD_LIMIT,
 });
@@ -81,23 +80,15 @@ onMounted(() => {
 
 <template>
   <div id="altPilotWrapper">
-    <div
-      v-if="!hasSelectedVolumes"
-      class="mb-6 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-yellow-800"
-    >
+    <div v-if="!hasSelectedVolumes" class="mb-6 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-yellow-800">
       <p>
         No volumes selected. Please configure the
-        <a
-          :href="`/${cpTrigger}/settings/plugins/alt-pilot`"
-          class="font-bold underline hover:text-yellow-900"
-          >settings</a
-        >.
+        <a :href="`/${cpTrigger}/settings/plugins/alt-pilot`"
+          class="font-bold underline hover:text-yellow-900">settings</a>.
       </p>
     </div>
 
-    <AltPilotStats />
-
-    <AltPilotFilter class="mt-4" />
+    <AltPilotHeader class="mt-4" />
 
     <div class="grid grid-cols-4 gap-4">
       <template v-if="loading">
@@ -112,20 +103,11 @@ onMounted(() => {
       </template>
     </div>
 
-    <AssetPagination
-      v-if="!loading"
-      :pagination="pagination"
-      @previous="handlePrevious"
-      @next="handleNext"
-      @page-change="handlePageChange"
-    />
+    <AssetPagination v-if="!loading" :pagination="pagination" @previous="handlePrevious" @next="handleNext"
+      @page-change="handlePageChange" />
 
     <Toaster />
-    <AssetLightbox
-      v-model:open="lightboxOpen"
-      :initial-asset-id="initialLightboxAssetId"
-      :assets="sortedAssets"
-      :primary-site-id="primarySiteId"
-    />
+    <AssetLightbox v-model:open="lightboxOpen" :initial-asset-id="initialLightboxAssetId" :assets="sortedAssets"
+      :primary-site-id="primarySiteId" />
   </div>
 </template>
