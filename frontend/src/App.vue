@@ -9,7 +9,6 @@ import AssetCardSkeleton from '@/components/AssetCardSkeleton.vue';
 import AssetPagination from '@/components/AssetPagination.vue';
 import AltPilotHeader from '@/components/AltPilotHeader.vue';
 import Toaster from '@/components/AltPilotToaster.vue';
-import { useToasts } from '@/composables/useToasts';
 import type { Site } from '@/types/Site';
 
 const { cpTrigger, csrfToken, sites, primarySiteId, hasSelectedVolumes } = defineProps<{
@@ -22,7 +21,6 @@ const { cpTrigger, csrfToken, sites, primarySiteId, hasSelectedVolumes } = defin
 
 const state = useGlobalState();
 const { fetchAssets, query } = useAssets();
-const { toast } = useToasts();
 
 // Check for query param in URL (e.g. from deep link)
 const urlParams = new URLSearchParams(window.location.search);
@@ -75,15 +73,6 @@ const sortedAssets = computed(() => {
   return assetIds.value.map((id) => assets.value[id]).filter((asset) => asset !== undefined);
 });
 
-const showTestToast = () => {
-  const message = 'Generated alt text for 1 asset.';
-  toast({
-    title: 'Generated',
-    description: message,
-    type: 'foreground',
-  });
-};
-
 onMounted(() => {
   fetchAssets();
   fetchStatusCounts();
@@ -107,15 +96,6 @@ onMounted(() => {
     </div>
 
     <AltPilotHeader />
-    <div class="mb-4 flex justify-end">
-      <button
-        type="button"
-        class="rounded-full border border-ap-dark-green px-3 py-1 text-sm text-ap-dark-green transition-colors hover:bg-ap-light-green/30"
-        @click="showTestToast"
-      >
-        test toast
-      </button>
-    </div>
 
     <div class="relative">
       <Transition name="asset-grid-fade">

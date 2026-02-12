@@ -22,13 +22,13 @@ const { toasts, dismiss, onOpenChange } = useToasts();
       v-model:open="t.open"
       :duration="t.duration"
       :type="t.type"
-      class="relative w-full overflow-hidden rounded-2xl border border-[#ECECEC] bg-white text-ap-dark-green"
+      class="toast-transition relative w-full overflow-hidden rounded-2xl border border-ap-dark-green bg-ap-light-green text-ap-dark-green"
       @update:open="(open) => onOpenChange(t.id, open)"
     >
       <ToastClose as-child>
         <button
           type="button"
-          class="absolute top-2 right-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#ECECEC] text-ap-dark-green transition-colors hover:bg-ap-light-green/30"
+          class="absolute top-2 right-2 inline-flex h-5 w-5 items-center justify-center rounded-full border-ap-dark-green text-ap-dark-green transition-colors hover:border hover:bg-ap-dark-green/10"
           aria-label="Close"
         >
           <svg aria-hidden="true" viewBox="0 0 12 12" class="h-2.5 w-2.5">
@@ -76,3 +76,37 @@ const { toasts, dismiss, onOpenChange } = useToasts();
     />
   </ToastProvider>
 </template>
+
+<style scoped>
+:deep(.toast-transition[data-state='open']) {
+  animation: toast-enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:deep(.toast-transition[data-state='closed']) {
+  animation: toast-leave 320ms ease;
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-leave {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+}
+</style>

@@ -39,7 +39,7 @@ const onSortChange = (event: Event) => {
 
 <template>
   <div class="my-4">
-    <div class="grid grid-cols-[1fr_max-content] items-end gap-4">
+    <div class="grid grid-cols-[1fr_max-content] items-end gap-4 max-md:grid-cols-1">
       <div>
         <div class="mb-ap-title-p text-sm text-ap-dark-green">showing results</div>
         <div class="text-xl text-ap-dark-green">
@@ -47,7 +47,7 @@ const onSortChange = (event: Event) => {
         </div>
       </div>
 
-      <div class="flex justify-self-end">
+      <div class="flex md:justify-self-end">
         <div>
           <p class="mb-1 mb-ap-title-p text-sm leading-[1.2] text-ap-dark-green">filter</p>
           <ul class="flex flex-wrap gap-2">
@@ -66,7 +66,7 @@ const onSortChange = (event: Event) => {
           </ul>
         </div>
 
-        <div class="ml-4">
+        <div class="sm:ml-4">
           <p class="mb-1 mb-ap-title-p text-sm leading-[1.2] text-ap-dark-green">sort by</p>
           <div class="relative">
             <select

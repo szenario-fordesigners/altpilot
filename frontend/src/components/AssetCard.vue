@@ -188,7 +188,7 @@ const handleCancel = () => {
             @input="handleTextareaInput(site.id, $event)"
             class="w-full resize-none rounded-lg px-2 py-1 text-base leading-[1.1] text-[#555] transition-colors hover:border-ap-light-green focus:border focus:border-ap-light-green focus:ring-0 focus:outline-none"
             :class="{
-              'animate-pulse border border-green-500 bg-green-50/40 text-ap-dark-green':
+              'textarea-generating-pulse border border-green-500 text-ap-dark-green':
                 isGeneratingSite(site.id),
               'border border-ap-light-green': !isGeneratingSite(site.id) && hasSiteChanges(site.id),
               'border border-ap-red':
@@ -223,7 +223,22 @@ const handleCancel = () => {
 }
 
 .textarea-finish-pulse {
-  animation: textarea-finish-pulse 0.45s ease-in-out 2;
+  animation: textarea-finish-pulse 1s ease-in-out 1;
+}
+
+.textarea-generating-pulse {
+  animation: textarea-generating-pulse 1s ease-in-out infinite;
+}
+
+@keyframes textarea-generating-pulse {
+  0%,
+  100% {
+    background-color: rgb(240 253 244 / 0);
+  }
+
+  50% {
+    background-color: rgb(187 247 208 / 0.5);
+  }
 }
 
 @keyframes textarea-finish-pulse {
@@ -231,8 +246,8 @@ const handleCancel = () => {
     background-color: #ffffff;
   }
 
-  50% {
-    background-color: rgba(204, 255, 203, 0.5);
+  18% {
+    background-color: rgb(204 255 203);
   }
 
   100% {

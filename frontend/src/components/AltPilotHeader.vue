@@ -8,7 +8,7 @@ import AltPilotFilter from '@/components/AltPilotFilter.vue';
 <template>
   <div>
     <div
-      class="grid grid-cols-[max-content_max-content_1fr] items-start gap-x-6 gap-y-4 border-b border-ap-dark-green"
+      class="grid grid-cols-[max-content_max-content_1fr] items-start gap-x-6 gap-y-4 border-b border-ap-dark-green max-md:grid-cols-2 max-md:pb-4"
     >
       <div class="justify-self-start">
         <AltPilotHeaderTotal />
