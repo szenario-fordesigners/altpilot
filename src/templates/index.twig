@@ -1,8 +1,8 @@
 {% extends "_layouts/cp.twig" %}
 
-{% do view.registerAssetBundle("szenario\\craftaltpilot\\web\\assets\\altpilotfrontend\\AltPilotFrontendAsset") %}
+{% do view.registerAssetBundle("szenario\\craftaltpilot\\assetbundles\\altpilotfrontend\\AltPilotFrontendAsset") %}
 
-{% set title = "Alt Pilot"|t('alt-pilot') %}
+{% set title = "altpilot"|t('alt-pilot') %}
 
 {% set csrfToken = { name: craft.app.request.csrfParam, value: craft.app.request.getCsrfToken() } %}
 
