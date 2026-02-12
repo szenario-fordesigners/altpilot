@@ -9,6 +9,7 @@ import AssetCardSkeleton from '@/components/AssetCardSkeleton.vue';
 import AssetPagination from '@/components/AssetPagination.vue';
 import AltPilotHeader from '@/components/AltPilotHeader.vue';
 import Toaster from '@/components/AltPilotToaster.vue';
+import { useToasts } from '@/composables/useToasts';
 import type { Site } from '@/types/Site';
 
 const { cpTrigger, csrfToken, sites, primarySiteId, hasSelectedVolumes } = defineProps<{
@@ -21,6 +22,7 @@ const { cpTrigger, csrfToken, sites, primarySiteId, hasSelectedVolumes } = defin
 
 const state = useGlobalState();
 const { fetchAssets, query } = useAssets();
+const { toast } = useToasts();
 
 // Check for query param in URL (e.g. from deep link)
 const urlParams = new URLSearchParams(window.location.search);
@@ -41,6 +43,7 @@ const { assets, assetIds, loading, pagination } = useAssets({
   defaultLimit: ASSET_CARD_LIMIT,
 });
 const { fetchStatusCounts } = useStatusCounts();
+const showLoading = computed(() => loading.value);
 
 const lightboxOpen = ref(false);
 const initialLightboxAssetId = ref<number | null>(null);
@@ -72,6 +75,15 @@ const sortedAssets = computed(() => {
   return assetIds.value.map((id) => assets.value[id]).filter((asset) => asset !== undefined);
 });
 
+const showTestToast = () => {
+  const message = 'Generated alt text for 1 asset.';
+  toast({
+    title: 'Generated',
+    description: message,
+    type: 'foreground',
+  });
+};
+
 onMounted(() => {
   fetchAssets();
   fetchStatusCounts();
@@ -80,34 +92,86 @@ onMounted(() => {
 
 <template>
   <div id="altPilotWrapper">
-    <div v-if="!hasSelectedVolumes" class="mb-6 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-yellow-800">
+    <div
+      v-if="!hasSelectedVolumes"
+      class="mb-6 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-yellow-800"
+    >
       <p>
         No volumes selected. Please configure the
-        <a :href="`/${cpTrigger}/settings/plugins/alt-pilot`"
-          class="font-bold underline hover:text-yellow-900">settings</a>.
+        <a
+          :href="`/${cpTrigger}/settings/plugins/alt-pilot`"
+          class="font-bold underline hover:text-yellow-900"
+          >settings</a
+        >.
       </p>
     </div>
 
-    <AltPilotHeader class="mt-4" />
-
-    <div class="grid grid-cols-4 gap-4">
-      <template v-if="loading">
-        <div v-for="i in ASSET_CARD_LIMIT" :key="`skeleton-${i}`" class="h-full">
-          <AssetCardSkeleton />
-        </div>
-      </template>
-      <template v-else>
-        <div v-for="id in assetIds" :key="id" class="h-full">
-          <AssetCard v-if="assets[id]" :asset="assets[id]" @click-image="openLightbox" />
-        </div>
-      </template>
+    <AltPilotHeader />
+    <div class="mb-4 flex justify-end">
+      <button
+        type="button"
+        class="rounded-full border border-ap-dark-green px-3 py-1 text-sm text-ap-dark-green transition-colors hover:bg-ap-light-green/30"
+        @click="showTestToast"
+      >
+        test toast
+      </button>
     </div>
 
-    <AssetPagination v-if="!loading" :pagination="pagination" @previous="handlePrevious" @next="handleNext"
-      @page-change="handlePageChange" />
+    <div class="relative">
+      <Transition name="asset-grid-fade">
+        <div
+          v-if="showLoading"
+          key="loading"
+          class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 3xl:grid-cols-6"
+        >
+          <div v-for="i in ASSET_CARD_LIMIT" :key="`skeleton-${i}`" class="h-full">
+            <AssetCardSkeleton />
+          </div>
+        </div>
+        <div
+          v-else
+          key="loaded"
+          class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 3xl:grid-cols-6"
+        >
+          <div v-for="id in assetIds" :key="id" class="h-full">
+            <AssetCard v-if="assets[id]" :asset="assets[id]" @click-image="openLightbox" />
+          </div>
+        </div>
+      </Transition>
+    </div>
+
+    <AssetPagination
+      v-if="!showLoading"
+      :pagination="pagination"
+      @previous="handlePrevious"
+      @next="handleNext"
+      @page-change="handlePageChange"
+    />
 
     <Toaster />
-    <AssetLightbox v-model:open="lightboxOpen" :initial-asset-id="initialLightboxAssetId" :assets="sortedAssets"
-      :primary-site-id="primarySiteId" />
+    <AssetLightbox
+      v-model:open="lightboxOpen"
+      :initial-asset-id="initialLightboxAssetId"
+      :assets="sortedAssets"
+      :primary-site-id="primarySiteId"
+    />
   </div>
 </template>
+
+<style scoped>
+.asset-grid-fade-enter-active,
+.asset-grid-fade-leave-active {
+  transition: opacity 220ms ease-in-out;
+}
+
+.asset-grid-fade-leave-active {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.asset-grid-fade-enter-from,
+.asset-grid-fade-leave-to {
+  opacity: 0;
+}
+</style>

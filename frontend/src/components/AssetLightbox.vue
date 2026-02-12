@@ -85,13 +85,10 @@ onUnmounted(() => {
         <DialogTitle class="sr-only"> Asset Preview </DialogTitle>
         <DialogDescription class="sr-only"> Preview of the selected asset </DialogDescription>
 
-        <div
-          v-if="currentAsset"
-          class="relative flex max-h-[90vh] max-w-full flex-col items-center"
-        >
+        <div v-if="currentAsset" class="relative flex w-full flex-col items-center">
           <!-- Close Button -->
           <DialogClose
-            class="absolute -top-12 -right-12 cursor-pointer p-2 text-white hover:text-gray-300 focus:outline-none"
+            class="absolute -top-12 right-[max(4vw,1rem)] cursor-pointer p-2 text-white hover:text-gray-300 focus:outline-none"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -109,18 +106,22 @@ onUnmounted(() => {
             </svg>
           </DialogClose>
 
-          <!-- Image -->
-          <img
-            :src="currentAsset.url"
-            :alt="currentAsset.title || 'Asset'"
-            class="max-h-[80vh] max-w-full rounded object-contain shadow-lg"
-          />
+          <!-- White stage for media -->
+          <div
+            class="flex h-[min(78vh,900px)] w-[960px] max-w-[calc(100vw-12rem)] items-center justify-center bg-white p-6 shadow-2xl"
+          >
+            <img
+              :src="currentAsset.url"
+              :alt="currentAsset.title || 'Asset'"
+              class="h-full w-full object-contain"
+            />
+          </div>
 
           <div class="mt-4 text-lg font-medium text-white">{{ currentAsset.title }}</div>
 
           <!-- Navigation Buttons -->
           <button
-            class="absolute top-1/2 left-[-60px] -translate-y-1/2 cursor-pointer p-2 text-white hover:text-gray-300 focus:outline-none"
+            class="absolute top-1/2 left-[max(2vw,0.5rem)] -translate-y-1/2 cursor-pointer p-2 text-white hover:text-gray-300 focus:outline-none"
             @click="prev"
             title="Previous"
           >
@@ -140,7 +141,7 @@ onUnmounted(() => {
           </button>
 
           <button
-            class="absolute top-1/2 right-[-60px] -translate-y-1/2 cursor-pointer p-2 text-white hover:text-gray-300 focus:outline-none"
+            class="absolute top-1/2 right-[max(2vw,0.5rem)] -translate-y-1/2 cursor-pointer p-2 text-white hover:text-gray-300 focus:outline-none"
             @click="next"
             title="Next"
           >
