@@ -6,6 +6,7 @@ use Craft;
 use craft\elements\Asset;
 use craft\queue\Queue as CraftQueue;
 use yii\base\Component;
+use yii\helpers\StringHelper;
 
 /**
  * Queue Service service
@@ -14,6 +15,9 @@ class QueueService extends Component
 {
     public function safelyCreateJob(Asset $asset): array
     {
+        $siteLanguageCode = $this->getSiteLanguageCode($asset->siteId);
+        $displayFilename = $this->getDisplayFilename($asset);
+
         // check if an openai key is set
         $settings = \szenario\craftaltpilot\AltPilot::getInstance()->getSettings();
         if (empty($settings->openAiApiKey)) {
@@ -43,7 +47,7 @@ class QueueService extends Component
                     }
 
                     // For active jobs (waiting, running), skip creating a duplicate
-                    $message = sprintf('Job for %s on site ID: %d already in queue, skipping', $asset->filename ?? $asset->id, $asset->siteId);
+                    $message = sprintf('Job for %s (%s) already in queue, skipping', $displayFilename, $siteLanguageCode);
                     Craft::info($message, 'alt-pilot');
                     return [
                         'status' => "warning",
@@ -64,14 +68,14 @@ class QueueService extends Component
             $jobId = Craft::$app->getQueue()->push($job);
             return [
                 'status' => "success",
-                'message' => 'Job created for asset ID: ' . $asset->id . ' on site ID: ' . $asset->siteId,
+                'message' => 'Job created for ' . $displayFilename . ' (' . $siteLanguageCode . ')',
                 'jobId' => (string) $jobId,
             ];
         } catch (\Exception $e) {
             Craft::error(sprintf('Error creating job for asset ID: %d on site ID: %d - %s', $asset->id, $asset->siteId, $e->getMessage()), 'alt-pilot');
             return [
                 'status' => "error",
-                'message' => 'Error creating job for asset ID: ' . $asset->id . ' on site ID: ' . $asset->siteId . ' - ' . $e->getMessage(),
+                'message' => 'Error creating job for ' . $displayFilename . ' (' . $siteLanguageCode . ') - ' . $e->getMessage(),
                 'jobId' => null,
             ];
         }
@@ -233,6 +237,33 @@ class QueueService extends Component
             CraftQueue::STATUS_FAILED => 'failed',
             default => 'unknown',
         };
+    }
+
+    private function getSiteLanguageCode(?int $siteId): string
+    {
+        if ($siteId === null) {
+            return 'unknown';
+        }
+
+        $site = Craft::$app->sites->getSiteById($siteId);
+        if ($site === null || empty($site->language)) {
+            return 'unknown';
+        }
+
+        $language = (string) $site->language;
+        $baseLanguage = preg_split('/[-_]/', $language)[0] ?? $language;
+
+        return strtolower($baseLanguage);
+    }
+
+    private function getDisplayFilename(Asset $asset): string
+    {
+        $filename = trim((string) ($asset->filename ?? ''));
+        if ($filename === '') {
+            $filename = 'asset #' . (string) $asset->id;
+        }
+
+        return StringHelper::truncate($filename, 45, '...');
     }
 
     /**
