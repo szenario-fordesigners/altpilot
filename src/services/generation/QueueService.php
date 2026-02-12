@@ -27,8 +27,6 @@ class QueueService extends Component
         // check if a job for this asset is already in the queue
         $jobs = Craft::$app->getQueue()->getJobInfo();
         foreach ($jobs as $job) {
-            Craft::info('Job: ' . print_r($job, true), 'alt-pilot');
-
             // Extract asset ID and site ID from job description (Site ID might be missing)
             $description = $job['description'] ?? '';
             if (preg_match('/\[Asset ID: (\d+)(?:\s+\|\s+Site ID: (\d+))?\]/', $description, $matches)) {

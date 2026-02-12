@@ -21,10 +21,9 @@ class Install extends Migration
         // 1 = ai generated
         // 2 = manually edited
 
-
         if ($this->db->tableExists(DatabaseService::TABLE_NAME)) {
-            Craft::info('AltPilot metadata table already exists, dropping it and creating a new one.', 'alt-pilot');
-            $this->dropTable(DatabaseService::TABLE_NAME);
+            Craft::info('AltPilot metadata table already exists, skipping table creation.', 'alt-pilot');
+            return true;
         }
 
         $this->createTable(DatabaseService::TABLE_NAME, [

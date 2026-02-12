@@ -295,7 +295,15 @@ class WebController extends Controller
     {
         $this->requireAcceptsJson();
 
-        $assetIdParam = $this->request->getRequiredBodyParam('assetID');
+        $assetIdParam = $this->request->getQueryParam('assetID');
+        if ($assetIdParam === null) {
+            $assetIdParam = $this->request->getBodyParam('assetID');
+        }
+
+        if ($assetIdParam === null || $assetIdParam === '') {
+            return $this->errorResponse('Missing required parameter: assetID');
+        }
+
         $assetId = filter_var($assetIdParam, FILTER_VALIDATE_INT);
         if ($assetId === false) {
             return $this->errorResponse('Asset ID must be a valid integer');
