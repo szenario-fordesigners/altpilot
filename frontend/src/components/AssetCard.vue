@@ -5,7 +5,7 @@ import { useGlobalState } from '@/composables/useGlobalState';
 import { useAssetGeneration } from '@/composables/useAssetGeneration';
 import { useStorage } from '@vueuse/core';
 import type { Asset, MultiLanguageAsset } from '@/types/Asset';
-import { assetStatus } from '@/utils/assetStatus';
+import { assetStatusShort } from '@/utils/assetStatus';
 import OverwriteConfirmationDialog from '@/components/OverwriteConfirmationDialog.vue';
 
 const props = defineProps<{
@@ -29,11 +29,6 @@ const currentSiteHandle = computed(() => {
   return sites.value.find((site) => site.id === currentSiteId.value)?.handle ?? null;
 });
 
-const isAssetStatusMissing = computed(() => {
-  const isMissing = Object.values(props.asset).some((asset) => asset.status === 0);
-  return isMissing;
-});
-
 const charactersRemaining = (siteId: number) => {
   const value = altTexts[siteId] ?? '';
   return 150 - value.length;
@@ -47,6 +42,22 @@ const { generateForSite, generatingBySite, isGenerationActive, isGenerationFinis
 const anyGenerationFinished = computed(() => {
   return sites.value.some((site) => isGenerationFinished(site.id));
 });
+
+const isGeneratingSite = (siteId: number) => {
+  return generatingBySite[siteId] || isGenerationActive(siteId);
+};
+
+const getTextareaValue = (siteId: number) => {
+  return isGeneratingSite(siteId) ? '...' : altTexts[siteId] ?? '';
+};
+
+const handleTextareaInput = (siteId: number, event: Event) => {
+  if (isGeneratingSite(siteId)) {
+    return;
+  }
+
+  altTexts[siteId] = (event.target as HTMLTextAreaElement).value;
+};
 
 const handleGenerateClick = (siteId: number) => {
   const currentText = altTexts[siteId] ?? '';
@@ -90,8 +101,9 @@ const handleCancel = () => {
   <div
     class="relative flex h-full flex-col items-start gap-0 overflow-hidden bg-white border-[#ECECEC] border rounded-[1.25rem]">
     <div v-if="anyGenerationFinished"
-      class="asset-card-pulse pointer-events-none absolute inset-0 z-50 bg-ap-periwinkle/30"></div>
-    <div class="h-32 w-full relative" :class="[isAssetStatusMissing ? 'bg-ap-red' : 'bg-ap-periwinkle']">
+      class="asset-card-pulse pointer-events-none absolute inset-0 z-50 bg-ap-light-green/30 opacity-0 ease-in-out">
+    </div>
+    <div class="h-32 w-full relative">
       <img class="aspect-[4/3] h-full w-full cursor-pointer object-cover" :src="currentAsset.url"
         :alt="currentAsset.title" @click="emit('click-image', currentAsset.id)" />
 
@@ -122,30 +134,43 @@ const handleCancel = () => {
 
 
 
-    <div class="flex w-full py-2 gap-0">
+    <div class="flex w-full pt-2 gap-0">
       <div v-for="site in sites" :key="site.id"
-        class="mb-4 flex gap-0 w-full border-b border-[#ECECEC] last:border-b-0">
-        <div class="flex w-full justify-between px-3">
+        class="mb-4 flex gap-0 w-full border-b border-[#ECECEC] last:border-b-0 last:mb-0">
+        <div class="relative flex w-full items-center px-3">
           <div class="text-ap-dark-green uppercase">
-            {{ site.language }} ({{ assetStatus[props.asset[site.id]?.status ?? 0] }})
+            {{ site.language }}: {{ assetStatusShort[props.asset[site.id]?.status ?? 0] }}
           </div>
-          <div class="text-[#AEAEAE]">{{ charactersRemaining(site.id) }}</div>
-          <button class="mb-1 rounded-full border p-1 transition-colors text-[#AEAEAE] hover:text-black" :class="{
-            'text-black': generatingBySite[site.id] || isGenerationActive(site.id),
-          }" :disabled="generatingBySite[site.id] || isGenerationActive(site.id)"
+
+          <div class="absolute left-1/2 -translate-x-1/2 text-center text-[#AEAEAE]"
+            :class="charactersRemaining(site.id) < 0 ? 'text-ap-red' : ''">{{
+              charactersRemaining(site.id) }}</div>
+
+          <button
+            class="mb-1 ml-auto rounded-full border p-1 transition-colors text-ap-dark-green hover:bg-ap-light-green/30"
+            :class="{
+              'bg-ap-light-green/30': generatingBySite[site.id] || isGenerationActive(site.id),
+            }" :disabled="generatingBySite[site.id] || isGenerationActive(site.id)"
             @click="handleGenerateClick(site.id)">
             <svg class="regenerate-icon"
               :class="{ 'animate-spin': generatingBySite[site.id] || isGenerationActive(site.id) }"
               xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
               <path fill="currentColor"
-                d="m410.168 133.046l-28.958-28.958l82.807-.088l-.034-32L328 72.144V208h32v-79.868l27.541 27.541A152.5 152.5 0 0 1 279.972 416l.056 32a184.5 184.5 0 0 0 130.14-314.954M232.028 104l-.056-32a184.5 184.5 0 0 0-130.14 314.954L130.878 416H48v32h136V312h-32v79.868l-27.541-27.541A152.5 152.5 0 0 1 232.028 104" />
+                d="M101.83,133.05c-34.52,34.52-53.94,81.31-54.03,130.13-.18,101.9,82.28,184.65,184.17,184.83l.06-32c-40.35-.07-79.02-16.13-107.56-44.66-59.56-59.55-59.56-156.11-.01-215.67l27.54-27.54v79.87s32,0,32,0V72.14s-135.98-.14-135.98-.14l-.03,32,82.81.09-28.96,28.96M279.97,104c40.35.07,79.02,16.13,107.56,44.66,59.56,59.55,59.56,156.11.01,215.67l-27.54,27.54v-79.87s-32,0-32,0v136s136,0,136,0v-32s-82.88,0-82.88,0l29.05-29.05c34.52-34.52,53.94-81.31,54.03-130.13.18-101.9-82.28-184.65-184.17-184.83l-.06,32" />
             </svg>
           </button>
         </div>
-        <div class="w-full p-3 pt-1">
-          <textarea v-model="altTexts[site.id]" class="w-full font-mono px-2 rounded focus:outline-none focus:ring-0"
-            :class="hasSiteChanges(site.id) ? 'border border-ap-light-green' : (!altTexts[site.id]?.length ? 'border border-red-500' : 'border border-transparent')"
-            rows="4" />
+
+
+        <div class="w-full px-3 py-1">
+          <textarea :value="getTextareaValue(site.id)" :disabled="isGeneratingSite(site.id)"
+            @input="handleTextareaInput(site.id, $event)"
+            class="resize-none w-full px-2 py-1 rounded-lg transition-colors focus:outline-none focus:ring-0 text-base leading-[1.1] focus:border focus:border-ap-light-green text-[#555] hover:border-ap-light-green"
+            :class="isGeneratingSite(site.id)
+              ? 'border border-green-500 bg-green-50/40 text-ap-dark-green animate-pulse'
+              : (hasSiteChanges(site.id)
+                ? 'border border-ap-light-green'
+                : (!altTexts[site.id]?.length ? 'border border-ap-red' : 'border border-transparent'))" rows="4" />
         </div>
       </div>
     </div>
