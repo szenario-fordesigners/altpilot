@@ -48,7 +48,7 @@
 	},
 	"extra": {
 		"handle": "alt-pilot",
-		"name": "AltPilot",
+		"name": "altpilot",
 		"developer": "szenario",
 		"documentationUrl": "https://github.com/szenario-fordesigners/altpilot",
 		"class": "szenario\\craftaltpilot\\AltPilot"
