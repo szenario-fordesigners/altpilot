@@ -7,5 +7,5 @@ export const assetStatus = {
 export const assetStatusShort = {
   0: '?!',
   1: 'AI',
-  2: 'ME'
-}
+  2: 'ME',
+};

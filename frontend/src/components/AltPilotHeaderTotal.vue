@@ -12,7 +12,8 @@ const formatNumber = (num: number): string => {
 <template>
   <div class="flex items-center gap-6 text-ap-dark-green">
     <div
-      class="pointer-events-none flex h-12 w-12 shrink-0 self-end items-center justify-center rounded-2xl bg-ap-light-green text-ap-dark-green mb-2">
+      class="pointer-events-none mb-2 flex h-12 w-12 shrink-0 items-center justify-center self-end rounded-2xl bg-ap-light-green text-ap-dark-green"
+    >
       <AltPilotLogo class="max-h-8 w-8" />
     </div>
     <div>

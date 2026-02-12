@@ -14,7 +14,9 @@ const formatNumber = (num: number): string => num.toLocaleString('de-DE');
 
 <template>
   <div class="text-ap-dark-green">
-    <div class="grid grid-cols-[max-content_max-content] gap-x-6 gap-y-0.5 text-sm leading-[1.15] pt-1">
+    <div
+      class="grid grid-cols-[max-content_max-content] gap-x-6 gap-y-0.5 pt-1 text-sm leading-[1.15]"
+    >
       <p class="m-0">{{ assetStatus[1] }}</p>
       <p class="m-0">{{ formatNumber(aiGeneratedCount) }}</p>
       <p class="m-0">{{ assetStatus[2] }}</p>

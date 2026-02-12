@@ -7,14 +7,16 @@ import AltPilotFilter from '@/components/AltPilotFilter.vue';
 
 <template>
   <div>
-    <div class="grid grid-cols-[max-content_max-content_1fr] items-start gap-x-6 gap-y-4 border-b border-ap-dark-green">
+    <div
+      class="grid grid-cols-[max-content_max-content_1fr] items-start gap-x-6 gap-y-4 border-b border-ap-dark-green"
+    >
       <div class="justify-self-start">
         <AltPilotHeaderTotal />
       </div>
       <div class="justify-self-start">
         <AltPilotHeaderStats />
       </div>
-      <div class="justify-self-end w-full max-w-lg">
+      <div class="w-full max-w-lg justify-self-end">
         <AltPilotSearch />
       </div>
     </div>
