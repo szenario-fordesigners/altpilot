@@ -261,6 +261,27 @@ class DatabaseService extends Component
         ];
     }
 
+    /**
+     * Returns distinct totals used by the dashboard widget.
+     *
+     * @return array{imageTotal: int, languageTotal: int}
+     */
+    public function getWidgetTotals(): array
+    {
+        $imageTotal = (new Query())
+            ->from(self::TABLE_NAME)
+            ->count('DISTINCT [[assetId]]');
+
+        $languageTotal = (new Query())
+            ->from(self::TABLE_NAME)
+            ->count('DISTINCT [[siteId]]');
+
+        return [
+            'imageTotal' => (int) $imageTotal,
+            'languageTotal' => (int) $languageTotal,
+        ];
+    }
+
     private function ensureAltFieldForVolume(int $volumeId): void
     {
         $volumesService = Craft::$app->getVolumes();
