@@ -1,0 +1,55 @@
+:root {
+	--ap-dark-green: #3c6e4e;
+	--ap-light-green: #8ff5b3;
+}
+
+.pane:has(.altpilot-widget) {
+	background-color: #8ff5b3 !important;
+	border-radius: 1.25rem !important;
+}
+
+.altpilot-widget {
+	width: 100%;
+	display: flex;
+	justify-content: start;
+
+	color: var(--ap-dark-green);
+
+	font-family: "Arial", sans-serif;
+
+	.altpilot-flex {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.altpilot-brand {
+		margin-right: 3rem;
+	}
+
+	.altpilot-flex-row {
+		display: flex;
+		flex-direction: row;
+	}
+
+	.altpilot-header {
+		font-size: 1.25rem;
+		margin-bottom: 1rem;
+	}
+
+	.altpilot-logo {
+		margin-top: 0.25rem;
+	}
+
+	.altpilot-total-count {
+		font-size: 3.75rem;
+		line-height: 1;
+	}
+
+	.altpilot-log {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0 1rem;
+
+		margin-left: 1.5rem;
+	}
+}

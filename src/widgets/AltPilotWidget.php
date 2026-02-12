@@ -5,7 +5,7 @@ namespace szenario\craftaltpilot\widgets;
 use Craft;
 use craft\base\Widget;
 use szenario\craftaltpilot\AltPilot;
-use szenario\craftaltpilot\web\assets\altpilotwidget\AltPilotWidgetAsset;
+use szenario\craftaltpilot\assetbundles\altpilotwidget\AltPilotWidgetAsset;
 
 /**
  * Alt Pilot Widget widget type
@@ -48,10 +48,14 @@ class AltPilotWidget extends Widget
 
         Craft::$app->getView()->registerAssetBundle(AltPilotWidgetAsset::class);
 
+        $widgetTotals = AltPilot::getInstance()->databaseService->getWidgetTotals();
+
         return Craft::$app->getView()->renderTemplate(
             'alt-pilot/_widget',
             [
                 'statusCounts' => AltPilot::getInstance()->databaseService->getStatusCounts(),
+                'imageTotal' => $widgetTotals['imageTotal'],
+                'languageTotal' => $widgetTotals['languageTotal'],
             ]
         );
     }

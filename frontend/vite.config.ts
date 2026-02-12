@@ -33,7 +33,7 @@ export default defineConfig({
         assetFileNames: '[name][extname]',
       },
     },
-    outDir: '../src/web/assets/altpilotfrontend/dist',
+    outDir: '../src/assetbundles/altpilotfrontend/dist',
     emptyOutDir: true,
 
     sourcemap: true,
