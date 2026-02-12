@@ -8,7 +8,7 @@ on:
     repository_dispatch:
         types:
             - craftcms/new-release
-    workflow_dispatch
+    workflow_dispatch:
 
 jobs:
     build:
