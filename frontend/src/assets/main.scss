@@ -3,12 +3,28 @@
   color: black;
 
   .asset-card-pulse {
-    animation: pulse 0.75s infinite;
+    animation: pulse 1s 2;
   }
 }
 
 @keyframes pulse {
-  50% {
-    opacity: 0.5;
+  0% {
+    opacity: 0;
   }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+#content {
+  background: linear-gradient(
+    to bottom,
+    #ffffff 0,
+    #ffffff 100px,
+    #F4FEF7 200px,
+    #F4FEF7 100%
+  ) !important;
 }
