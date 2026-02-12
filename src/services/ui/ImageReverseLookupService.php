@@ -72,6 +72,12 @@ class ImageReverseLookupService extends Component
                 $img->setAttribute('data-cp-edit-url', $result['url']);
                 $img->setAttribute('data-cp-edit-type', $result['type']); // 'direct' or 'search'
                 $img->setAttribute('data-cp-alt-text', $altText);
+                if (!empty($result['assetId'])) {
+                    $img->setAttribute('data-cp-asset-id', (string)$result['assetId']);
+                }
+                if (!empty($result['searchFilename'])) {
+                    $img->setAttribute('data-cp-search-filename', (string)$result['searchFilename']);
+                }
             }
         }
 
@@ -215,6 +221,8 @@ class ImageReverseLookupService extends Component
                 'type' => 'direct',
                 'url' => UrlHelper::cpUrl('alt-pilot', ['query' => 'id:' . $targetAssetId]),
                 'alt' => $assetAlt,
+                'assetId' => (int)$targetAssetId,
+                'searchFilename' => $filename,
             ];
         } else {
             // Fallback: Link to Assets Index with "filename:image.jpg" search
@@ -223,6 +231,8 @@ class ImageReverseLookupService extends Component
                 'type' => 'search',
                 'url' => UrlHelper::cpUrl('assets', ['search' => 'filename:"' . $filename . '"']),
                 'alt' => null,
+                'assetId' => null,
+                'searchFilename' => $filename,
             ];
         }
     }

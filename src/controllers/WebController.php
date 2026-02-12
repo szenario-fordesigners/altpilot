@@ -420,14 +420,48 @@ class WebController extends Controller
         }
 
         if ($queryParam !== null && $queryParam !== '') {
-            if (preg_match('/^id:(\d+)$/', $queryParam, $matches)) {
-                $uniqueAssetQuery->id($matches[1]);
-            } else {
-                $uniqueAssetQuery->search($queryParam);
+            $queryTokens = preg_split('/\s+OR\s+/i', (string)$queryParam) ?: [];
+            $idFilterValues = [];
+            $searchTokens = [];
+
+            foreach ($queryTokens as $token) {
+                $token = trim($token);
+                if ($token === '') {
+                    continue;
+                }
+
+                if (preg_match('/^id:(\d+)$/i', $token, $matches)) {
+                    $idFilterValues[] = (int)$matches[1];
+                    continue;
+                }
+
+                $searchTokens[] = $token;
             }
+
+            $allIds = [];
+
+            if ($idFilterValues !== []) {
+                $idFilterValues = array_values(array_unique($idFilterValues));
+                $idQuery = clone $uniqueAssetQuery;
+                $idQuery->id($idFilterValues);
+                $allIds = array_merge($allIds, array_map('intval', $idQuery->ids()));
+            }
+
+            if ($searchTokens !== []) {
+                $searchQuery = clone $uniqueAssetQuery;
+                $searchQuery->search(implode(' OR ', $searchTokens));
+                $allIds = array_merge($allIds, array_map('intval', $searchQuery->ids()));
+            }
+
+            // Fallback for legacy/free-form search values that don't tokenize cleanly.
+            if ($allIds === []) {
+                $fallbackQuery = clone $uniqueAssetQuery;
+                $fallbackQuery->search((string)$queryParam);
+                $allIds = array_map('intval', $fallbackQuery->ids());
+            }
+
             // Fetch all IDs first to manually deduplicate, avoiding unique() search bug
-            $allIds = $uniqueAssetQuery->ids();
-            $uniqueIds = array_values(array_unique(array_map('intval', $allIds)));
+            $uniqueIds = array_values(array_unique($allIds));
 
             $total = count($uniqueIds);
             $assetIds = array_slice($uniqueIds, $offset, $limit);
