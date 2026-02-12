@@ -97,7 +97,7 @@ const handleCancel = () => {
 
 <template>
   <div
-    class="relative flex h-full flex-col items-start gap-0 overflow-hidden rounded-[1.25rem] border border-[#ECECEC] bg-white shadow-xl"
+    class="relative flex h-full flex-col items-start gap-0 overflow-hidden rounded-[1.25rem] border border-[#ECECEC] bg-white"
   >
     <div class="relative h-32 w-full">
       <img

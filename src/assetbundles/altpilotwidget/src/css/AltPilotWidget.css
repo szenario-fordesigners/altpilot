@@ -6,12 +6,20 @@
 .pane:has(.altpilot-widget) {
 	background-color: #8ff5b3 !important;
 	border-radius: 1.25rem !important;
+	container-type: inline-size;
+	container-name: altpilot-pane;
 }
 
 .altpilot-widget {
 	width: 100%;
-	display: flex;
-	justify-content: start;
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	grid-template-areas:
+		"brand summary"
+		"brand metrics";
+	column-gap: 3rem;
+	row-gap: 0.75rem;
+	align-items: start;
 
 	color: var(--ap-dark-green);
 
@@ -23,7 +31,15 @@
 	}
 
 	.altpilot-brand {
-		margin-right: 3rem;
+		grid-area: brand;
+	}
+
+	.altpilot-summary {
+		grid-area: summary;
+	}
+
+	.altpilot-metrics {
+		grid-area: metrics;
 	}
 
 	.altpilot-flex-row {
@@ -51,5 +67,43 @@
 		gap: 0 1rem;
 
 		margin-left: 1.5rem;
+	}
+}
+
+@media (max-width: 900px) {
+	.altpilot-widget {
+		grid-template-columns: auto minmax(0, 1fr);
+		grid-template-areas:
+			"brand summary"
+			"metrics metrics";
+		column-gap: 1.5rem;
+		row-gap: 0.5rem;
+
+		.altpilot-metrics {
+			align-items: baseline;
+		}
+	}
+}
+
+@media (max-width: 680px) {
+	.altpilot-widget {
+		grid-template-columns: 1fr;
+		grid-template-areas:
+			"brand"
+			"summary"
+			"metrics";
+
+		.altpilot-header {
+			font-size: 1.1rem;
+		}
+
+		.altpilot-metrics {
+			flex-wrap: wrap;
+			gap: 0.75rem 1rem;
+		}
+
+		.altpilot-log {
+			margin-left: 0;
+		}
 	}
 }
