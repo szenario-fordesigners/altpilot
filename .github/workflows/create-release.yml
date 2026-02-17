@@ -1,27 +1,40 @@
 name: Create Release
-run-name: Create release for ${{ github.event.client_payload.version }}
+run-name: Create release for ${{ github.event.client_payload.version || inputs.version }}
 
 on:
+    # The real trigger (Keep this!)
     repository_dispatch:
         types:
             - craftcms/new-release
+
+    # The TEST trigger (Allows manual runs)
+    workflow_dispatch:
+        inputs:
+            version:
+                description: "Version (e.g., 1.0.0)"
+                required: true
+                default: "0.0.1-test"
+            tag:
+                description: "Tag (e.g., 0.0.1-test)"
+                required: true
+                default: "0.0.1-test"
 
 jobs:
     build:
         runs-on: ubuntu-latest
         permissions:
-            contents: write # Required to update the tag
+            contents: write # Required to create tags/releases
         steps:
             - uses: actions/checkout@v4
               with:
-                  ref: ${{ github.event.client_payload.tag }}
+                  # If triggered by Craft, use that tag. If manual, use the branch you are on.
+                  ref: ${{ github.event.client_payload.tag || github.ref }}
                   fetch-depth: 0
 
             # 1. Setup Environment
             - uses: pnpm/action-setup@v4
               with:
                   version: 10
-
             - uses: actions/setup-node@v4
               with:
                   node-version: 22
@@ -29,33 +42,37 @@ jobs:
                   cache-dependency-path: frontend/pnpm-lock.yaml
 
             # 2. Build the Frontend
-            # Vite will automatically output to ../src/assetbundles/altpilotfrontend/dist
             - name: Build frontend assets
               run: |
                   cd frontend
                   pnpm install
                   pnpm build
 
-            # 3. Commit the Assets to the Tag
+            # 3. Commit the Assets (Simulated for Test)
             - name: Commit Build Artifacts to Tag
               run: |
                   git config --global user.name "GitHub Actions"
                   git config --global user.email "actions@github.com"
 
-                  # Force add the folder where Vite output the files
-                  # We use -f because this folder is likely in your .gitignore
+                  # Use inputs if manual, or payload if real
+                  TAG_NAME="${{ github.event.client_payload.tag || inputs.tag }}"
+
+                  # Force add the built files (from your vite config path)
                   git add -f src/assetbundles/altpilotfrontend/dist
 
-                  # Commit and update the tag
-                  git commit -m "Build assets for ${{ github.event.client_payload.version }}"
-                  git tag -f ${{ github.event.client_payload.tag }}
-                  git push origin ${{ github.event.client_payload.tag }} --force
+                  # Commit
+                  git commit -m "Build assets for $TAG_NAME"
+
+                  # Update/Create the tag
+                  git tag -f $TAG_NAME
+                  git push origin $TAG_NAME --force
 
             # 4. Create the Release
             - uses: ncipollo/release-action@v1
               with:
-                  body: ${{ github.event.client_payload.notes }}
-                  makeLatest: ${{ github.event.client_payload.latest }}
-                  name: ${{ github.event.client_payload.version }}
-                  prerelease: ${{ github.event.client_payload.prerelease }}
-                  tag: ${{ github.event.client_payload.tag }}
+                  # Logic: "If payload exists, use it. Else, use manual inputs."
+                  body: ${{ github.event.client_payload.notes || 'Manual Test Release' }}
+                  makeLatest: ${{ github.event.client_payload.latest || false }}
+                  name: ${{ github.event.client_payload.version || inputs.version }}
+                  prerelease: ${{ github.event.client_payload.prerelease || true }}
+                  tag: ${{ github.event.client_payload.tag || inputs.tag }}
