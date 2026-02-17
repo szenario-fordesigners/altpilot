@@ -2,7 +2,7 @@ name: Create Release
 run-name: Create release for ${{ github.event.client_payload.version || inputs.version }}
 
 on:
-    # The real trigger (Keep this!)
+    # The real trigger
     repository_dispatch:
         types:
             - craftcms/new-release
