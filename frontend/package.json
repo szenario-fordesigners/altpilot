@@ -27,8 +27,8 @@
   },
   "devDependencies": {
     "@prettier/plugin-oxc": "^0.0.4",
-    "@tsconfig/node22": "^22.0.2",
-    "@types/node": "^22.18.11",
+    "@tsconfig/node24": "^24.0.0",
+    "@types/node": "^24.0.0",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.6.0",
@@ -46,5 +46,6 @@
     "vite": "^7.1.11",
     "vite-plugin-vue-devtools": "^8.0.3",
     "vue-tsc": "^3.1.1"
-  }
+  },
+  "packageManager": "pnpm@10.29.3+sha512.498e1fb4cca5aa06c1dcf2611e6fafc50972ffe7189998c409e90de74566444298ffe43e6cd2acdc775ba1aa7cc5e092a8b7054c811ba8c5770f84693d33d2dc"
 }
