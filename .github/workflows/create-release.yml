@@ -1,6 +1,3 @@
-# Creates a new GitHub Release whenever the Craft Plugin Store
-# is notified of a new version tag.
-
 name: Create Release
 run-name: Create release for ${{ github.event.client_payload.version }}
 
@@ -8,32 +5,53 @@ on:
     repository_dispatch:
         types:
             - craftcms/new-release
-    workflow_dispatch:
 
 jobs:
     build:
         runs-on: ubuntu-latest
         permissions:
-            contents: write
+            contents: write # Required to update the tag
         steps:
             - uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.event.client_payload.tag }}
+                  fetch-depth: 0
 
+            # 1. Setup Environment
             - uses: pnpm/action-setup@v4
               with:
                   version: 10
 
             - uses: actions/setup-node@v4
               with:
-                  node-version: 24
+                  node-version: 22
                   cache: pnpm
-                  cache-dependency-path: pnpm-lock.yaml
+                  cache-dependency-path: frontend/pnpm-lock.yaml
 
+            # 2. Build the Frontend
+            # Vite will automatically output to ../src/assetbundles/altpilotfrontend/dist
             - name: Build frontend assets
               run: |
                   cd frontend
                   pnpm install
                   pnpm build
 
+            # 3. Commit the Assets to the Tag
+            - name: Commit Build Artifacts to Tag
+              run: |
+                  git config --global user.name "GitHub Actions"
+                  git config --global user.email "actions@github.com"
+
+                  # Force add the folder where Vite output the files
+                  # We use -f because this folder is likely in your .gitignore
+                  git add -f src/assetbundles/altpilotfrontend/dist
+
+                  # Commit and update the tag
+                  git commit -m "Build assets for ${{ github.event.client_payload.version }}"
+                  git tag -f ${{ github.event.client_payload.tag }}
+                  git push origin ${{ github.event.client_payload.tag }} --force
+
+            # 4. Create the Release
             - uses: ncipollo/release-action@v1
               with:
                   body: ${{ github.event.client_payload.notes }}
