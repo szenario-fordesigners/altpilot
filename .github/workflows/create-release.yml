@@ -34,10 +34,10 @@ jobs:
             # 1. Setup Environment
             - uses: pnpm/action-setup@v4
               with:
-                  version: 10
+                  version: 10.29.3
             - uses: actions/setup-node@v4
               with:
-                  node-version: 22
+                  node-version: 22.22.0
                   cache: pnpm
                   cache-dependency-path: frontend/pnpm-lock.yaml
 

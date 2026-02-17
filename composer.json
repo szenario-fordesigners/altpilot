@@ -11,10 +11,10 @@
 		"rss": "https://github.com/szenario-fordesigners/altpilot/releases.atom"
 	},
 	"require": {
-		"php": ">=8.2",
-		"craftcms/cms": "^5.0.0",
-		"ilyagvc/checkhost": "^1.2",
-		"openai-php/client": "^0.18.0"
+		"php": "8.5.3",
+		"craftcms/cms": "5.9.10",
+		"ilyagvc/checkhost": "1.2.3",
+		"openai-php/client": "0.18.0"
 	},
 	"require-dev": {
 		"craftcms/ecs": "dev-main",
