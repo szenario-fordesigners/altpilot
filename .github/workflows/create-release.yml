@@ -25,7 +25,7 @@ jobs:
         permissions:
             contents: write # Required to create tags/releases
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
               with:
                   # If triggered by Craft, use that tag. If manual, use the branch you are on.
                   ref: ${{ github.event.client_payload.tag || github.ref }}
