@@ -1,0 +1,17 @@
+@import 'tailwindcss/theme.css';
+@import 'tailwindcss/preflight.css';
+@import 'tailwindcss/utilities.css';
+
+@theme {
+  --breakpoint-3xl: 120rem;
+  --color-ap-lavender-mist: #e8ebf6;
+  --color-ap-periwinkle: #6980dc;
+  --color-ap-red: #fe5b5b;
+  --color-ap-orange: #f5c28f;
+  --color-ap-dark-green: #3c6e4e;
+  --color-ap-light-green: #8ff5b3;
+  --font-ap-mono:
+    'Courier New', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    monospace;
+  --spacing-ap-title-p: 0.5rem;
+}

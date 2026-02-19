@@ -1,0 +1,301 @@
+<div id="craft-alt-page-search-overlay">
+	<a id="craft-alt-page-search-btn" href="#" target="_blank">
+		<svg
+			id="craft-alt-page-search-icon"
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 112 114"
+			fill="none"
+			aria-hidden="true"
+			focusable="false"
+		>
+			<path
+				d="M10 2.5H24.7686C27.0149 2.50001 29.1428 3.50726 30.5674 5.24414L107.664 99.2441C111.679 104.14 108.196 111.5 101.865 111.5H10C5.85787 111.5 2.5 108.142 2.5 104V10C2.5 5.85787 5.85787 2.5 10 2.5Z"
+				fill="currentColor"
+				stroke="currentColor"
+				stroke-width="5"
+			/>
+		</svg>
+		<span>review current page</span>
+	</a>
+</div>
+
+<div id="craft-alt-checker-overlay">
+	<div>
+		<span id="craft-alt-text-display"></span>
+		<a id="craft-alt-edit-btn" href="#" target="_blank">
+			Edit
+		</a>
+	</div>
+</div>
+
+<script>
+	(function () {
+const overlay = document.getElementById('craft-alt-checker-overlay');
+const txt = document.getElementById('craft-alt-text-display');
+const btn = document.getElementById('craft-alt-edit-btn');
+const pageSearchOverlay = document.getElementById('craft-alt-page-search-overlay');
+const pageSearchBtn = document.getElementById('craft-alt-page-search-btn');
+let activeImg = null;
+const warnIcon = String.fromCodePoint(0x26A0);
+const searchIcon = String.fromCodePoint(0x1F50D);
+const darkGreen = '#0f5132';
+const altPilotBaseUrl = '{{ cpUrl("altpilot")|e("js") }}';
+let scrollTicking = false;
+
+// Find all tagged images
+const images = document.querySelectorAll('img[data-cp-check-enabled="true"]');
+
+// Show page-level search button if there are any images
+if (images.length > 0) {
+pageSearchOverlay.style.display = 'block';
+pageSearchBtn.href = generatePageSearchUrl();
+}
+
+images.forEach(img => {
+img.addEventListener('mouseenter', (e) => {
+activeImg = img;
+updateOverlay(img);
+});
+
+img.addEventListener('mouseleave', (e) => {
+// Slight delay to allow moving mouse to the edit button if it overlaps?
+// Actually, since we position the overlay ON the image, we just hide when leaving the image
+// BUT we need to be careful if the overlay covers the mouse.
+// Simplified: Hide immediately.
+overlay.style.display = 'none';
+activeImg = null;
+});
+});
+
+// Keep overlay visible if we hover over the overlay itself (if needed)
+overlay.addEventListener('mouseenter', () => overlay.style.display = 'block');
+overlay.addEventListener('mouseleave', () => overlay.style.display = 'none');
+
+window.addEventListener('scroll', onViewportChange, { passive: true, capture: true });
+window.addEventListener('resize', onViewportChange, { passive: true });
+
+function updateOverlay(img) {
+const url = img.getAttribute('data-cp-edit-url');
+const type = img.getAttribute('data-cp-edit-type'); // direct vs search
+const alt = img.getAttribute('data-cp-alt-text');
+
+// Update Text
+if (! alt || alt.trim() === '') {
+txt.innerText = warnIcon + ' alt text missing';
+txt.style.color = darkGreen;
+} else {
+txt.innerText = alt;
+txt.style.color = darkGreen;
+}
+
+// Update Button
+btn.href = (type === 'direct') ? url : generateImageSearchUrl(img);
+btn.innerText = (type === 'direct') ? 'Edit' : (searchIcon + ' Edit');
+
+// Show it
+overlay.style.display = 'block';
+positionOverlay(img);
+}
+
+function positionOverlay(img) {
+if (!img || !img.isConnected) {
+overlay.style.display = 'none';
+activeImg = null;
+return;
+}
+
+const rect = img.getBoundingClientRect();
+if (rect.width <= 0 || rect.height <= 0) {
+overlay.style.display = 'none';
+return;
+}
+
+const overlayRect = overlay.getBoundingClientRect();
+// Place overlay in the bottom-right corner of the image
+// Use a small inset to avoid touching edges
+const inset = 6;
+const top = rect.bottom - overlayRect.height - inset;
+const left = rect.right - overlayRect.width - inset;
+
+overlay.style.top = top + 'px';
+overlay.style.left = left + 'px';
+}
+
+function onViewportChange() {
+if (!activeImg || overlay.style.display !== 'block') {
+return;
+}
+
+if (scrollTicking) {
+return;
+}
+
+scrollTicking = true;
+window.requestAnimationFrame(() => {
+positionOverlay(activeImg);
+scrollTicking = false;
+});
+}
+
+function generatePageSearchUrl() { // Collect all unique filenames from images on the page
+const assetIds = new Set();
+const filenames = new Set();
+
+images.forEach(img => {
+const assetIdRaw = img.getAttribute('data-cp-asset-id');
+const assetId = assetIdRaw ? parseInt(assetIdRaw, 10) : NaN;
+
+if (! Number.isNaN(assetId) && assetId > 0) {
+assetIds.add(assetId);
+return;
+}
+
+const normalizedFilename = img.getAttribute('data-cp-search-filename');
+if (normalizedFilename) {
+filenames.add(normalizedFilename);
+return;
+}
+
+const src = img.getAttribute('src');
+if (! src) {
+return;
+}
+const filename = src.split('/').pop().split('?')[0]; // Last-resort fallback from image URL
+if (! filename) {
+return;
+}
+const cleanFilename = filename.replace(/(_\d+x\d+|_thumb|_transform)(\.[a-z0-9]+)$/i, '$2');
+filenames.add(cleanFilename);
+});
+
+// Prefer stable asset IDs, and only fall back to filename lookup when needed.
+const idTerms = Array.from(assetIds).map(id => `id:${id}`);
+const filenameTerms = Array.from(filenames).map(filename => `filename:"${filename}"`);
+const searchTerms = [...idTerms, ...filenameTerms];
+const searchQuery = searchTerms.join(' OR ');
+
+// Return URL to AltPilot backend with the search query
+return buildAltPilotUrl(searchQuery);
+}
+
+function generateImageSearchUrl(img) {
+const assetIdRaw = img.getAttribute('data-cp-asset-id');
+const assetId = assetIdRaw ? parseInt(assetIdRaw, 10) : NaN;
+
+if (! Number.isNaN(assetId) && assetId > 0) {
+return buildAltPilotUrl('id:' + assetId);
+}
+
+const normalizedFilename = img.getAttribute('data-cp-search-filename');
+if (normalizedFilename) {
+return buildAltPilotUrl('filename:"' + normalizedFilename + '"');
+}
+
+const src = img.getAttribute('src');
+if (! src) {
+return buildAltPilotUrl();
+}
+
+const filename = src.split('/').pop().split('?')[0];
+if (! filename) {
+return buildAltPilotUrl();
+}
+
+const cleanFilename = filename.replace(/(_\d+x\d+|_thumb|_transform)(\.[a-z0-9]+)$/i, '$2');
+return buildAltPilotUrl('filename:"' + cleanFilename + '"');
+}
+
+function buildAltPilotUrl(query = '') {
+if (! query || query.trim() === '') {
+return altPilotBaseUrl;
+}
+return altPilotBaseUrl + '?query=' + encodeURIComponent(query);
+}
+})();
+</script>
+
+
+<style>
+	#craft-alt-page-search-overlay {
+		display: none;
+		position: fixed;
+		z-index: 2147483646;
+		top: 20px;
+		right: 20px;
+		pointer-events: auto;
+	}
+
+	#craft-alt-page-search-btn {
+		background: #8FF5B3;
+		color: #0f5132;
+		text-decoration: none;
+		padding: 6px 12px;
+		border-radius: 999px;
+		border: 1px solid #0f5132;
+		font-weight: 500;
+		font-size: 16px;
+		font-family: system-ui, -apple-system, sans-serif;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		box-shadow: 0 6px 18px rgba(15, 81, 50, 0.18);
+		transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+	}
+
+	#craft-alt-page-search-btn:hover {
+		background: #ddfce8;
+	}
+
+	#craft-alt-page-search-icon {
+		width: 16px;
+		height: 16px;
+		display: block;
+		flex: 0 0 auto;
+	}
+
+	#craft-alt-checker-overlay {
+		display: none;
+		position: fixed;
+		z-index: 2147483647;
+		pointer-events: none;
+	}
+
+	#craft-alt-checker-overlay > div {
+		background: #ffffff;
+		color: #0f5132;
+		/* border: 1px solid #0f5132; */
+		padding-left: 8px;
+		border-radius: 999px;
+		font-family: system-ui, -apple-system, sans-serif;
+		font-size: 13px;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		box-shadow: 0 6px 20px rgba(15, 81, 50, 0.2);
+	}
+
+	#craft-alt-text-display {
+		max-width: 220px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		color: #0f5132;
+	}
+
+	#craft-alt-edit-btn {
+		pointer-events: auto;
+		background: #8FF5B3;
+		color: #0f5132;
+		text-decoration: none;
+		padding: 4px 10px;
+		border-radius: 999px;
+		border: 1px solid #0f5132;
+		font-size: 15px;
+		white-space: nowrap;
+		transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+	}
+
+	#craft-alt-edit-btn:hover {
+		background: #ddfce8;
+	}
+</style>

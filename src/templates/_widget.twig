@@ -1,0 +1,38 @@
+{% set missingAltTextCount = statusCounts.counts[0] %}
+{% set aiGeneratedAltTextCount = statusCounts.counts[1] %}
+{% set manualAltTextCount = statusCounts.counts[2] %}
+{% set totalCount = statusCounts.total %}
+
+<div class="altpilot-widget">
+	<div class="altpilot-flex altpilot-brand">
+		<div class="altpilot-header">
+			altpilot
+		</div>
+		<div class="altpilot-logo">
+			<svg viewBox="0 0 144 144" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="M15 2.5H129C135.904 2.5 141.5 8.09644 141.5 15V129C141.5 135.904 135.904 141.5 129 141.5H15C8.09644 141.5 2.5 135.904 2.5 129V15C2.5 8.09644 8.09644 2.5 15 2.5Z" stroke-width="5"/>
+				<path id="altpilot-logo-inner" d="M25 17.5H39.7686C42.0149 17.5 44.1428 18.5073 45.5674 20.2441L122.664 114.244C126.679 119.14 123.196 126.5 116.865 126.5H25C20.8579 126.5 17.5 123.142 17.5 119V25C17.5 20.8579 20.8579 17.5 25 17.5Z" stroke-width="5"/>
+			</svg>
+		</div>
+	</div>
+
+	<div class="altpilot-flex">
+		<div class="altpilot-header">
+			alt texts for {{ imageTotal|number_format(0, ',', '.') }} images in {{ languageTotal|number_format(0, ',', '.') }} languages
+		</div>
+		<div class="altpilot-flex-row">
+			<div class="altpilot-total-count">
+				{{ totalCount|number_format(0, ',', '.') }}
+			</div>
+
+			<div class="altpilot-log">
+				<div>AI-generated</div>
+				<div>{{ aiGeneratedAltTextCount }}</div>
+				<div>manually</div>
+				<div>{{ manualAltTextCount }}</div>
+				<div>missing</div>
+				<div>{{ missingAltTextCount }}</div>
+			</div>
+		</div>
+	</div>
+</div>

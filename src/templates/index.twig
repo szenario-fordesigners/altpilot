@@ -1,0 +1,18 @@
+{% extends "_layouts/cp.twig" %}
+
+{% do view.registerAssetBundle("szenario\\craftaltpilot\\assetbundles\\altpilotfrontend\\AltPilotFrontendAsset") %}
+
+{% set title = "altpilot"|t('altpilot') %}
+
+{% set csrfToken = { name: craft.app.request.csrfParam, value: craft.app.request.getCsrfToken() } %}
+
+{# get all site languages #}
+{% set sites = craft.app.getSites().getAllSites() %}
+
+
+{% set settings = craft.app.plugins.getPlugin('altpilot').getSettings() %}
+{% set hasSelectedVolumes = settings.volumeIDs|length > 0 %}
+
+{% block content %}
+	<div id="altpilot-app" data-props='{{ { cpTrigger: craft.app.config.general.cpTrigger, csrfToken: csrfToken, sites: sites, primarySiteId: craft.app.sites.currentSite.id, hasSelectedVolumes: hasSelectedVolumes }|json_encode }}'></div>
+{% endblock %}

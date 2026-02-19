@@ -1,0 +1,108 @@
+{# @var plugin \szenario\craftaltpilot\AltPilot #}
+{# @var settings \szenario\craftaltpilot\models\Settings #}
+
+{% import '_includes/forms.twig' as forms %}
+
+{# phpMaxExecutionTime is injected from settingsHtml in AltPilot.php #}
+{% set phpMaxExecutionTime = phpMaxExecutionTime ?? 0 %}
+{% set phpMaxExecutionTime = phpMaxExecutionTime is numeric ? phpMaxExecutionTime|integer : 0 %}
+{% if phpMaxExecutionTime != 0 and phpMaxExecutionTime < 120 %}
+	<div class="pane" style="background-color: var(--yellow-050); border-color: var(--yellow-300);">
+		<p class="warning with-icon">
+			{{ "PHP max_execution_time is set to {seconds}s. For stable OpenAI requests we recommend at least 120s. Consider increasing it in php.ini or the Craft general config."|t('app', { seconds: phpMaxExecutionTime }) }}
+		</p>
+	</div>
+{% endif %}
+
+<div class="pane" style="background-color: var(--blue-050); border-color: var(--blue-300);">
+	<p class="notice with-icon">
+		For setup and usage details (queue runner recommendations and CLI commands), see the
+		<a href="https://github.com/szenario-fordesigners/altpilot#readme" target="_blank" rel="noopener">
+			altpilot GitHub documentation
+		</a>.
+	</p>
+</div>
+
+{{ forms.autosuggestField({
+	label: "OpenAI API Key"|t("altpilot"),
+	instructions: "The API key from your Open AI account"|t("altpilot"),
+	id: "openAiApiKey",
+	name: "openAiApiKey",
+	suggestEnvVars: true,
+	value: settings.openAiApiKey,
+	errors: settings.getErrors("openAiApiKey"),
+	required: true,
+}) }}
+
+
+{{ forms.checkboxSelectField({
+	label: 'Volumes'|t('app'),
+	id: 'volumeIDs',
+	name: 'volumeIDs',
+	instructions: "The volumes to generate the alt text for."|t("altpilot"),
+	values: settings.volumeIDs ?? [],
+	errors: settings.getErrors('volumeIDs'),
+	options: craft.app.volumes.getAllVolumes()|map(volume => {
+		value: volume.id,
+		label: volume.name
+	}),
+}) }}
+
+<div style="font-weight: bold;">
+Inline Frontend Editing
+</div>
+
+{{ forms.checkboxField({
+	label: 'Enable Inline Frontend Editing'|t('app'),
+	id: 'showImageOverlay',
+	name: 'showImageOverlay',
+	instructions: "Whether to show an alt text image overlay in the frontend."|t("altpilot"),
+	checked: settings.showImageOverlay,
+	errors: settings.getErrors('showImageOverlay'),
+}) }}
+
+{{ forms.textareaField({
+	label: 'Prompt'|t('app'),
+	id: 'openAiPrompt',
+	name: 'openAiPrompt',
+	instructions: "The prompt which will be sent to OpenAI alongside the image to generate an alt text."|t("altpilot"),
+	value: settings.openAiPrompt,
+	placeholder: "Your OpenAI prompt goes here...",
+	rows: 8,
+	errors: settings.getErrors('openAiPrompt'),
+}) }}
+
+{{ forms.textField({
+	label: 'Prompt Role'|t('app'),
+	id: 'openAiPromptRole',
+	name: 'openAiPromptRole',
+	instructions: "Optional role/context added as instruction #7 (e.g., 'gardening company')."|t("altpilot"),
+	value: settings.openAiPromptRole,
+	placeholder: "Add role or business context...",
+	errors: settings.getErrors('openAiPromptRole'),
+}) }}
+
+{{ forms.textareaField({
+	label: 'Prompt Focus'|t('app'),
+	id: 'openAiPromptFocus',
+	name: 'openAiPromptFocus',
+	instructions: "Optional focus added as instruction #8 (e.g., 'plants and their Latin names')."|t("altpilot"),
+	value: settings.openAiPromptFocus,
+	placeholder: "Add what the AI should prioritize...",
+	rows: 2,
+	errors: settings.getErrors('openAiPromptFocus'),
+}) }}
+
+{{ forms.selectField({
+	label: 'Open AI Model'|t('app'),
+	id: 'openAiModel',
+	name: 'openAiModel',
+	instructions: "The OpenAI model used to generate the response. We strongly recommend to use GPT-5 Nano. Using other models may lead to extraordinary costs and lower quality. For details, take a look at the calculator at the bottom of the [OpenAI pricing page](https://openai.com/api/pricing/#trigger_2L7BlliZjpyN3nKgx6ujVA). To find out which models are capable of vision OpenAI suggest to look [on the models page](https://platform.openai.com/docs/models)"|t("altpilot"),
+	value: settings.openAiModel,
+	errors: settings.getErrors('openAiModel'),
+	options: [
+		{value: 'gpt-5-nano', label: 'GPT-5 Nano — Fastest and cheapest option'},
+		{value: 'gpt-4o-mini', label: 'GPT-4o Mini — Alternative to  GPT-5 Nano while being a non-reasoning model'},
+		{value: 'gpt-4o', label: 'GPT-4o — Highest quality for complex images (better accuracy, more expensive)'},
+	],
+}) }}

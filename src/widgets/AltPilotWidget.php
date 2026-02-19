@@ -1,0 +1,62 @@
+<?php
+
+namespace szenario\craftaltpilot\widgets;
+
+use Craft;
+use craft\base\Widget;
+use szenario\craftaltpilot\AltPilot;
+use szenario\craftaltpilot\assetbundles\altpilotwidget\AltPilotWidgetAsset;
+
+/**
+ * Alt Pilot Widget widget type
+ */
+class AltPilotWidget extends Widget
+{
+    public static function displayName(): string
+    {
+        return 'AltPilot';
+    }
+
+    public static function isSelectable(): bool
+    {
+        return true;
+    }
+
+    public function getTitle(): ?string
+    {
+        return "";
+    }
+
+    public static function maxColspan(): ?int
+    {
+        return 2;
+    }
+
+    public static function icon(): ?string
+    {
+        return '<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="alt-pilot-logo-title" viewbox="0 0 612 612" fill="currentColor">
+				<title id="alt-pilot-logo-title">AltPilot logo</title>
+				<path d="M602.2,10.3c-10.5-10.5-45.7,0-58.7,4.5-17.3,5.9-32.8,14.8-46.6,26.6-37,31.5-68.6,74-105.1,106.5l-58.1-15.5c.5-6.9,9-9.3,11-15.7,6.9-22-18.7-44.2-39.4-33.5-7.9,4-27.4,31-33.5,31L62.7,56.1c-22.2-7.2-35.1,20.1-49.6,32.7l279,161.3c-26.2,28.9-58.4,55-84.1,84.1-21.2,24-38.6,53-58.4,78.3l-6.3.5-105.8-28.7c-10.3.2-25.3,19.7-32.2,27.1l106.7,59.5c2.6,3.6-13.2,26.7-8.8,35.4,6,12.1,33.7-9.2,38.5-5.8l62.4,104.7c7.1-8.2,23.7-19,23.9-30.6l-28.4-105.5c-.7-2.3-.5-4.2.5-6.3,1.8-3.6,41.2-29.2,48.4-34.8,41.4-32.3,76.6-70.9,113.9-107.6l162.2,279c10.6-14.1,34.5-25,32.7-44.5l-59.3-213.8c.3-6.4,27.2-25.7,31.3-33.8,10.5-20.4-11.5-46.5-33.5-39.4-6.4,2.1-8.8,10.5-15.7,11l-15.1-58.4c46.8-55.6,123.6-96.7,139.2-172.6,2-9.7,5.6-29.9-2-37.5Z"/>
+			</svg>';
+    }
+
+    public function getBodyHtml(): ?string
+    {
+        if (!Craft::$app->getUser()->checkPermission('accessPlugin-altpilot')) {
+            return '';
+        }
+
+        Craft::$app->getView()->registerAssetBundle(AltPilotWidgetAsset::class);
+
+        $widgetTotals = AltPilot::getInstance()->databaseService->getWidgetTotals();
+
+        return Craft::$app->getView()->renderTemplate(
+            'altpilot/_widget',
+            [
+                'statusCounts' => AltPilot::getInstance()->databaseService->getStatusCounts(),
+                'imageTotal' => $widgetTotals['imageTotal'],
+                'languageTotal' => $widgetTotals['languageTotal'],
+            ]
+        );
+    }
+}

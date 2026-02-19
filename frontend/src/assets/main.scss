@@ -1,0 +1,30 @@
+#altPilotWrapper {
+  font-family: 'Arial', sans-serif;
+  color: black;
+
+  .asset-card-pulse {
+    animation: pulse 1s 2;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+#content {
+  background: linear-gradient(
+    to bottom,
+    #ffffff 0,
+    #ffffff 100px,
+    #eefef4 200px,
+    #eefef4 100%
+  ) !important;
+}
