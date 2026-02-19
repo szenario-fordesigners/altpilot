@@ -46,7 +46,7 @@ Install from the Craft Plugin Store or via Composer.
 
 ### Plugin Store
 
-TODO: Add Plugin Store URL once published.
+[Install altpilot from the Craft Plugin Store](https://plugins.craftcms.com/altpilot)
 
 ### Composer
 
