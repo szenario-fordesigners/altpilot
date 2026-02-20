@@ -3,7 +3,7 @@
 	"description": "Generate and manage alt texts. Fully integrated, for thousands of assets.",
 	"type": "craft-plugin",
 	"license": "proprietary",
-	"version": "5.0.0",
+	"version": "5.0.1",
 	"support": {
 		"email": "support@szenario.design",
 		"issues": "https://github.com/szenario-fordesigners/altpilot/issues?state=open",
