@@ -12,8 +12,8 @@
 		"rss": "https://github.com/szenario-fordesigners/altpilot/releases.atom"
 	},
 	"require": {
-		"php": "^8.2.0",
-		"craftcms/cms": "^5.0.0",
+		"php": "8.5.3",
+		"craftcms/cms": "5.9.12",
 		"ilyagvc/checkhost": "1.2.3",
 		"openai-php/client": "0.19.0"
 	},
