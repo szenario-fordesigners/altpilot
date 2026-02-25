@@ -136,9 +136,9 @@ final class AssetEvents
         $view = Craft::$app->getView();
         $view->registerJsWithVars(
             fn(string $id, int $assetId, int $siteId) => <<<JS
-const \$button = $('#' + $id);
-\$button.on('activate', () => {
-  \$button.addClass('loading');
+$('#' + $id).on('activate', () => {
+  const \$btn = $('#' + $id);
+  \$btn.addClass('loading');
 
   Craft.cp.displayNotice('Generating alt text...');
 
@@ -155,7 +155,7 @@ const \$button = $('#' + $id);
     const errorMessage = response?.data?.error ?? 'Failed to generate alt text';
     Craft.cp.displayError(errorMessage);
   }).finally(() => {
-    \$button.removeClass('loading');
+    \$btn.removeClass('loading');
 
     if (Craft.cp.elementIndex) {
         Craft.cp.elementIndex.updateElements();
