@@ -27,6 +27,8 @@ class Settings extends Model
 
     public $showImageOverlay = true;
 
+    public $pageReviewButtonPosition = 'top-right';
+
     public $averageTokenCount = 5000;
 
     public $averageRequestDuration = 30;
@@ -43,6 +45,7 @@ class Settings extends Model
         return [
             [['openAiApiKey'], 'required'],
             [['openAiApiKey', 'openAiPrompt', 'openAiPromptRole', 'openAiPromptFocus'], 'string'],
+            [['pageReviewButtonPosition'], 'in', 'range' => ['top-left', 'top-right', 'bottom-left', 'bottom-right']],
         ];
     }
 

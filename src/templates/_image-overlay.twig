@@ -1,4 +1,16 @@
-<div id="craft-alt-page-search-overlay">
+{% set btnPosition = craft.app.plugins.getPlugin("altpilot").getSettings().pageReviewButtonPosition|default("bottom-right") %}
+{% set btnStyle = "" %}
+{% if btnPosition == 'top-left' %}
+	{% set btnStyle = 'top: 20px; left: 20px;' %}
+{% elseif btnPosition == 'top-right' %}
+	{% set btnStyle = 'top: 20px; right: 20px;' %}
+{% elseif btnPosition == 'bottom-left' %}
+	{% set btnStyle = 'bottom: 20px; left: 20px;' %}
+{% else %}
+	{% set btnStyle = 'bottom: 20px; right: 20px;' %}
+{% endif %}
+
+<div id="craft-alt-page-search-overlay" style="{{ btnStyle }}">
 	<a id="craft-alt-page-search-btn" href="#" target="_blank">
 		<svg
 			id="craft-alt-page-search-icon"
@@ -220,8 +232,6 @@ return altPilotBaseUrl + '?query=' + encodeURIComponent(query);
 		display: none;
 		position: fixed;
 		z-index: 2147483646;
-		top: 20px;
-		right: 20px;
 		pointer-events: auto;
 	}
 
