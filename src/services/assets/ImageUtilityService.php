@@ -142,11 +142,6 @@ class ImageUtilityService extends Component
         $mimeType = strtolower((string) $asset->getMimeType());
         $extension = strtolower((string) $asset->getExtension());
 
-        // SVG conversion depends on Craft's transformSvgs setting.
-        if ($mimeType === 'image/svg+xml' && !Craft::$app->getConfig()->getGeneral()->transformSvgs) {
-            throw new \Exception('SVGs are not supported by the OpenAI API and transformSvgs is disabled.');
-        }
-
         if (!in_array($mimeType, self::OPENAI_SUPPORTED_MIME_TYPES, true)) {
             return true;
         }

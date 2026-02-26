@@ -17,19 +17,6 @@ class QueueService extends Component
     {
         $siteLanguageCode = $this->getSiteLanguageCode($asset->siteId);
         $displayFilename = $this->getDisplayFilename($asset);
-        $extension = strtolower((string) $asset->getExtension());
-        $mimeType = strtolower((string) $asset->getMimeType());
-
-        // OpenAI vision endpoints do not accept SVG images.
-        if ($extension === 'svg' || $mimeType === 'image/svg+xml') {
-            $message = sprintf('Skipping %s (%s): SVG is not supported by OpenAI image inputs', $displayFilename, $siteLanguageCode);
-            Craft::info($message, 'altpilot');
-            return [
-                'status' => "warning",
-                'message' => $message,
-                'jobId' => null,
-            ];
-        }
 
         // check if an openai key is set
         $settings = \szenario\craftaltpilot\AltPilot::getInstance()->getSettings();
