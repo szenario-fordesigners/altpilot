@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useAssetAltEditor } from '@/composables/useAssetAltEditor';
 import { useGlobalState } from '@/composables/useGlobalState';
 import { useAssetGeneration } from '@/composables/useAssetGeneration';
-import { useStorage } from '@vueuse/core';
+import { useStorage, useMagicKeys } from '@vueuse/core';
 import type { Asset, MultiLanguageAsset } from '@/types/Asset';
 import { assetStatusShort } from '@/utils/assetStatus';
 import OverwriteConfirmationDialog from '@/components/OverwriteConfirmationDialog.vue';
@@ -93,6 +93,21 @@ const handleCancel = () => {
   }
   resetChanges();
 };
+
+const { meta_s, ctrl_s } = useMagicKeys({
+  passive: false,
+  onEventFired(e) {
+    if (e.type === 'keydown' && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+    }
+  },
+});
+
+watch([meta_s, ctrl_s], ([m, c]) => {
+  if (m || c) {
+    handleSave();
+  }
+});
 </script>
 
 <template>
