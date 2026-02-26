@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useAssetAltEditor } from '@/composables/useAssetAltEditor';
 import { useGlobalState } from '@/composables/useGlobalState';
 import { useAssetGeneration } from '@/composables/useAssetGeneration';
-import { useStorage, useMagicKeys } from '@vueuse/core';
+import { useStorage, useMagicKeys, useFocusWithin } from '@vueuse/core';
 import type { Asset, MultiLanguageAsset } from '@/types/Asset';
 import { assetStatusShort } from '@/utils/assetStatus';
 import OverwriteConfirmationDialog from '@/components/OverwriteConfirmationDialog.vue';
@@ -94,17 +94,22 @@ const handleCancel = () => {
   resetChanges();
 };
 
+const cardRef = ref<HTMLElement | null>(null);
+const { focused } = useFocusWithin(cardRef);
+
 const { meta_s, ctrl_s } = useMagicKeys({
   passive: false,
   onEventFired(e) {
     if (e.type === 'keydown' && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-      e.preventDefault();
+      if (focused.value) {
+        e.preventDefault();
+      }
     }
   },
 });
 
 watch([meta_s, ctrl_s], ([m, c]) => {
-  if (m || c) {
+  if ((m || c) && focused.value) {
     handleSave();
   }
 });
@@ -112,6 +117,7 @@ watch([meta_s, ctrl_s], ([m, c]) => {
 
 <template>
   <div
+    ref="cardRef"
     class="relative flex h-full flex-col items-start gap-0 overflow-hidden rounded-[1.25rem] border border-[#ECECEC] bg-white"
   >
     <div class="relative h-32 w-full">
