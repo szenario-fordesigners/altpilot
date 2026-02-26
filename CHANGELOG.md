@@ -1,10 +1,14 @@
 # Release Notes for AltPilot
 
+## 5.0.3 - 2026-02-26
+
+- Added keyboard shortcut (Cmd/Ctrl + S) to save alt texts
+- Fixed an issue with alt text generation for SVG files
+
 ## 5.0.2 - 2026-02-26
 
 - Added a setting to customize the position of the "Review current page" button
 - Fixed a JavaScript scoping issue in the Control Panel
-
 
 ## 5.0.1 - 2026-02-20
 
