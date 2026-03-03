@@ -46,8 +46,16 @@ class UrlReachabilityChecker extends Component
             $checkHost = $this->getCheckHost();
             $result = $checkHost->runCheck($url, 'http', $maxNodes);
 
-            if ($result === false || !isset($result['results']) || !is_array($result['results'])) {
-                Craft::warning('Invalid result from check-host.net for URL: ' . $url, 'altpilot');
+            if ($result === false) {
+                Craft::warning('Failed to connect to check-host.net API for URL: ' . $url, 'altpilot');
+                return false;
+            }
+
+            if (!isset($result['results']) || !is_array($result['results'])) {
+                Craft::warning(
+                    'Invalid result format from check-host.net for URL: ' . $url . '. Result: ' . print_r($result, true),
+                    'altpilot'
+                );
                 return false;
             }
 

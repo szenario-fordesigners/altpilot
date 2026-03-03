@@ -66,7 +66,6 @@ class AltPilotMetadata extends Behavior
      */
     public function setStatus(int $value): void
     {
-        Craft::info("AltPilotMetadata: setStatus called with value $value", 'altpilot');
         $this->_status = $value;
         $this->_loaded = true;
         $this->_statusExplicitlySet = true;
@@ -78,7 +77,6 @@ class AltPilotMetadata extends Behavior
     public function beforeSave(ModelEvent $event): void
     {
         $asset = $this->owner;
-        Craft::info("AltPilotMetadata: beforeSave for asset " . $asset->id, 'altpilot');
 
         if (!$asset instanceof Asset) {
             return;
@@ -109,7 +107,6 @@ class AltPilotMetadata extends Behavior
     public function afterSave(ModelEvent $event): void
     {
         $asset = $this->owner;
-        Craft::info("AltPilotMetadata: afterSave for asset " . $asset->id, 'altpilot');
 
         if (!$asset instanceof Asset || !$asset->id || !$asset->siteId) {
             return;

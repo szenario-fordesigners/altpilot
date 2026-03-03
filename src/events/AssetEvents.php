@@ -63,24 +63,16 @@ final class AssetEvents
                     return;
                 }
 
-                Craft::info('Asset after save event triggered', 'altpilot');
-
                 $asset = $event->sender;
                 if (!$asset instanceof Asset || !$asset->id || $asset->kind !== 'image') {
                     return;
                 }
 
-                Craft::info('Asset after save event triggered: ' . $asset->id . ' - kind: ' . $asset->kind, 'altpilot');
-
                 $configuredVolumes = SettingsHelper::normalizeVolumeIds($this->plugin->getSettings()->volumeIDs ?? []);
-
-                Craft::info('Configured volumes: ' . Json::encode($configuredVolumes), 'altpilot');
 
                 if ($configuredVolumes === [] || !in_array((int) $asset->volumeId, $configuredVolumes, true)) {
                     return;
                 }
-
-                Craft::info('Asset after save event triggered: ' . $asset->id . ' - kind: ' . $asset->kind . ' - volumeId: ' . $asset->volumeId, 'altpilot');
 
                 $sites = Craft::$app->getSites()->getAllSites();
 
