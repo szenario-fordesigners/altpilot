@@ -16,6 +16,7 @@ use szenario\craftaltpilot\events\OverlayEvents;
 use szenario\craftaltpilot\events\SettingsEvents;
 use szenario\craftaltpilot\models\Settings;
 use szenario\craftaltpilot\services\ai\OpenAiService;
+use szenario\craftaltpilot\services\ai\StatsService;
 use szenario\craftaltpilot\services\assets\DatabaseService;
 use szenario\craftaltpilot\services\generation\AltTextGenerator;
 use szenario\craftaltpilot\services\generation\QueueService;
@@ -32,10 +33,11 @@ use szenario\craftaltpilot\services\generation\QueueService;
  * @property-read QueueService $queueService
  * @property-read AltTextGenerator $altTextGenerator
  * @property-read DatabaseService $databaseService
+ * @property-read StatsService $statsService
  */
 class AltPilot extends Plugin
 {
-    public string $schemaVersion = '1.0.0';
+    public string $schemaVersion = '1.0.1';
     public bool $hasCpSettings = true;
     public bool $hasCpSection = true;
 
@@ -47,6 +49,7 @@ class AltPilot extends Plugin
                 'queueService' => QueueService::class,
                 'altTextGenerator' => AltTextGenerator::class,
                 'databaseService' => DatabaseService::class,
+                'statsService' => StatsService::class,
             ],
         ];
     }

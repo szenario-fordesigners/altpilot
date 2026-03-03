@@ -29,10 +29,6 @@ class Settings extends Model
 
     public $pageReviewButtonPosition = 'top-right';
 
-    public $averageTokenCount = 5000;
-
-    public $averageRequestDuration = 30;
-
     public $volumeIDs = [];
 
     public $initialized = false;

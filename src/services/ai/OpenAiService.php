@@ -240,19 +240,6 @@ class OpenAiService extends Component
 
     private function updateRequestStats(int $tokenCount, float $durationSeconds): array
     {
-        $settings = AltPilot::getInstance()->getSettings();
-        $averageTokenCount = $settings->averageTokenCount;
-        $averageRequestDuration = $settings->averageRequestDuration;
-
-        $settings->averageTokenCount = round(($averageTokenCount + $tokenCount) / 2);
-        $settings->averageRequestDuration = round(($averageRequestDuration + $durationSeconds) / 2);
-        $settingsData = $settings->toArray();
-        $settingsData['volumeIDs'] = SettingsHelper::normalizeVolumeIds($settingsData['volumeIDs'] ?? []);
-        Craft::$app->getPlugins()->savePluginSettings(AltPilot::getInstance(), $settingsData);
-
-        return [
-            'averageTokenCount' => $settings->averageTokenCount,
-            'averageRequestDuration' => $settings->averageRequestDuration,
-        ];
+        return AltPilot::getInstance()->statsService->updateStats($tokenCount, $durationSeconds);
     }
 }

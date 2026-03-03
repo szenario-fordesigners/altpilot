@@ -1,5 +1,9 @@
 # Release Notes for AltPilot
 
+## 5.0.4 - 2026-03-03
+- Move stats to seperate database table
+- Improve logging
+
 ## 5.0.3 - 2026-02-26
 
 - Added keyboard shortcut (Cmd/Ctrl + S) to save alt texts
