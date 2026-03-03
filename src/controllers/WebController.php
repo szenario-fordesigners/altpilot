@@ -203,12 +203,14 @@ class WebController extends Controller
         }
 
         $results = [];
+        $errors = [];
         $elementsService = Craft::$app->getElements();
 
         foreach ($normalizedAltTexts as $siteId => $altText) {
             $asset = Craft::$app->assets->getAssetById($assetId, $siteId);
             if (!$asset) {
-                return $this->errorResponse(sprintf('Asset %d not found for site %d', $assetId, $siteId), 404);
+                $errors[$siteId] = sprintf('Asset %d not found for site %d', $assetId, $siteId);
+                continue;
             }
 
             // Explicitly set the siteId to ensure correct site context when saving
@@ -223,17 +225,10 @@ class WebController extends Controller
             }
 
             if (!$elementsService->saveElement($asset)) {
-                $errors = $asset->getErrors();
-                Craft::error(sprintf('Failed to save asset alt text for asset ID: %d, site ID: %d. Errors: %s', $assetId, $siteId, json_encode($errors)), "altpilot");
-                return $this->errorResponse(
-                    'Failed to save asset alt text',
-                    400,
-                    [
-                        'assetId' => $assetId,
-                        'siteId' => $siteId,
-                        'errors' => $errors,
-                    ]
-                );
+                $assetErrors = $asset->getErrors();
+                Craft::error(sprintf('Failed to save asset alt text for asset ID: %d, site ID: %d. Errors: %s', $assetId, $siteId, json_encode($assetErrors)), "altpilot");
+                $errors[$siteId] = $assetErrors;
+                continue;
             }
 
             Craft::info(sprintf('Successfully saved alt text for asset ID: %d, site ID: %d', $assetId, $siteId), "altpilot");
@@ -242,6 +237,18 @@ class WebController extends Controller
                 'siteId' => (int) $siteId,
                 'alt' => $altText,
             ];
+        }
+
+        if ($errors !== []) {
+            return $this->errorResponse(
+                'Failed to save alt text for some sites',
+                400,
+                [
+                    'assetId' => $assetId,
+                    'successfulSites' => $results,
+                    'errors' => $errors,
+                ]
+            );
         }
 
         return $this->successResponse([
