@@ -35,6 +35,12 @@ abstract class BaseAssetController extends Controller
             return;
         }
 
+        $openAiApiKey = $settings->openAiApiKey;
+        if ($openAiApiKey === '') {
+            $this->stderr("No OpenAI API key configured in AltPilot settings.\n", Console::FG_RED);
+            return;
+        }
+
         $query = Asset::find()
             ->volumeId($volumeIds)
             ->kind('image')

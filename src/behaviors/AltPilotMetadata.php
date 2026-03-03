@@ -84,19 +84,19 @@ class AltPilotMetadata extends Behavior
 
         // If status was explicitly set, don't overwrite it
         if ($this->_statusExplicitlySet) {
-            Craft::info("AltPilotMetadata: Status explicitly set to " . $this->_status . ", skipping auto-detection", 'altpilot');
+            Craft::info("AltPilotMetadata: Status explicitly set to " . $this->_status . ", skipping auto-detection for asset " . $asset->id . " on site " . $asset->siteId, 'altpilot');
             return;
         }
 
         // If alt text changed, update status automatically
         if ($asset->isAttributeDirty('alt')) {
             $altText = $asset->alt;
-            Craft::info("AltPilotMetadata: Alt text dirty. New value: '$altText'", 'altpilot');
+            Craft::info("AltPilotMetadata: Alt text dirty. New value: '$altText' for asset " . $asset->id . " on site " . $asset->siteId, 'altpilot');
             $status = ($altText === null || trim($altText) === '')
                 ? self::STATUS_MISSING
                 : self::STATUS_MANUAL;
 
-            Craft::info("AltPilotMetadata: Auto-setting status to $status", 'altpilot');
+            Craft::info("AltPilotMetadata: Auto-setting status to $status for asset " . $asset->id . " on site " . $asset->siteId, 'altpilot');
             $this->setStatus($status);
         }
     }
@@ -113,7 +113,7 @@ class AltPilotMetadata extends Behavior
         }
 
         $status = $this->getStatus();
-        Craft::info("AltPilotMetadata: Persisting status $status to DB", 'altpilot');
+        Craft::info("AltPilotMetadata: Persisting status $status to DB for asset " . $asset->id . " on site " . $asset->siteId, 'altpilot');
 
         AltPilot::getInstance()
             ->databaseService

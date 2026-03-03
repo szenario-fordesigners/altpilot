@@ -4,8 +4,6 @@ namespace szenario\craftaltpilot\services\generation;
 
 use Craft;
 use szenario\craftaltpilot\AltPilot;
-use szenario\craftaltpilot\services\assets\ImageUtilityService;
-use szenario\craftaltpilot\services\infrastructure\UrlReachabilityChecker;
 use yii\base\Component;
 
 /**
@@ -13,9 +11,6 @@ use yii\base\Component;
  */
 class AltTextGenerator extends Component
 {
-    private ?ImageUtilityService $imageUtilityService = null;
-    private ?UrlReachabilityChecker $urlReachabilityChecker = null;
-
     /**
      * Generate alt text for an asset (synchronous)
      *
@@ -26,8 +21,8 @@ class AltTextGenerator extends Component
     {
         $plugin = AltPilot::getInstance();
         $openAiService = $plugin->openAiService;
-        $urlReachabilityChecker = $this->getUrlReachabilityChecker();
-        $imageUtilityService = $this->getImageUtilityService();
+        $urlReachabilityChecker = $plugin->urlReachabilityChecker;
+        $imageUtilityService = $plugin->imageUtilityService;
         $sitesService = Craft::$app->getSites();
 
         /** @var \craft\models\Site|null $site */
@@ -59,23 +54,5 @@ class AltTextGenerator extends Component
         // Transform logic is handled internally by assetToBase64()
         $base64Image = $imageUtilityService->assetToBase64($asset);
         return $openAiService->generateAltTextForImage($base64Image, $asset, $site);
-    }
-
-    private function getImageUtilityService(): ImageUtilityService
-    {
-        if ($this->imageUtilityService === null) {
-            $this->imageUtilityService = new ImageUtilityService();
-        }
-
-        return $this->imageUtilityService;
-    }
-
-    private function getUrlReachabilityChecker(): UrlReachabilityChecker
-    {
-        if ($this->urlReachabilityChecker === null) {
-            $this->urlReachabilityChecker = new UrlReachabilityChecker();
-        }
-
-        return $this->urlReachabilityChecker;
     }
 }

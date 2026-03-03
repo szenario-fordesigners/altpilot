@@ -21,9 +21,6 @@ class OpenAiService extends Component
     private const DEFAULT_PROMPT = 'Describe this image in a way suitable for alt text (roughly 150 characters maximum).';
 
     private ?Client $client = null;
-    private ?OpenAiRateLimiter $rateLimiter = null;
-    private ?OpenAiErrorService $errorService = null;
-
     /**
      * Get the OpenAI client instance
      *
@@ -46,22 +43,9 @@ class OpenAiService extends Component
         return $this->client;
     }
 
-    private function getRateLimiter(): OpenAiRateLimiter
-    {
-        if ($this->rateLimiter === null) {
-            $this->rateLimiter = new OpenAiRateLimiter();
-        }
-
-        return $this->rateLimiter;
-    }
-
     private function getErrorService(): OpenAiErrorService
     {
-        if ($this->errorService === null) {
-            $this->errorService = new OpenAiErrorService();
-        }
-
-        return $this->errorService;
+        return AltPilot::getInstance()->openAiErrorService;
     }
 
     /**
@@ -89,10 +73,10 @@ class OpenAiService extends Component
 
             return $response;
         } catch (\Exception $e) {
-            $processedException = $this->getErrorService()->handleException($e);
+            $processedException = AltPilot::getInstance()->openAiErrorService->handleException($e);
             
             if ($e instanceof \OpenAI\Exceptions\RateLimitException && property_exists($e, 'response') && $e->response !== null) {
-                $this->getRateLimiter()->handleRateLimitResponse($e->response);
+                AltPilot::getInstance()->openAiRateLimiter->handleRateLimitResponse($e->response);
             }
             
             throw $processedException;
@@ -138,17 +122,17 @@ class OpenAiService extends Component
             // 'max_completion_tokens' => 300,
         ]);
 
-        $this->getRateLimiter()->throttleIfNeeded();
+        AltPilot::getInstance()->openAiRateLimiter->throttleIfNeeded();
 
         $startTime = time();
 
         $response = $this->chatCompletion($messages, $options);
 
         // Validate response and check for errors
-        $this->getErrorService()->validateResponse($response);
+        AltPilot::getInstance()->openAiErrorService->validateResponse($response);
 
         // Extract content
-        $content = $this->getErrorService()->extractContent($response);
+        $content = AltPilot::getInstance()->openAiErrorService->extractContent($response);
 
         $durationSeconds = time() - $startTime;
 
@@ -171,7 +155,7 @@ class OpenAiService extends Component
                 $tokenLimit = $meta->tokenLimit ?? null;
                 $requestLimit = $meta->requestLimit ?? null;
 
-                $this->getRateLimiter()->scheduleNextRequestDelay(
+                AltPilot::getInstance()->openAiRateLimiter->scheduleNextRequestDelay(
                     $tokenLimit,
                     $requestLimit,
                     $stats['averageTokenCount'],

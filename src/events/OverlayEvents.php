@@ -12,7 +12,6 @@ use yii\base\Event;
 final class OverlayEvents
 {
     private AltPilot $plugin;
-    private ?ImageReverseLookupService $imageReverseLookupService = null;
 
     public function __construct(AltPilot $plugin)
     {
@@ -40,10 +39,6 @@ final class OverlayEvents
 
     private function getImageReverseLookupService(): ImageReverseLookupService
     {
-        if ($this->imageReverseLookupService === null) {
-            $this->imageReverseLookupService = new ImageReverseLookupService();
-        }
-
-        return $this->imageReverseLookupService;
+        return $this->plugin->imageReverseLookupService;
     }
 }

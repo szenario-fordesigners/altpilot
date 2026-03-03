@@ -18,8 +18,13 @@ use szenario\craftaltpilot\models\Settings;
 use szenario\craftaltpilot\services\ai\OpenAiService;
 use szenario\craftaltpilot\services\ai\StatsService;
 use szenario\craftaltpilot\services\assets\DatabaseService;
+use szenario\craftaltpilot\services\assets\ImageUtilityService;
 use szenario\craftaltpilot\services\generation\AltTextGenerator;
 use szenario\craftaltpilot\services\generation\QueueService;
+use szenario\craftaltpilot\services\infrastructure\UrlReachabilityChecker;
+use szenario\craftaltpilot\services\ui\ImageReverseLookupService;
+use szenario\craftaltpilot\services\ai\OpenAiRateLimiter;
+use szenario\craftaltpilot\services\ai\OpenAiErrorService;
 
 /**
  * AltPilot plugin
@@ -34,6 +39,11 @@ use szenario\craftaltpilot\services\generation\QueueService;
  * @property-read AltTextGenerator $altTextGenerator
  * @property-read DatabaseService $databaseService
  * @property-read StatsService $statsService
+ * @property-read ImageUtilityService $imageUtilityService
+ * @property-read UrlReachabilityChecker $urlReachabilityChecker
+ * @property-read ImageReverseLookupService $imageReverseLookupService
+ * @property-read OpenAiRateLimiter $openAiRateLimiter
+ * @property-read OpenAiErrorService $openAiErrorService
  */
 class AltPilot extends Plugin
 {
@@ -50,6 +60,11 @@ class AltPilot extends Plugin
                 'altTextGenerator' => AltTextGenerator::class,
                 'databaseService' => DatabaseService::class,
                 'statsService' => StatsService::class,
+                'imageUtilityService' => ImageUtilityService::class,
+                'urlReachabilityChecker' => UrlReachabilityChecker::class,
+                'imageReverseLookupService' => ImageReverseLookupService::class,
+                'openAiRateLimiter' => OpenAiRateLimiter::class,
+                'openAiErrorService' => OpenAiErrorService::class,
             ],
         ];
     }

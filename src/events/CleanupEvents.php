@@ -2,6 +2,7 @@
 
 namespace szenario\craftaltpilot\events;
 
+use craft\elements\Asset;
 use craft\events\DeleteSiteEvent;
 use craft\events\VolumeEvent;
 use craft\services\Sites;
@@ -20,6 +21,16 @@ final class CleanupEvents
 
     public function register(): void
     {
+        Event::on(
+            Asset::class,
+            Asset::EVENT_AFTER_DELETE,
+            function (Event $event) {
+                /** @var Asset $asset */
+                $asset = $event->sender;
+                $this->plugin->databaseService->deleteMetadataForAsset((int)$asset->id);
+            }
+        );
+
         Event::on(
             Sites::class,
             Sites::EVENT_AFTER_DELETE_SITE,
