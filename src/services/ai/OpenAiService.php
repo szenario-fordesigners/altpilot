@@ -89,7 +89,13 @@ class OpenAiService extends Component
 
             return $response;
         } catch (\Exception $e) {
-            throw $this->getErrorService()->handleException($e);
+            $processedException = $this->getErrorService()->handleException($e);
+            
+            if ($e instanceof \OpenAI\Exceptions\RateLimitException && property_exists($e, 'response') && $e->response !== null) {
+                $this->getRateLimiter()->handleRateLimitResponse($e->response);
+            }
+            
+            throw $processedException;
         }
     }
 
@@ -136,11 +142,7 @@ class OpenAiService extends Component
 
         $startTime = time();
 
-        try {
-            $response = $this->chatCompletion($messages, $options);
-        } catch (\Exception $e) {
-            throw $this->getErrorService()->handleException($e);
-        }
+        $response = $this->chatCompletion($messages, $options);
 
         // Validate response and check for errors
         $this->getErrorService()->validateResponse($response);

@@ -24,7 +24,54 @@ class OpenAiErrorService extends Component
         if ($e instanceof RateLimitException) {
             $message = 'OpenAI API rate limit exceeded. Please try again later.';
             $sanitizedMessage = $this->sanitizeErrorMessage($e->getMessage());
-            Craft::error('OpenAI API rate limit error: ' . $sanitizedMessage, 'altpilot');
+            
+            $rateLimitContext = [];
+            $responseMessage = '';
+
+            try {
+                if (property_exists($e, 'response') && $e->response !== null) {
+                    $response = $e->response;
+                    
+                    // Extract rate limit headers
+                    $headers = [
+                        'x-ratelimit-limit-requests',
+                        'x-ratelimit-limit-tokens',
+                        'x-ratelimit-remaining-requests',
+                        'x-ratelimit-remaining-tokens',
+                        'x-ratelimit-reset-requests',
+                        'x-ratelimit-reset-tokens',
+                    ];
+                    
+                    foreach ($headers as $header) {
+                        if ($response->hasHeader($header)) {
+                            $rateLimitContext[$header] = $response->getHeaderLine($header);
+                        }
+                    }
+
+                    // Try to get detailed error from body
+                    $body = (string) $response->getBody();
+                    if (!empty($body)) {
+                        $decoded = json_decode($body, true);
+                        if (json_last_error() === JSON_ERROR_NONE && isset($decoded['error']['message'])) {
+                            $responseMessage = $decoded['error']['message'];
+                        } else {
+                            $responseMessage = $body;
+                        }
+                    }
+                }
+            } catch (\Throwable $th) {
+                // Silently fallback if response extraction fails
+            }
+
+            $logMessage = 'OpenAI API rate limit error: ' . $sanitizedMessage;
+            if ($responseMessage !== '') {
+                $logMessage .= ' - Detail: ' . $this->sanitizeErrorMessage($responseMessage);
+            }
+            if ($rateLimitContext !== []) {
+                $logMessage .= ' - Headers: ' . json_encode($rateLimitContext);
+            }
+
+            Craft::error($logMessage, 'altpilot');
 
             return new OpenAiErrorException(
                 $message,

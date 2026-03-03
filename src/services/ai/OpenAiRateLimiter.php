@@ -7,31 +7,62 @@ use OpenAI\Responses\Meta\MetaInformationRateLimit;
 
 class OpenAiRateLimiter
 {
-    private const THROTTLE_LOG_CATEGORY = 'altpilot-throttle';
     private const EXECUTION_BUFFER_SECONDS = 3;
     private const MAX_EXECUTION_TIME_SECONDS = 55;
 
-    private int $nextAllowedRequestTime = 0;
+    private const CACHE_KEY = 'altpilot_openai_next_allowed_time';
 
     public function throttleIfNeeded(): void
     {
-        if ($this->nextAllowedRequestTime <= 0) {
+        $nextAllowedRequestTime = (int) Craft::$app->getCache()->get(self::CACHE_KEY);
+
+        if ($nextAllowedRequestTime <= 0) {
             return;
         }
 
         $now = time();
-        if ($now >= $this->nextAllowedRequestTime) {
-            $this->nextAllowedRequestTime = 0;
+        if ($now >= $nextAllowedRequestTime) {
+            Craft::$app->getCache()->delete(self::CACHE_KEY);
             return;
         }
 
-        $sleepSeconds = (int) max(1, $this->nextAllowedRequestTime - $now);
+        $sleepSeconds = (int) max(1, $nextAllowedRequestTime - $now);
         $this->logThrottle('Sleeping before next OpenAI request', [
             'sleepSeconds' => $sleepSeconds,
-            'nextAllowedRequestTime' => $this->nextAllowedRequestTime,
+            'nextAllowedRequestTime' => $nextAllowedRequestTime,
         ]);
         sleep($sleepSeconds);
-        $this->nextAllowedRequestTime = 0;
+        Craft::$app->getCache()->delete(self::CACHE_KEY);
+    }
+
+    public function handleRateLimitResponse($response): void
+    {
+        if ($response === null) {
+            return;
+        }
+
+        $requestReset = $response->hasHeader('x-ratelimit-reset-requests') ? $response->getHeaderLine('x-ratelimit-reset-requests') : null;
+        $tokenReset = $response->hasHeader('x-ratelimit-reset-tokens') ? $response->getHeaderLine('x-ratelimit-reset-tokens') : null;
+
+        $requestResetSeconds = $this->roundSeconds($this->parseResetInterval($requestReset));
+        $tokenResetSeconds = $this->roundSeconds($this->parseResetInterval($tokenReset));
+
+        $waitSeconds = max((int)$requestResetSeconds, (int)$tokenResetSeconds);
+
+        // Fallback to a safe 60 seconds if headers are missing or unparseable
+        if ($waitSeconds <= 0) {
+            $waitSeconds = 60;
+        }
+
+        $nextAllowedRequestTime = time() + $waitSeconds;
+        Craft::$app->getCache()->set(self::CACHE_KEY, $nextAllowedRequestTime, $waitSeconds);
+
+        $this->logThrottle('Scheduled next OpenAI request delay due to 429 Rate Limit error', [
+            'waitSeconds' => $waitSeconds,
+            'nextAllowedRequestTime' => $nextAllowedRequestTime,
+            'requestResetHeader' => $requestReset,
+            'tokenResetHeader' => $tokenReset,
+        ]);
     }
 
     public function scheduleNextRequestDelay(
@@ -79,7 +110,7 @@ class OpenAiRateLimiter
         }
 
         if ($intervals === []) {
-            $this->nextAllowedRequestTime = 0;
+            Craft::$app->getCache()->delete(self::CACHE_KEY);
             $this->logThrottle('Could not compute throttling interval (no headers provided).');
             return;
         }
@@ -105,7 +136,7 @@ class OpenAiRateLimiter
                 'maxExecutionTime' => ini_get('max_execution_time'),
                 'lastRequestDuration' => $lastRequestDuration,
             ]);
-            $this->nextAllowedRequestTime = 0;
+            Craft::$app->getCache()->delete(self::CACHE_KEY);
             return;
         }
 
@@ -118,15 +149,17 @@ class OpenAiRateLimiter
         }
 
         if ($waitSeconds <= 0) {
-            $this->nextAllowedRequestTime = 0;
+            Craft::$app->getCache()->delete(self::CACHE_KEY);
             $this->logThrottle('Throttle interval resolved to 0 seconds. No delay scheduled.');
             return;
         }
 
-        $this->nextAllowedRequestTime = time() + $waitSeconds;
+        $nextAllowedRequestTime = time() + $waitSeconds;
+        Craft::$app->getCache()->set(self::CACHE_KEY, $nextAllowedRequestTime, $waitSeconds);
+        
         $this->logThrottle('Scheduled next OpenAI request', [
             'waitSeconds' => $waitSeconds,
-            'nextAllowedRequestTime' => $this->nextAllowedRequestTime,
+            'nextAllowedRequestTime' => $nextAllowedRequestTime,
         ]);
     }
 
@@ -206,6 +239,6 @@ class OpenAiRateLimiter
     private function logThrottle(string $message, array $context = []): void
     {
         $payload = $context === [] ? $message : sprintf('%s %s', $message, json_encode($context));
-        Craft::info($payload, self::THROTTLE_LOG_CATEGORY);
+        Craft::info($payload, 'altpilot');
     }
 }

@@ -39,8 +39,6 @@ final class AssetEvents
                     return;
                 }
 
-                Craft::info('AltPilot behavior attached to asset: ' . $asset->id . ' - kind: ' . $asset->kind, 'altpilot');
-
                 $asset->attachBehavior('altPilotMetadata', AltPilotMetadata::class);
             }
         );
