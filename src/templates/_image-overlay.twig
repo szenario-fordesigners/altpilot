@@ -221,7 +221,8 @@ function buildAltPilotUrl(query = '') {
 if (! query || query.trim() === '') {
 return altPilotBaseUrl;
 }
-return altPilotBaseUrl + '?query=' + encodeURIComponent(query);
+const separator = altPilotBaseUrl.includes('?') ? '&' : '?';
+return altPilotBaseUrl + separator + 'query=' + encodeURIComponent(query);
 }
 })();
 </script>
