@@ -1,5 +1,9 @@
 # Release Notes for AltPilot
 
+## 5.0.5 - 2026-03-03
+
+- Fix Inline frontend editing workflow
+
 ## 5.0.4 - 2026-03-03
 
 - Move stats to seperate database table
