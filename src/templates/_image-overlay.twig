@@ -54,34 +54,40 @@ const darkGreen = '#0f5132';
 const altPilotBaseUrl = '{{ cpUrl("altpilot")|e("js") }}';
 let scrollTicking = false;
 
-// Find all tagged images
-const images = document.querySelectorAll('img[data-cp-check-enabled="true"]');
-
-// Show page-level search button if there are any images
-if (images.length > 0) {
-pageSearchOverlay.style.display = 'block';
-pageSearchBtn.href = generatePageSearchUrl();
-}
-
-images.forEach(img => {
-img.addEventListener('mouseenter', (e) => {
-activeImg = img;
-updateOverlay(img);
+// Intercept click on the page review button to lazily calculate the URL
+pageSearchBtn.addEventListener('click', (e) => {
+	e.preventDefault();
+	const url = generatePageSearchUrl();
+	window.open(url, '_blank');
 });
 
-img.addEventListener('mouseleave', (e) => {
-// Slight delay to allow moving mouse to the edit button if it overlaps?
-// Actually, since we position the overlay ON the image, we just hide when leaving the image
-// BUT we need to be careful if the overlay covers the mouse.
-// Simplified: Hide immediately.
-overlay.style.display = 'none';
-activeImg = null;
-});
+// Event delegation for images
+document.addEventListener('mouseover', (e) => {
+	const img = e.target.closest('img[data-cp-check-enabled="true"]');
+	if (img) {
+		activeImg = img;
+		updateOverlay(img);
+	}
 });
 
-// Keep overlay visible if we hover over the overlay itself (if needed)
+document.addEventListener('mouseout', (e) => {
+	const img = e.target.closest('img[data-cp-check-enabled="true"]');
+	if (img) {
+		// If we are moving mouse to the overlay, don't hide it
+		if (overlay.contains(e.relatedTarget)) {
+			return;
+		}
+		overlay.style.display = 'none';
+		activeImg = null;
+	}
+});
+
+// Keep overlay visible if we hover over the overlay itself
 overlay.addEventListener('mouseenter', () => overlay.style.display = 'block');
-overlay.addEventListener('mouseleave', () => overlay.style.display = 'none');
+overlay.addEventListener('mouseleave', () => {
+	overlay.style.display = 'none';
+	activeImg = null;
+});
 
 window.addEventListener('scroll', onViewportChange, { passive: true, capture: true });
 window.addEventListener('resize', onViewportChange, { passive: true });
@@ -149,11 +155,12 @@ scrollTicking = false;
 });
 }
 
-function generatePageSearchUrl() { // Collect all unique filenames from images on the page
+function generatePageSearchUrl() { // Collect all unique filenames from currently rendered images
 const assetIds = new Set();
 const filenames = new Set();
+const currentImages = document.querySelectorAll('img[data-cp-check-enabled="true"]');
 
-images.forEach(img => {
+currentImages.forEach(img => {
 const assetIdRaw = img.getAttribute('data-cp-asset-id');
 const assetId = assetIdRaw ? parseInt(assetIdRaw, 10) : NaN;
 
@@ -230,7 +237,7 @@ return altPilotBaseUrl + separator + 'query=' + encodeURIComponent(query);
 
 <style>
 	#craft-alt-page-search-overlay {
-		display: none;
+		display: block;
 		position: fixed;
 		z-index: 2147483646;
 		pointer-events: auto;
