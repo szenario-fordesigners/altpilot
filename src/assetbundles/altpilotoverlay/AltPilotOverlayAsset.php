@@ -6,7 +6,7 @@ use craft\web\AssetBundle;
 
 class AltPilotOverlayAsset extends AssetBundle
 {
-    public $sourcePath = '@szenario/craftaltpilot/assetbundles/altpilotoverlay/dist';
+    public $sourcePath = '@szenario/craftaltpilot/assetbundles/altpilotoverlay/js';
 
     public $js = [
         'overlay.js',

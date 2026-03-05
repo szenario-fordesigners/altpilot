@@ -1,5 +1,9 @@
 # Release Notes for AltPilot
 
+## 5.0.8 - 2026-03-05
+
+- Fix dist path issue
+
 ## 5.0.7 - 2026-03-05
 
 - Add support for static page caching
