@@ -19,8 +19,8 @@ const setFilter = (value: string) => {
 
 const sortOptions = [
   { value: 'dateUpdated', label: 'last edited' },
-  { value: 'dateCreated', label: 'image: last uploaded' },
-  { value: 'filename', label: 'image: filename' },
+  { value: 'dateCreated', label: 'last uploaded' },
+  { value: 'filename', label: 'filename' },
 ];
 
 const setSort = (value: string) => {
