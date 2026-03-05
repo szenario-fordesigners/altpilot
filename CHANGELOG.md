@@ -1,5 +1,9 @@
 # Release Notes for AltPilot
 
+## 5.0.7 - 2026-03-05
+
+- Add support for static page caching
+
 ## 5.0.6 - 2026-03-04
 
 - Add support for SPAs (barba, swup, etc)

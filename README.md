@@ -24,6 +24,8 @@
 
 - Dedicated UI for reviewing and managing generated alt text
 - Inline frontend editing workflow
+- Compatible with static page caching (Blitz, Varnish, CDN, etc.)
+- Automatic SPA support (Barba.js, Swup, Turbo, htmx, etc.)
 - Native Craft CMS integration for assets and action menus
 - CLI commands for batch generation and maintenance
 - Dynamic OpenAI rate-limit throttling for safer large runs
