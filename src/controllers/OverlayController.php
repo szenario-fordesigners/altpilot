@@ -12,7 +12,7 @@ use yii\web\Response;
  * Lightweight API for the client-side image overlay.
  *
  * Single endpoint: POST resolve-images
- * – Returns 401 for anonymous visitors (the JS exits silently)
+ * – Returns authenticated:false for anonymous visitors (the JS exits silently)
  * – Returns resolved asset data for all submitted image srcs
  */
 class OverlayController extends Controller
@@ -40,7 +40,7 @@ class OverlayController extends Controller
      *
      * Accepts: { "images": [ { "src": "...", "alt": "..." }, ... ] }
      * Returns: { "authenticated": true, "cpUrl": "...", "images": [ ... ] }
-     * Or 401 if the user is not logged in / lacks permission.
+     * Or authenticated:false if the user is not logged in / lacks permission.
      */
     public function actionResolveImages(): Response
     {
@@ -51,9 +51,7 @@ class OverlayController extends Controller
         if (!$settings->showImageOverlay ||
             !Craft::$app->getUser()->checkPermission('accessPlugin-altpilot')
         ) {
-            $response = $this->asJson(['authenticated' => false]);
-            $response->setStatusCode(401);
-            return $response;
+            return $this->asJson(['authenticated' => false]);
         }
 
         $images = $this->request->getBodyParam('images', []);
