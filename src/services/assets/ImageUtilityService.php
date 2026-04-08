@@ -3,10 +3,17 @@
 namespace szenario\craftaltpilot\services\assets;
 
 use Craft;
+use craft\elements\Asset;
+use craft\models\ImageTransform;
 use yii\base\Component;
 
 /**
- * Image Utility Service service
+ * Prepares Craft assets for the OpenAI Vision API.
+ *
+ * Responsibilities:
+ * - Determine if an asset can be sent via public URL or needs base64 encoding
+ * - Resize images that exceed OpenAI's recommended dimensions
+ * - Convert unsupported formats (SVG, animated GIF, etc.) to JPG
  */
 class ImageUtilityService extends Component
 {
@@ -17,127 +24,109 @@ class ImageUtilityService extends Component
         'image/gif',
     ];
 
-    /**
-     * Check if a GIF file is animated
-     *
-     * @param string $filePath Path to the GIF file
-     * @return bool True if animated, false otherwise
-     */
-    public function isAnimatedGif(string $filePath): bool
-    {
-        $fileContents = file_get_contents($filePath);
-        if ($fileContents === false) {
-            return false;
-        }
-
-        // Animated GIFs contain multiple image descriptors
-        // Look for the image separator (0x2C) which appears before each frame
-        // A single-frame GIF will have only one image separator after the header
-        $imageSeparator = "\x2C";
-        $count = substr_count($fileContents, $imageSeparator);
-
-        // If there's more than one image separator, it's likely animated
-        // But we need to account for the first one which is always present
-        return $count > 1;
-    }
+    /** OpenAI's "low detail" mode tiles at 512px; 1024 is a safe ceiling for quality vs. cost */
+    private const MAX_DIMENSION = 1024;
 
     /**
-     * Get the public URL for a Craft Asset if available
-     *
-     * @param \craft\elements\Asset $asset The Craft Asset element
-     * @return string|null The public URL if available, null otherwise
+     * Get a publicly-accessible URL for the asset, with resize transform applied if needed.
+     * Returns null if the filesystem has no URLs or the format needs conversion
+     * (in which case the caller should use assetToBase64 instead).
      */
-    public function getAssetPublicUrl(\craft\elements\Asset $asset): ?string
+    public function getAssetPublicUrl(Asset $asset): ?string
     {
-        // Check if the volume/filesystem has URLs enabled
         $volume = $asset->getVolume();
-        if ($volume === null) {
-            return null;
-        }
-
-        // Check filesystem hasUrls
-        $fs = $volume->getFs();
+        $fs = $volume?->getFs();
         if ($fs === null || !$fs->hasUrls) {
             return null;
         }
 
-        // For assets that need format conversion (e.g. SVG or animated GIF), prefer base64 path
-        // to avoid passing unsupported formats to OpenAI via URL.
-        if ($this->requiresFormatTransform($asset)) {
+        // Format conversion needs base64 path — can't rely on URL for unsupported formats
+        if ($this->needsFormatConversion($asset)) {
             return null;
         }
 
-        // Get combined transform (size + format if needed) - function determines internally
-        $transform = $this->getCombinedTransform($asset);
-
-        // Try to get the URL
-        $url = $asset->getUrl($transform, true);
-        return $url;
+        return $asset->getUrl($this->buildTransform($asset), true);
     }
 
     /**
-     * Get an image transform that fits the image to max 1500px on the longer side
+     * Convert an asset to a base64 data URI suitable for the OpenAI API.
      *
-     * @param \craft\elements\Asset $asset The Craft Asset element
-     * @return \craft\models\ImageTransform|null The transform or null if not needed
+     * If a transform is needed (resize and/or format conversion), fetches the
+     * transformed image via its internal URL and encodes it. If no transform
+     * is needed, uses Craft's built-in getDataUrl().
+     *
+     * Throws if format conversion is required but the transform URL can't be fetched
+     * (we can't safely fall back to the original bytes of an unsupported format).
      */
-    public function getSizeTransform(\craft\elements\Asset $asset): ?\craft\models\ImageTransform
+    public function assetToBase64(Asset $asset): string
     {
+        $needsConversion = $this->needsFormatConversion($asset);
+        $transform = $this->buildTransform($asset);
+
+        if ($transform !== null) {
+            $url = $asset->getUrl($transform);
+            if ($url !== null) {
+                $data = @file_get_contents($url);
+                if ($data !== false) {
+                    $mime = ($transform->format === 'jpg') ? 'image/jpeg' : $asset->getMimeType();
+                    return "data:{$mime};base64," . base64_encode($data);
+                }
+            }
+        }
+
+        if ($needsConversion) {
+            throw new \Exception('Could not transform asset ' . $asset->id . ' into an OpenAI-supported format.');
+        }
+
+        return $asset->getDataUrl();
+    }
+
+    /**
+     * Build a single transform handling both resize and format conversion as needed.
+     */
+    private function buildTransform(Asset $asset): ?ImageTransform
+    {
+        $needsResize = false;
         $width = $asset->getWidth();
         $height = $asset->getHeight();
+        $transformWidth = null;
+        $transformHeight = null;
 
-        // If dimensions are not available, return null
-        if ($width === null || $height === null) {
-            Craft::debug('Size transform skipped for asset ' . $asset->id . ': dimensions not available', 'altpilot');
+        if ($width !== null && $height !== null && ($width > self::MAX_DIMENSION || $height > self::MAX_DIMENSION)) {
+            $needsResize = true;
+            if ($width > $height) {
+                $transformWidth = self::MAX_DIMENSION;
+            } else {
+                $transformHeight = self::MAX_DIMENSION;
+            }
+        }
+
+        $needsConversion = $this->needsFormatConversion($asset);
+
+        if (!$needsResize && !$needsConversion) {
             return null;
         }
 
-        $maxSize = 1024;
+        $config = ['mode' => 'fit', 'upscale' => false];
 
-        // Check if image exceeds max size on either side
-        if ($width <= $maxSize && $height <= $maxSize) {
-            Craft::debug('Size transform not needed for asset ' . $asset->id . ': dimensions (' . $width . 'x' . $height . ') are within limit', 'altpilot');
-            return null;
+        if ($needsResize) {
+            $config['width'] = $transformWidth;
+            $config['height'] = $transformHeight;
         }
 
-        // Calculate dimensions to fit max 1500px on the longer side
-        if ($width > $height) {
-            // Landscape: fit width to maxSize
-            $transformWidth = $maxSize;
-            $transformHeight = null;
-            Craft::debug('Size transform needed for asset ' . $asset->id . ': landscape image (' . $width . 'x' . $height . ') will be resized to width ' . $maxSize, 'altpilot');
-        } else {
-            // Portrait or square: fit height to maxSize
-            $transformWidth = null;
-            $transformHeight = $maxSize;
-            Craft::debug('Size transform needed for asset ' . $asset->id . ': portrait/square image (' . $width . 'x' . $height . ') will be resized to height ' . $maxSize, 'altpilot');
+        if ($needsConversion) {
+            $config['format'] = 'jpg';
         }
 
-        // Create a transform that fits the image without upscaling
-        $transform = new \craft\models\ImageTransform([
-            'width' => $transformWidth,
-            'height' => $transformHeight,
-            'mode' => 'fit',
-            'upscale' => false,
-        ]);
-
-        return $transform;
+        return new ImageTransform($config);
     }
 
-    public function getFormatTransform(\craft\elements\Asset $asset): ?\craft\models\ImageTransform
-    {
-        if ($this->requiresFormatTransform($asset)) {
-            return new \craft\models\ImageTransform([
-                'format' => 'jpg',
-                'mode' => 'fit',
-                'upscale' => false,
-            ]);
-        }
-
-        return null;
-    }
-
-    private function requiresFormatTransform(\craft\elements\Asset $asset): bool
+    /**
+     * Check if the asset's format is unsupported by OpenAI and needs JPG conversion.
+     * SVGs, TIFFs, etc. always need conversion. Animated GIFs also need conversion
+     * because OpenAI's vision endpoint doesn't handle multi-frame images.
+     */
+    private function needsFormatConversion(Asset $asset): bool
     {
         $mimeType = strtolower((string) $asset->getMimeType());
         $extension = strtolower((string) $asset->getExtension());
@@ -146,7 +135,6 @@ class ImageUtilityService extends Component
             return true;
         }
 
-        // OpenAI accepts GIF, but animated GIF input is not supported in this flow.
         if ($mimeType === 'image/gif' || $extension === 'gif') {
             $path = $asset->getCopyOfFile();
             if ($path !== null && file_exists($path) && $this->isAnimatedGif($path)) {
@@ -157,77 +145,13 @@ class ImageUtilityService extends Component
         return false;
     }
 
-    /**
-     * Get a combined transform for size and format if needed
-     *
-     * @param \craft\elements\Asset $asset The Craft Asset element
-     * @return \craft\models\ImageTransform|null The combined transform or null if not needed
-     */
-    public function getCombinedTransform(\craft\elements\Asset $asset): ?\craft\models\ImageTransform
+    /** A GIF is animated if it contains more than one image separator byte (0x2C). */
+    private function isAnimatedGif(string $filePath): bool
     {
-        $sizeTransform = $this->getSizeTransform($asset);
-        $formatTransform = $this->getFormatTransform($asset);
-
-        // If we need both transforms, combine them
-        if ($sizeTransform !== null && $formatTransform !== null) {
-            Craft::debug('Combined transform (size + format) will be applied to asset ' . $asset->id, 'altpilot');
-            return new \craft\models\ImageTransform([
-                'width' => $sizeTransform->width,
-                'height' => $sizeTransform->height,
-                'format' => $formatTransform->format,
-                'mode' => 'fit',
-                'upscale' => false,
-            ]);
+        $contents = file_get_contents($filePath);
+        if ($contents === false) {
+            return false;
         }
-
-        Craft::debug('Applying ' . $sizeTransform ? 'sizeTransform' : 'formatTransform' . ' to asset ' . $asset->id, 'altpilot');
-
-        // Return whichever transform is needed
-        return $sizeTransform ?? $formatTransform;
-    }
-
-    /**
-     * Convert a Craft Asset to base64 data URL
-     *
-     * @param \craft\elements\Asset $asset The Craft Asset element
-     * @return string Base64 data URL
-     * @throws \Exception
-     */
-    public function assetToBase64(\craft\elements\Asset $asset): string
-    {
-        $formatTransform = $this->getFormatTransform($asset);
-
-        // Get combined transform (size + format if needed) - function determines internally
-        $transform = $this->getCombinedTransform($asset);
-
-        // If we need to transform, get the transformed file via URL
-        if ($transform !== null) {
-            $transformUrl = $asset->getUrl($transform);
-
-            if ($transformUrl !== null) {
-                // Download the transformed image
-                $imageData = @file_get_contents($transformUrl);
-                if ($imageData !== false) {
-                    // Determine MIME type based on transform
-                    if (isset($transform->format) && $transform->format === 'jpg') {
-                        $mimeType = 'image/jpeg';
-                    } else {
-                        // Use original MIME type if format wasn't changed
-                        $mimeType = $asset->getMimeType();
-                    }
-                    $base64 = base64_encode($imageData);
-                    return "data:{$mimeType};base64,{$base64}";
-                }
-            }
-        }
-
-        // Never fall back to original bytes if format conversion is required.
-        if ($formatTransform !== null) {
-            throw new \Exception('Could not transform asset ' . $asset->id . ' into an OpenAI-supported image format.');
-        }
-
-        // If we didn't transform, get the original mime type using consistent method
-        Craft::debug('Using original image for base64 encoding of asset ' . $asset->id . ' (no transform needed)', 'altpilot');
-        return $asset->getDataUrl();
+        return substr_count($contents, "\x2C") > 1;
     }
 }

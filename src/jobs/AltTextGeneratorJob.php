@@ -10,7 +10,15 @@ use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 use szenario\craftaltpilot\exceptions\OpenAiErrorException;
 
 /**
- * Alt Text Generator queue job
+ * Craft queue job that generates alt text for a single asset on a single site.
+ *
+ * Created by QueueService::safelyCreateJob(). Each job:
+ * 1. Loads the asset by ID + site
+ * 2. Calls OpenAiService::generateForAsset() to get the alt text
+ * 3. Saves the alt text on the asset and sets the status to AI_GENERATED
+ *
+ * OpenAI errors are caught and re-thrown with an error code marker in the message
+ * so the frontend can parse and display them when polling job status.
  */
 class AltTextGeneratorJob extends BaseJob
 {
@@ -28,10 +36,9 @@ class AltTextGeneratorJob extends BaseJob
         }
 
         $plugin = \szenario\craftaltpilot\AltPilot::getInstance();
-        $altTextGenerator = $plugin->altTextGenerator;
 
         try {
-            $altText = $altTextGenerator->generateAltTextForAsset($asset);
+            $altText = $plugin->openAiService->generateForAsset($asset);
 
             $asset->alt = $altText;
 
@@ -75,6 +82,10 @@ class AltTextGeneratorJob extends BaseJob
         }
     }
 
+    /**
+     * Queue description shown in the Craft CP queue manager.
+     * The [Asset ID: X | Site ID: Y] format is parsed by QueueService to match jobs to assets.
+     */
     protected function defaultDescription(): ?string
     {
         return Craft::t('altpilot', '[Asset ID: {id} | Site ID: {siteId}] AltPilot: Generating alt text for {asset}', [

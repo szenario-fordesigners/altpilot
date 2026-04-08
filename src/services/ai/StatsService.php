@@ -10,7 +10,10 @@ use yii\base\Component;
 use yii\db\Expression;
 
 /**
- * Handles AI request statistics table orchestration.
+ * Tracks rolling averages for OpenAI token usage and request duration.
+ * Uses a simple moving average (new = (old + current) / 2) stored in a
+ * single-row `altpilot_stats` table. The averages are used by the frontend
+ * to estimate remaining time for queued jobs.
  */
 class StatsService extends Component
 {

@@ -6,13 +6,21 @@ use Craft;
 use craft\elements\Asset;
 use craft\queue\Queue as CraftQueue;
 use yii\base\Component;
+use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 use yii\helpers\StringHelper;
 
 /**
- * Queue Service service
+ * Manages alt text generation jobs in the Craft queue.
+ *
+ * Handles creating jobs (with deduplication), querying job status for the
+ * frontend polling endpoint, and mapping Craft queue statuses to API responses.
  */
 class QueueService extends Component
 {
+    /**
+     * Create a queue job for the given asset, unless one is already pending/running.
+     * Returns an array with 'status' (success|warning|error), 'message', and 'jobId'.
+     */
     public function safelyCreateJob(Asset $asset): array
     {
         $siteLanguageCode = $this->getSiteLanguageCode($asset->siteId);
@@ -79,6 +87,7 @@ class QueueService extends Component
         }
     }
 
+    /** Count AltPilot jobs that haven't finished yet (used by the dashboard widget). */
     public function getPendingAltPilotJobCount(): int
     {
         $jobs = Craft::$app->getQueue()->getJobInfo();
@@ -88,6 +97,10 @@ class QueueService extends Component
     }
 
     /**
+     * Given a list of asset+site pairs, return each one's queue job status.
+     * Used by the frontend to poll for completion after triggering generation.
+     * If no job is found, checks whether the asset exists and returns 'finished' or 'missing'.
+     *
      * @param array<int, array{assetId:int, siteId: int|null}> $assetsToCheck
      */
     public function getJobStatuses(array $assetsToCheck): array
@@ -138,7 +151,7 @@ class QueueService extends Component
                 if ($status === 'finished') {
                     $asset = Craft::$app->assets->getAssetById($assetId, $siteId);
                     if ($asset) {
-                        $result['asset'] = $this->formatAsset($asset);
+                        $result['asset'] = AltPilotMetadata::formatAssetForApi($asset);
                     }
                 }
 
@@ -151,7 +164,7 @@ class QueueService extends Component
                 'assetId' => $assetId,
                 'siteId' => $siteId,
                 'status' => $asset ? 'finished' : 'missing',
-                'asset' => $asset ? $this->formatAsset($asset) : null,
+                'asset' => $asset ? AltPilotMetadata::formatAssetForApi($asset) : null,
                 'message' => $asset ? 'Alt text updated' : 'Asset could not be found',
             ];
         }
@@ -159,31 +172,11 @@ class QueueService extends Component
         return $results;
     }
 
-    private function formatAsset(Asset $asset): array
-    {
-        $behavior = $asset->getBehavior('altPilotMetadata');
-        $status = $behavior instanceof \szenario\craftaltpilot\behaviors\AltPilotMetadata
-            ? $behavior->getStatus()
-            : \szenario\craftaltpilot\behaviors\AltPilotMetadata::STATUS_MISSING;
-
-        $url = $asset->getUrl();
-        if (!is_string($url)) {
-            $url = '';
-        }
-
-        $altText = $asset->alt;
-        $normalizedAltText = $altText === null || $altText === '' ? null : (string) $altText;
-
-        return [
-            'id' => (int) $asset->id,
-            'siteId' => $asset->siteId === null ? null : (int) $asset->siteId,
-            'url' => $url,
-            'title' => (string) $asset->title,
-            'alt' => $normalizedAltText,
-            'status' => (int) $status,
-        ];
-    }
-
+    /**
+     * Build a lookup index of all queue jobs keyed by "assetId:siteId".
+     * Parses the asset/site IDs from the job description string (set by AltTextGeneratorJob).
+     * Also stores a fallback key without siteId for loose matching.
+     */
     private function indexJobsByAsset(): array
     {
         $jobs = Craft::$app->getQueue()->getJobInfo();
@@ -208,6 +201,7 @@ class QueueService extends Component
         return $indexed;
     }
 
+    /** Look up a job by exact assetId+siteId, falling back to assetId-only match. */
     private function findJobForAsset(array $jobsIndex, int $assetId, ?int $siteId): ?array
     {
         $exactKey = $this->buildAssetKey($assetId, $siteId);
@@ -224,6 +218,7 @@ class QueueService extends Component
         return $assetId . ':' . ($siteId ?? 'default');
     }
 
+    /** Convert Craft's numeric queue status constants to human-readable strings for the API. */
     private function mapJobStatus(mixed $status): string
     {
         $statusInt = is_numeric($status) ? (int) $status : null;
@@ -237,6 +232,7 @@ class QueueService extends Component
         };
     }
 
+    /** Get the base language code (e.g. "en", "de") for a site, used in log/status messages. */
     private function getSiteLanguageCode(?int $siteId): string
     {
         if ($siteId === null) {
@@ -254,6 +250,7 @@ class QueueService extends Component
         return strtolower($baseLanguage);
     }
 
+    /** Truncate the filename for use in queue descriptions and user-facing messages. */
     private function getDisplayFilename(Asset $asset): string
     {
         $filename = trim((string) ($asset->filename ?? ''));

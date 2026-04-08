@@ -53,6 +53,13 @@ class ImageReverseLookupService extends Component
         return $results;
     }
 
+    /**
+     * Try to match a filename to exactly one Craft Asset. Disambiguation strategy:
+     * 1. Exact filename match → use it if unique
+     * 2. Strip transform suffixes (_800x600, _thumb, etc.) and retry
+     * 3. Multiple candidates → compare URL paths, then fall back to alt text matching
+     * 4. No unique match → return a "search" result linking to the asset index
+     */
     private function resolveAssetUrl(string $filename, ?string $altText, ?string $src = null): ?array
     {
         $candidates = Asset::find()->filename($filename)->all();

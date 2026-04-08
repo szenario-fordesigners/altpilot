@@ -7,7 +7,12 @@ use ILYAGVC\CheckHost\CheckHost;
 use yii\base\Component;
 
 /**
- * Url Reachability Checker service
+ * Determines whether an asset's public URL is accessible from the internet
+ * by probing it through the external check-host.net HTTP check service.
+ *
+ * If the URL is reachable, OpenAiService sends it directly to the Vision API.
+ * If not (e.g. local dev, private network), ImageUtilityService falls back
+ * to base64-encoding the image instead.
  */
 class UrlReachabilityChecker extends Component
 {

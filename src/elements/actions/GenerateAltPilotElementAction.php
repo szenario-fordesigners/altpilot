@@ -8,7 +8,8 @@ use craft\elements\Asset;
 use szenario\craftaltpilot\AltPilot;
 
 /**
- * Generate Alt Text element action
+ * Bulk element action shown in the assets index. Allows selecting multiple
+ * image assets and queueing alt text generation for all of them at once.
  */
 class GenerateAltPilotElementAction extends ElementAction
 {

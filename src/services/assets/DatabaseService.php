@@ -17,14 +17,23 @@ use yii\db\Expression;
 use yii\db\Connection;
 
 /**
- * Handles metadata table orchestration.
+ * Manages the `altpilot_metadata` table — a denormalized index that tracks
+ * every image asset's alt text status (missing / AI-generated / manual) per site.
+ *
+ * This table exists so the plugin can efficiently query status counts and filter
+ * assets by status without scanning every asset's alt field across all sites.
+ *
+ * The table is populated on install, updated when volumes change in settings,
+ * and kept in sync via the AltPilotMetadata behavior (afterSave/afterDelete).
  */
 class DatabaseService extends Component
 {
     public const TABLE_NAME = '{{%altpilot_metadata}}';
 
     /**
-     * Populate the metadata table with all assets from the selected volumes.
+     * Populate the metadata table with all image assets from the configured volumes.
+     * Called once on plugin install. Ensures each volume has the native Alt field
+     * enabled, then scans all sites and inserts a metadata row per asset+site pair.
      */
     public function initializeDatabase(): void
     {
@@ -102,6 +111,10 @@ class DatabaseService extends Component
         }
     }
 
+    /**
+     * Batch-insert metadata rows. Falls back to one-by-one inserts on failure
+     * (e.g. when some rows already exist from a partial earlier run).
+     */
     private function insertMultipleAssets(Connection $db, array $assets): void
     {
         $rows = [];
@@ -138,6 +151,10 @@ class DatabaseService extends Component
         }
     }
 
+    /**
+     * React to volume selection changes in the plugin settings.
+     * Inserts metadata rows for newly added volumes, deletes rows for removed ones.
+     */
     public function handleVolumesChange(array $oldVolumeIds, array $newVolumeIds): void
     {
         $addedVolumes = array_values(array_diff($newVolumeIds, $oldVolumeIds));
@@ -293,6 +310,11 @@ class DatabaseService extends Component
         ];
     }
 
+    /**
+     * Make sure Craft's native Alt field is present in the volume's field layout
+     * and that alt text is translated per-language. Without this, assets in the
+     * volume wouldn't have an alt field to write generated text into.
+     */
     private function ensureAltFieldForVolume(int $volumeId): void
     {
         $volumesService = Craft::$app->getVolumes();

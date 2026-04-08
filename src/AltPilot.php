@@ -15,35 +15,42 @@ use szenario\craftaltpilot\events\DashboardEvents;
 use szenario\craftaltpilot\events\OverlayEvents;
 use szenario\craftaltpilot\events\SettingsEvents;
 use szenario\craftaltpilot\models\Settings;
+use szenario\craftaltpilot\services\ai\OpenAiRateLimiter;
 use szenario\craftaltpilot\services\ai\OpenAiService;
 use szenario\craftaltpilot\services\ai\StatsService;
 use szenario\craftaltpilot\services\assets\DatabaseService;
 use szenario\craftaltpilot\services\assets\ImageUtilityService;
-use szenario\craftaltpilot\services\generation\AltTextGenerator;
 use szenario\craftaltpilot\services\generation\QueueService;
 use szenario\craftaltpilot\services\infrastructure\UrlReachabilityChecker;
 use szenario\craftaltpilot\services\ui\ImageReverseLookupService;
-use szenario\craftaltpilot\services\ai\OpenAiRateLimiter;
-use szenario\craftaltpilot\services\ai\OpenAiErrorService;
 
 /**
- * AltPilot plugin
+ * AltPilot — AI-powered alt text generation for Craft CMS assets.
+ *
+ * This is the plugin entry point. It registers all service components (via Yii DI),
+ * hooks up event listeners for asset lifecycle and settings changes, and sets up
+ * the Monolog log target for the 'altpilot' category.
+ *
+ * Service components (accessed via $plugin->serviceName):
+ * - openAiService           → Talks to OpenAI, generates alt text
+ * - queueService            → Creates and monitors queue jobs
+ * - databaseService         → Manages the altpilot_metadata table
+ * - statsService            → Tracks rolling averages for rate limiting
+ * - imageUtilityService     → Resizes/converts images for the API
+ * - urlReachabilityChecker  → Checks if a URL is reachable from the internet
+ * - imageReverseLookupService → Resolves page image URLs to Craft assets (for the overlay)
+ * - openAiRateLimiter       → Paces API requests to avoid 429 errors
  *
  * @method static AltPilot getInstance()
  * @method Settings getSettings()
- * @author szenario <support@szenario.design>
- * @copyright szenario
- * @license https://craftcms.github.io/license/ Craft License
  * @property-read OpenAiService $openAiService
  * @property-read QueueService $queueService
- * @property-read AltTextGenerator $altTextGenerator
  * @property-read DatabaseService $databaseService
  * @property-read StatsService $statsService
  * @property-read ImageUtilityService $imageUtilityService
  * @property-read UrlReachabilityChecker $urlReachabilityChecker
  * @property-read ImageReverseLookupService $imageReverseLookupService
  * @property-read OpenAiRateLimiter $openAiRateLimiter
- * @property-read OpenAiErrorService $openAiErrorService
  */
 class AltPilot extends Plugin
 {
@@ -51,20 +58,19 @@ class AltPilot extends Plugin
     public bool $hasCpSettings = true;
     public bool $hasCpSection = true;
 
+    /** Register all service components for Yii's dependency injection container. */
     public static function config(): array
     {
         return [
             'components' => [
                 'openAiService' => OpenAiService::class,
                 'queueService' => QueueService::class,
-                'altTextGenerator' => AltTextGenerator::class,
                 'databaseService' => DatabaseService::class,
                 'statsService' => StatsService::class,
                 'imageUtilityService' => ImageUtilityService::class,
                 'urlReachabilityChecker' => UrlReachabilityChecker::class,
                 'imageReverseLookupService' => ImageReverseLookupService::class,
                 'openAiRateLimiter' => OpenAiRateLimiter::class,
-                'openAiErrorService' => OpenAiErrorService::class,
             ],
         ];
     }
@@ -150,6 +156,14 @@ class AltPilot extends Plugin
         }
     }
 
+    /**
+     * Register all event listeners. Each Events class handles a specific concern:
+     * - DashboardEvents  → Auto-creates the widget on install, registers widget type
+     * - SettingsEvents   → Detects volume changes on settings save
+     * - AssetEvents      → Attaches metadata behavior, auto-queues new images, registers element actions
+     * - CleanupEvents    → Deletes metadata when assets/sites/volumes are deleted
+     * - OverlayEvents    → Injects the image overlay JS on frontend page renders
+     */
     private function attachEventHandlers(): void
     {
         (new DashboardEvents($this))->register();

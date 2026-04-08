@@ -9,7 +9,8 @@ use szenario\craftaltpilot\AltPilot;
 use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 
 /**
- * Base controller for asset operations
+ * Shared logic for the CLI commands that queue alt text generation.
+ * Subclasses only need to build the asset query and call processAssets().
  */
 abstract class BaseAssetController extends Controller
 {

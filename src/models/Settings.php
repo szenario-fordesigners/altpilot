@@ -6,7 +6,8 @@ use craft\base\Model;
 use szenario\craftaltpilot\helpers\SettingsHelper;
 
 /**
- * AltPilot settings
+ * Plugin settings model, persisted via Craft's plugin settings system.
+ * Each property maps to a field on the settings page in the CP.
  */
 class Settings extends Model
 {

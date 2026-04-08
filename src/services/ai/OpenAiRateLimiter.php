@@ -5,36 +5,50 @@ namespace szenario\craftaltpilot\services\ai;
 use Craft;
 use OpenAI\Responses\Meta\MetaInformationRateLimit;
 
+/**
+ * Paces OpenAI API requests to stay within rate limits.
+ *
+ * Uses Craft's cache to store the earliest time the next request is allowed.
+ * Two entry points:
+ * - throttleIfNeeded(): called BEFORE a request — sleeps if needed
+ * - scheduleNextRequestDelay(): called AFTER a request — calculates wait from response headers
+ * - handleRateLimitResponse(): called when a 429 is received — uses reset headers to schedule delay
+ */
 class OpenAiRateLimiter
 {
     private const EXECUTION_BUFFER_SECONDS = 3;
+    /** Hard ceiling to avoid exceeding PHP's max_execution_time inside a queue job */
     private const MAX_EXECUTION_TIME_SECONDS = 55;
-
     private const CACHE_KEY = 'altpilot_openai_next_allowed_time';
 
+    /**
+     * If a previous request scheduled a delay, sleep until that time has passed.
+     * Called at the start of each API request in OpenAiService.
+     */
     public function throttleIfNeeded(): void
     {
-        $nextAllowedRequestTime = (int) Craft::$app->getCache()->get(self::CACHE_KEY);
-
-        if ($nextAllowedRequestTime <= 0) {
+        $nextAllowed = (int) Craft::$app->getCache()->get(self::CACHE_KEY);
+        if ($nextAllowed <= 0) {
             return;
         }
 
         $now = time();
-        if ($now >= $nextAllowedRequestTime) {
+        if ($now >= $nextAllowed) {
             Craft::$app->getCache()->delete(self::CACHE_KEY);
             return;
         }
 
-        $sleepSeconds = (int) max(1, $nextAllowedRequestTime - $now);
-        $this->logThrottle('Sleeping before next OpenAI request', [
-            'sleepSeconds' => $sleepSeconds,
-            'nextAllowedRequestTime' => $nextAllowedRequestTime,
-        ]);
-        sleep($sleepSeconds);
+        $sleep = max(1, $nextAllowed - $now);
+        Craft::info("Rate limiter: sleeping {$sleep}s before next request", 'altpilot');
+        sleep($sleep);
         Craft::$app->getCache()->delete(self::CACHE_KEY);
     }
 
+    /**
+     * Called when OpenAI returns a 429 rate limit error.
+     * Reads the x-ratelimit-reset-* headers to determine how long to wait,
+     * then stores that delay in cache for throttleIfNeeded() to pick up.
+     */
     public function handleRateLimitResponse($response): void
     {
         if ($response === null) {
@@ -44,27 +58,30 @@ class OpenAiRateLimiter
         $requestReset = $response->hasHeader('x-ratelimit-reset-requests') ? $response->getHeaderLine('x-ratelimit-reset-requests') : null;
         $tokenReset = $response->hasHeader('x-ratelimit-reset-tokens') ? $response->getHeaderLine('x-ratelimit-reset-tokens') : null;
 
-        $requestResetSeconds = $this->roundSeconds($this->parseResetInterval($requestReset));
-        $tokenResetSeconds = $this->roundSeconds($this->parseResetInterval($tokenReset));
+        $waitSeconds = max(
+            (int) $this->roundSeconds($this->parseResetInterval($requestReset)),
+            (int) $this->roundSeconds($this->parseResetInterval($tokenReset))
+        );
 
-        $waitSeconds = max((int)$requestResetSeconds, (int)$tokenResetSeconds);
-
-        // Fallback to a safe 60 seconds if headers are missing or unparseable
         if ($waitSeconds <= 0) {
             $waitSeconds = 60;
         }
 
-        $nextAllowedRequestTime = time() + $waitSeconds;
-        Craft::$app->getCache()->set(self::CACHE_KEY, $nextAllowedRequestTime, $waitSeconds);
-
-        $this->logThrottle('Scheduled next OpenAI request delay due to 429 Rate Limit error', [
-            'waitSeconds' => $waitSeconds,
-            'nextAllowedRequestTime' => $nextAllowedRequestTime,
-            'requestResetHeader' => $requestReset,
-            'tokenResetHeader' => $tokenReset,
-        ]);
+        $this->scheduleDelay($waitSeconds);
     }
 
+    /**
+     * Called after a successful API response. Uses the response's rate-limit metadata
+     * to calculate an optimal delay before the next request.
+     *
+     * The idea: spread remaining requests evenly over the reset window.
+     *
+     * For request limits: divide reset time by remaining requests.
+     * For token limits: estimate how many requests fit in the remaining tokens
+     * (using the rolling average), then spread over the reset window.
+     *
+     * The delay is capped by PHP's max_execution_time to avoid killing the queue worker.
+     */
     public function scheduleNextRequestDelay(
         MetaInformationRateLimit $tokenLimit,
         MetaInformationRateLimit $requestLimit,
@@ -76,28 +93,16 @@ class OpenAiRateLimiter
 
         $tokenRemaining = max(0, (int) $tokenLimit->remaining);
         $requestRemaining = max(0, (int) $requestLimit->remaining);
-
         $tokenResetSeconds = $this->roundSeconds($this->parseResetInterval($tokenLimit->reset));
         $requestResetSeconds = $this->roundSeconds($this->parseResetInterval($requestLimit->reset));
 
+        // Calculate per-request interval for both limits, pick the larger one
         $intervals = [];
 
-        $this->logThrottle('Starting compute intervals', [
-            'requestResetSeconds' => $requestResetSeconds,
-            'tokenResetSeconds' => $tokenResetSeconds,
-            'requestResetSecondsRaw' => $requestLimit->reset,
-            'tokenResetSecondsRaw' => $tokenLimit->reset,
-            'requestRemaining' => $requestRemaining,
-            'tokenRemaining' => $tokenRemaining,
-            'averageTokenCount' => $averageTokenCount,
-        ]);
-
         if ($requestResetSeconds !== null && $requestResetSeconds > 0) {
-            if ($requestRemaining <= 0) {
-                $intervals[] = $requestResetSeconds;
-            } else {
-                $intervals[] = (int) ceil($requestResetSeconds / max($requestRemaining, 1));
-            }
+            $intervals[] = $requestRemaining <= 0
+                ? $requestResetSeconds
+                : (int) ceil($requestResetSeconds / max($requestRemaining, 1));
         }
 
         if ($tokenResetSeconds !== null && $tokenResetSeconds > 0) {
@@ -105,96 +110,59 @@ class OpenAiRateLimiter
                 $intervals[] = $tokenResetSeconds;
             } else {
                 $possibleRequests = $tokenRemaining / $averageTokenCount;
-                $intervals[] = $possibleRequests > 0 ? (int) ceil($tokenResetSeconds / $possibleRequests) : $tokenResetSeconds;
+                $intervals[] = $possibleRequests > 0
+                    ? (int) ceil($tokenResetSeconds / $possibleRequests)
+                    : $tokenResetSeconds;
             }
         }
 
         if ($intervals === []) {
             Craft::$app->getCache()->delete(self::CACHE_KEY);
-            $this->logThrottle('Could not compute throttling interval (no headers provided).');
             return;
         }
 
-        $requiredInterval = max($intervals);
-        $waitSeconds = max(0, $requiredInterval - $averageRequestDuration);
+        // Subtract the time the request itself will take (we're already "waiting" during execution)
+        $waitSeconds = max(0, max($intervals) - $averageRequestDuration);
+        $maxBudget = $this->getMaxDelayBudget($lastRequestDuration);
 
-        $this->logThrottle('Computed throttle interval', [
-            'tokenRemaining' => $tokenRemaining,
-            'tokenResetSeconds' => $tokenResetSeconds,
-            'requestRemaining' => $requestRemaining,
-            'requestResetSeconds' => $requestResetSeconds,
-            'requiredInterval' => $requiredInterval,
-            'averageRequestDuration' => $averageRequestDuration,
-            'lastRequestDuration' => $lastRequestDuration,
-            'initialWaitSeconds' => $waitSeconds,
-        ]);
-
-        $maxDelayBudget = $this->determineMaxDelayBudget($lastRequestDuration);
-
-        if ($maxDelayBudget === 0) {
-            $this->logThrottle('Skipping throttle due to exhausted PHP max_execution_time budget.', [
-                'maxExecutionTime' => ini_get('max_execution_time'),
-                'lastRequestDuration' => $lastRequestDuration,
-            ]);
+        if ($maxBudget === 0 || $waitSeconds <= 0) {
             Craft::$app->getCache()->delete(self::CACHE_KEY);
             return;
         }
 
-        if ($waitSeconds > $maxDelayBudget) {
-            $this->logThrottle('Trimming throttle interval due to PHP max_execution_time budget.', [
-                'requestedWaitSeconds' => $waitSeconds,
-                'maxDelayBudget' => $maxDelayBudget,
-            ]);
-            $waitSeconds = $maxDelayBudget;
-        }
+        $this->scheduleDelay(min($waitSeconds, $maxBudget));
+    }
 
-        if ($waitSeconds <= 0) {
-            Craft::$app->getCache()->delete(self::CACHE_KEY);
-            $this->logThrottle('Throttle interval resolved to 0 seconds. No delay scheduled.');
+    /** Store the delay in Craft's cache so the next throttleIfNeeded() call picks it up. */
+    private function scheduleDelay(int $seconds): void
+    {
+        if ($seconds <= 0) {
             return;
         }
 
-        $nextAllowedRequestTime = time() + $waitSeconds;
-        Craft::$app->getCache()->set(self::CACHE_KEY, $nextAllowedRequestTime, $waitSeconds);
-        
-        $this->logThrottle('Scheduled next OpenAI request', [
-            'waitSeconds' => $waitSeconds,
-            'nextAllowedRequestTime' => $nextAllowedRequestTime,
-        ]);
+        $nextAllowed = time() + $seconds;
+        Craft::$app->getCache()->set(self::CACHE_KEY, $nextAllowed, $seconds);
+        Craft::info("Rate limiter: scheduled {$seconds}s delay", 'altpilot');
     }
 
-    private function roundSeconds(?float $value): ?int
+    /**
+     * Calculate how many seconds we can safely sleep without exceeding PHP's max_execution_time.
+     * Returns 0 if there's no budget left (the request itself already used most of the time).
+     */
+    private function getMaxDelayBudget(int $lastRequestDuration): int
     {
-        if ($value === null) {
-            return null;
-        }
+        $phpMax = (int) ini_get('max_execution_time');
+        $ceiling = $phpMax > 0
+            ? min($phpMax, self::MAX_EXECUTION_TIME_SECONDS)
+            : self::MAX_EXECUTION_TIME_SECONDS;
 
-        $rounded = (int) ceil($value);
-        return $rounded > 0 ? $rounded : null;
+        return max(0, $ceiling - $lastRequestDuration - self::EXECUTION_BUFFER_SECONDS);
     }
 
-    private function determineMaxDelayBudget(int $lastRequestDuration): int
-    {
-        $phpMaxExecutionTime = (int) ini_get('max_execution_time');
-
-        $executionCeiling = !$phpMaxExecutionTime
-            ? self::MAX_EXECUTION_TIME_SECONDS
-            : min($phpMaxExecutionTime, self::MAX_EXECUTION_TIME_SECONDS);
-
-        $budget = $executionCeiling - $lastRequestDuration - self::EXECUTION_BUFFER_SECONDS;
-
-        $this->logThrottle('Calculated execution-time budget for throttling.', [
-            'phpMaxExecutionTime' => $phpMaxExecutionTime,
-            'configuredMaxExecutionTime' => self::MAX_EXECUTION_TIME_SECONDS,
-            'executionCeilingSeconds' => $executionCeiling,
-            'lastRequestDuration' => $lastRequestDuration,
-            'bufferSeconds' => self::EXECUTION_BUFFER_SECONDS,
-            'budget' => $budget,
-        ]);
-
-        return max(0, $budget);
-    }
-
+    /**
+     * Parse OpenAI's rate-limit reset header into seconds.
+     * Handles multiple formats: plain numbers, duration strings ("1m30s", "500ms"), ISO timestamps.
+     */
     private function parseResetInterval(?string $reset): ?float
     {
         if ($reset === null || $reset === '') {
@@ -208,23 +176,17 @@ class OpenAiRateLimiter
         }
 
         if (preg_match_all('/(\d+(?:\.\d+)?)(ms|s|m)/i', $trimmed, $matches, PREG_SET_ORDER) && $matches !== []) {
-            $totalSeconds = 0.0;
-
+            $total = 0.0;
             foreach ($matches as $match) {
                 $value = (float) $match[1];
-                $unit = strtolower($match[2]);
-
-                $totalSeconds += match ($unit) {
+                $total += match (strtolower($match[2])) {
                     'ms' => $value / 1000,
                     's' => $value,
                     'm' => $value * 60,
                     default => 0,
                 };
             }
-
-            if ($totalSeconds > 0) {
-                return $totalSeconds;
-            }
+            return $total > 0 ? $total : null;
         }
 
         $timestamp = strtotime($trimmed);
@@ -236,9 +198,13 @@ class OpenAiRateLimiter
         return null;
     }
 
-    private function logThrottle(string $message, array $context = []): void
+    /** Round up to the nearest whole second. Returns null if input is null or <= 0. */
+    private function roundSeconds(?float $value): ?int
     {
-        $payload = $context === [] ? $message : sprintf('%s %s', $message, json_encode($context));
-        Craft::info($payload, 'altpilot');
+        if ($value === null) {
+            return null;
+        }
+        $rounded = (int) ceil($value);
+        return $rounded > 0 ? $rounded : null;
     }
 }

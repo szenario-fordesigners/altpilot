@@ -13,7 +13,18 @@ use szenario\craftaltpilot\AltPilot;
 use yii\db\Query;
 
 /**
- * Alt Pilot Web controller
+ * JSON API controller for the AltPilot control panel section (Vue frontend).
+ *
+ * All actions require the `accessPlugin-altpilot` permission and return JSON.
+ *
+ * Endpoints:
+ * - POST queue            → Queue alt text generation for a single asset
+ * - POST save-alt-texts   → Manually save alt texts for an asset across sites
+ * - POST job-status       → Poll queue job status for a batch of assets
+ * - GET  get-all-assets   → Paginated, filterable asset listing
+ * - GET  get-single-asset → Single asset detail
+ * - GET  get-status-counts        → Aggregate counts by alt text status
+ * - GET  get-pending-alt-pilot-job-count → Number of pending queue jobs
  */
 class WebController extends Controller
 {
@@ -33,9 +44,7 @@ class WebController extends Controller
         return true;
     }
 
-    /**
-     * altpilot/altpilot-web action
-     */
+    /** POST: Queue an alt text generation job for a single asset + site. */
     public function actionQueue(): Response
     {
         $this->requirePostRequest();
@@ -83,6 +92,11 @@ class WebController extends Controller
         ], $message);
     }
 
+    /**
+     * Extract and validate the siteId from the request (body or query string).
+     * Falls back to the current site, then the primary site.
+     * Returns ['siteId' => int|'all'|null, 'error' => string|null].
+     */
     private function resolveSiteId(string $mode = 'body'): array
     {
         if ($mode === 'body') {
@@ -149,6 +163,7 @@ class WebController extends Controller
         ];
     }
 
+    /** GET: Return the number of AltPilot jobs still in the queue. */
     public function actionGetPendingAltPilotJobCount(): Response
     {
         $this->requireAcceptsJson();
@@ -157,6 +172,7 @@ class WebController extends Controller
         ]);
     }
 
+    /** GET: Return aggregate counts of assets by status (missing / AI-generated / manual). */
     public function actionGetStatusCounts(): Response
     {
         $this->requireAcceptsJson();
@@ -166,6 +182,10 @@ class WebController extends Controller
         return $this->successResponse($statusCounts);
     }
 
+    /**
+     * POST: Save manually-edited alt texts for a single asset across multiple sites.
+     * Expects { assetID: int, altTexts: { [siteId]: string|null, ... } }.
+     */
     public function actionSaveAltTexts(): Response
     {
         $this->requirePostRequest();
@@ -257,6 +277,10 @@ class WebController extends Controller
         ], 'Alt texts saved');
     }
 
+    /**
+     * POST: Poll the status of queue jobs for a batch of assets.
+     * Used by the frontend to update the UI while generation is in progress.
+     */
     public function actionJobStatus(): Response
     {
         $this->requirePostRequest();
@@ -298,6 +322,7 @@ class WebController extends Controller
     }
 
 
+    /** GET: Return full details for a single asset (used by the asset detail panel). */
     public function actionGetSingleAsset(): Response
     {
         $this->requireAcceptsJson();
@@ -334,6 +359,14 @@ class WebController extends Controller
 
 
 
+    /**
+     * GET: Paginated listing of image assets, with optional search and status filter.
+     *
+     * Query params: limit, offset, sort (dateCreated|dateUpdated|filename),
+     * query (free text, supports "id:123" and "term1 OR term2"), filter (all|missing|manual|ai-generated).
+     *
+     * Returns assets grouped by assetId, with each site's data nested inside.
+     */
     public function actionGetAllAssets(): Response
     {
         $this->requireAcceptsJson();
@@ -526,7 +559,7 @@ class WebController extends Controller
                 continue;
             }
 
-            $assetsByAssetId[$assetId][$siteKey] = $this->formatAssetForResponse($asset);
+            $assetsByAssetId[$assetId][$siteKey] = AltPilotMetadata::formatAssetForApi($asset);
         }
 
         return $this->successResponse([
@@ -541,31 +574,7 @@ class WebController extends Controller
         ], 'Assets fetched');
     }
 
-    private function formatAssetForResponse(Asset $asset): array
-    {
-        $behavior = $asset->getBehavior('altPilotMetadata');
-        $status = $behavior instanceof AltPilotMetadata
-            ? $behavior->getStatus()
-            : AltPilotMetadata::STATUS_MISSING;
-
-        $url = $asset->getUrl();
-        if (!is_string($url)) {
-            $url = '';
-        }
-
-        $altText = $asset->alt;
-        $normalizedAltText = $altText === null || $altText === '' ? null : (string) $altText;
-
-        return [
-            'id' => (int) $asset->id,
-            'siteId' => $asset->siteId === null ? null : (int) $asset->siteId,
-            'url' => $url,
-            'title' => (string) $asset->title,
-            'alt' => $normalizedAltText,
-            'status' => (int) $status,
-        ];
-    }
-
+    /** Wrap data in a standard { status: "success", data: {...} } JSON envelope. */
     private function successResponse(array $data = [], ?string $message = null, int $statusCode = 200): Response
     {
         $payload = [
@@ -582,6 +591,7 @@ class WebController extends Controller
         return $response;
     }
 
+    /** Wrap an error in a standard { status: "error", message: "..." } JSON envelope. */
     private function errorResponse(string $message, int $statusCode = 400, array $data = []): Response
     {
         $payload = [

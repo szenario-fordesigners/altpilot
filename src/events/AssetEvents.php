@@ -17,6 +17,14 @@ use szenario\craftaltpilot\elements\actions\GenerateAltPilotElementAction;
 use szenario\craftaltpilot\helpers\SettingsHelper;
 use yii\base\Event;
 
+/**
+ * All asset-related event listeners:
+ * - EVENT_INIT: attaches the AltPilotMetadata behavior to every image asset
+ * - EVENT_DEFINE_ACTION_MENU_ITEMS: adds "Generate Alt Text" to the asset context menu
+ * - EVENT_AFTER_SAVE (new assets only): auto-queues alt text generation for all sites
+ * - EVENT_REGISTER_ACTIONS: registers the bulk element action
+ * - EVENT_REGISTER_SEARCHABLE_ATTRIBUTES: makes 'alt' searchable in the index
+ */
 final class AssetEvents
 {
     private AltPilot $plugin;

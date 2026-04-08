@@ -13,7 +13,17 @@ use yii\base\Event;
 use yii\db\Exception;
 
 /**
- * Exposes a `status` attribute on assets and persists it in `altpilot_metadata`.
+ * Behavior attached to every image Asset. Tracks how the alt text was set:
+ *
+ *   STATUS_MISSING (0)      → No alt text exists
+ *   STATUS_AI_GENERATED (1) → Set by AltPilot's OpenAI integration
+ *   STATUS_MANUAL (2)       → Set by a human (either in the CP or via the plugin UI)
+ *
+ * The status is persisted in the `altpilot_metadata` table and lazily loaded
+ * from the DB on first access. It auto-detects changes in beforeSave: if the
+ * alt text changes and no explicit status was set, it defaults to MANUAL/MISSING.
+ *
+ * The queue job explicitly sets STATUS_AI_GENERATED before saving.
  */
 class AltPilotMetadata extends Behavior
 {
@@ -139,6 +149,27 @@ class AltPilotMetadata extends Behavior
         } catch (Exception $e) {
             Craft::error('Failed to delete AltPilot metadata for asset ' . $asset->id . ': ' . $e->getMessage(), 'altpilot');
         }
+    }
+
+    /**
+     * Format an asset for JSON API responses. Shared by WebController and QueueService.
+     */
+    public static function formatAssetForApi(Asset $asset): array
+    {
+        $behavior = $asset->getBehavior('altPilotMetadata');
+        $status = $behavior instanceof self ? $behavior->getStatus() : self::STATUS_MISSING;
+
+        $url = $asset->getUrl();
+        $altText = $asset->alt;
+
+        return [
+            'id' => (int) $asset->id,
+            'siteId' => $asset->siteId === null ? null : (int) $asset->siteId,
+            'url' => is_string($url) ? $url : '',
+            'title' => (string) $asset->title,
+            'alt' => ($altText === null || $altText === '') ? null : (string) $altText,
+            'status' => (int) $status,
+        ];
     }
 
     /**

@@ -4,17 +4,24 @@ namespace szenario\craftaltpilot\events;
 
 use Craft;
 use craft\events\PluginEvent;
-use craft\helpers\Json;
 use craft\services\Plugins;
 use szenario\craftaltpilot\AltPilot;
 use szenario\craftaltpilot\helpers\SettingsHelper;
 use yii\base\Event;
 
+/**
+ * Listens for plugin settings saves and triggers side effects when volumes change.
+ *
+ * When volumes are added or removed in settings, DatabaseService needs to
+ * populate/clean up the metadata table accordingly. We snapshot the volume IDs
+ * before the save and compare after to detect changes.
+ */
 final class SettingsEvents
 {
     private AltPilot $plugin;
-    private array $previousSettingsSnapshot = [];
-    private bool $hasStoredSettingsSnapshot = false;
+
+    /** Volume IDs from before the current save, used to detect changes */
+    private array $previousVolumeIds = [];
 
     public function __construct(AltPilot $plugin)
     {
@@ -32,8 +39,7 @@ final class SettingsEvents
                 }
 
                 $info = Craft::$app->getPlugins()->getStoredPluginInfo($this->plugin->handle) ?? [];
-                $this->hasStoredSettingsSnapshot = array_key_exists('settings', $info);
-                $this->previousSettingsSnapshot = $info['settings'] ?? [];
+                $this->previousVolumeIds = SettingsHelper::normalizeVolumeIds($info['settings']['volumeIDs'] ?? []);
             }
         );
 
@@ -45,30 +51,17 @@ final class SettingsEvents
                     return;
                 }
 
-                $newSettings = $this->plugin->getSettings()->toArray();
+                Craft::info('AltPilot settings saved.', 'altpilot');
 
-                if (!$this->hasStoredSettingsSnapshot) {
-                    Craft::info('AltPilot settings saved for the first time.', 'altpilot');
-                } else {
-                    $diff = SettingsHelper::calculateSettingsDiff($this->previousSettingsSnapshot, $newSettings);
+                $newVolumeIds = SettingsHelper::normalizeVolumeIds(
+                    $this->plugin->getSettings()->volumeIDs ?? []
+                );
 
-                    if ($diff === []) {
-                        Craft::info('AltPilot settings saved; no changes detected.', 'altpilot');
-                    } else {
-                        $redactedDiff = SettingsHelper::redactSensitiveSettingsDiff($diff);
-                        Craft::info('AltPilot settings changed: ' . Json::encode($redactedDiff), 'altpilot');
-
-                        $oldVolumeIds = SettingsHelper::normalizeVolumeIds($this->previousSettingsSnapshot['volumeIDs'] ?? []);
-                        $newVolumeIds = SettingsHelper::normalizeVolumeIds($newSettings['volumeIDs'] ?? []);
-
-                        if ($oldVolumeIds !== $newVolumeIds) {
-                            $this->plugin->databaseService->handleVolumesChange($oldVolumeIds, $newVolumeIds);
-                        }
-                    }
+                if ($this->previousVolumeIds !== $newVolumeIds) {
+                    $this->plugin->databaseService->handleVolumesChange($this->previousVolumeIds, $newVolumeIds);
                 }
 
-                $this->previousSettingsSnapshot = $newSettings;
-                $this->hasStoredSettingsSnapshot = true;
+                $this->previousVolumeIds = $newVolumeIds;
             }
         );
     }
