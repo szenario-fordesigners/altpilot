@@ -17,8 +17,8 @@ export default defineConfig({
     },
   },
   define: {
-    'process.env': JSON.stringify({ NODE_ENV: nodeEnv }),
-    __VUE_PROD_DEVTOOLS__: true,
+    'process.env.NODE_ENV': JSON.stringify(nodeEnv),
+    __VUE_PROD_DEVTOOLS__: false,
   },
   build: {
     lib: {
