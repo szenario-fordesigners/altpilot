@@ -1,5 +1,10 @@
 # Release Notes for AltPilot
 
+## 5.0.9 - 2026-04-09
+
+- Improve compatibility with basic-auth-protected sites
+- Improve code readability
+
 ## 5.0.8 - 2026-03-05
 
 - Fix dist path issue
