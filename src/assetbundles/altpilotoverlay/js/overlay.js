@@ -35,7 +35,7 @@
 
 	function collectImages() {
 		var imgs = document.querySelectorAll(
-			'img:not([data-cp-check-enabled="true"])',
+			'img:not([data-cp-processed="true"])',
 		);
 		var result = [];
 		var seen = {};
@@ -72,7 +72,7 @@
 			return dataSrc;
 		}
 
-		return img.getAttribute("src") || "";
+		return img.currentSrc || img.src || img.getAttribute("src") || "";
 	}
 
 	// ── API ────────────────────────────────────────────────────
@@ -132,7 +132,7 @@
 
 			for (var k = 0; k < images[j].elements.length; k++) {
 				var el = images[j].elements[k];
-				el.setAttribute("data-cp-check-enabled", "true");
+				el.setAttribute("data-cp-processed", "true");
 				el.setAttribute("data-cp-edit-url", match.url || "");
 				el.setAttribute("data-cp-edit-type", match.type || "search");
 				el.setAttribute("data-cp-alt-text", altText);
@@ -151,7 +151,7 @@
 		ensureUI();
 	}
 
-	// ── UI (one-shot) ──────────────────────────────────────────
+	// ── UI ──────────────────────────────────────────
 
 	function ensureUI() {
 		if (state.uiReady) return;
@@ -166,14 +166,14 @@
 		var posStyle = getPositionStyle();
 
 		var pageSearch = document.createElement("div");
-		pageSearch.id = "craft-alt-page-search-overlay";
+		pageSearch.id = "craft-altpilot-page-search-overlay";
 		pageSearch.setAttribute("style", posStyle);
 
 		var pageBtn = document.createElement("a");
-		pageBtn.id = "craft-alt-page-search-btn";
+		pageBtn.id = "craft-altpilot-page-search-btn";
 		pageBtn.href = "#";
 		pageBtn.innerHTML =
-			'<svg id="craft-alt-page-search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 114" fill="none" aria-hidden="true" focusable="false">' +
+			'<svg id="craft-altpilot-page-search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 114" fill="none" aria-hidden="true" focusable="false">' +
 			'<path d="M10 2.5H24.7686C27.0149 2.50001 29.1428 3.50726 30.5674 5.24414L107.664 99.2441C111.679 104.14 108.196 111.5 101.865 111.5H10C5.85787 111.5 2.5 108.142 2.5 104V10C2.5 5.85787 5.85787 2.5 10 2.5Z" fill="currentColor" stroke="currentColor" stroke-width="5"/>' +
 			"</svg>" +
 			"<span>review current page</span>";
@@ -186,14 +186,14 @@
 		});
 
 		var overlay = document.createElement("div");
-		overlay.id = "craft-alt-checker-overlay";
+		overlay.id = "craft-altpilot-overlay";
 
 		var inner = document.createElement("div");
 		var txt = document.createElement("span");
-		txt.id = "craft-alt-text-display";
+		txt.id = "craft-altpilot-text-display";
 
 		var editBtn = document.createElement("a");
-		editBtn.id = "craft-alt-edit-btn";
+		editBtn.id = "craft-altpilot-edit-btn";
 		editBtn.href = "#";
 		editBtn.target = "_blank";
 		editBtn.textContent = "Edit";
@@ -224,26 +224,26 @@
 	}
 
 	function injectStyles() {
-		if (document.getElementById("craft-alt-overlay-styles")) return;
+		if (document.getElementById("craft-altpilot-overlay-styles")) return;
 
 		var css =
-			"#craft-alt-page-search-overlay{display:block;position:fixed;z-index:2147483646;pointer-events:auto;opacity:0;transition:opacity .4s ease}" +
-			"#craft-alt-page-search-btn{background:#8FF5B3;color:#0f5132;text-decoration:none;padding:6px 12px;border-radius:999px;border:1px solid #0f5132;font-weight:500;font-size:16px;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;gap:8px;box-shadow:0 6px 18px rgba(15,81,50,.18);transition:background-color 150ms ease,color 150ms ease,border-color 150ms ease,box-shadow 150ms ease}" +
-			"#craft-alt-page-search-btn:hover{background:#ddfce8}" +
-			"#craft-alt-page-search-icon{width:16px;height:16px;display:block;flex:0 0 auto}" +
-			"#craft-alt-checker-overlay{display:none;position:fixed;z-index:2147483647;pointer-events:none}" +
-			"#craft-alt-checker-overlay>div{background:#fff;color:#0f5132;padding-left:8px;border-radius:999px;font-family:system-ui,-apple-system,sans-serif;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 20px rgba(15,81,50,.2)}" +
-			"#craft-alt-text-display{max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#0f5132}" +
-			"#craft-alt-edit-btn{pointer-events:auto;background:#8FF5B3;color:#0f5132;text-decoration:none;padding:4px 10px;border-radius:999px;border:1px solid #0f5132;font-size:15px;white-space:nowrap;transition:background-color 150ms ease,color 150ms ease,border-color 150ms ease,box-shadow 150ms ease}" +
-			"#craft-alt-edit-btn:hover{background:#ddfce8}";
+			"#craft-altpilot-page-search-overlay{display:block;position:fixed;z-index:2147483646;pointer-events:auto;opacity:0;transition:opacity .4s ease}" +
+			"#craft-altpilot-page-search-btn{background:#8FF5B3;color:#0f5132;text-decoration:none;padding:6px 12px;border-radius:999px;border:1px solid #0f5132;font-weight:500;font-size:16px;font-family:system-ui,-apple-system,sans-serif;display:flex;align-items:center;gap:8px;box-shadow:0 6px 18px rgba(15,81,50,.18);transition:background-color 150ms ease,color 150ms ease,border-color 150ms ease,box-shadow 150ms ease}" +
+			"#craft-altpilot-page-search-btn:hover{background:#ddfce8}" +
+			"#craft-altpilot-page-search-icon{width:16px;height:16px;display:block;flex:0 0 auto}" +
+			"#craft-altpilot-overlay{display:none;position:fixed;z-index:2147483647;pointer-events:none}" +
+			"#craft-altpilot-overlay>div{background:#fff;color:#0f5132;padding-left:8px;border-radius:999px;font-family:system-ui,-apple-system,sans-serif;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 20px rgba(15,81,50,.2)}" +
+			"#craft-altpilot-text-display{max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#0f5132}" +
+			"#craft-altpilot-edit-btn{pointer-events:auto;background:#8FF5B3;color:#0f5132;text-decoration:none;padding:4px 10px;border-radius:999px;border:1px solid #0f5132;font-size:15px;white-space:nowrap;transition:background-color 150ms ease,color 150ms ease,border-color 150ms ease,box-shadow 150ms ease}" +
+			"#craft-altpilot-edit-btn:hover{background:#ddfce8}";
 
 		var style = document.createElement("style");
-		style.id = "craft-alt-overlay-styles";
+		style.id = "craft-altpilot-overlay-styles";
 		style.textContent = css;
 		document.head.appendChild(style);
 	}
 
-	// ── Events (one-shot) ──────────────────────────────────────
+	// ── Events ──────────────────────────────────────
 
 	function bindEvents() {
 		state.pageSearchBtn.addEventListener("click", function (e) {
@@ -253,7 +253,7 @@
 
 		document.addEventListener("mouseover", function (e) {
 			var img = e.target.closest
-				? e.target.closest('img[data-cp-check-enabled="true"]')
+				? e.target.closest('img[data-cp-processed="true"]')
 				: null;
 			if (img) {
 				state.activeImg = img;
@@ -263,7 +263,7 @@
 
 		document.addEventListener("mouseout", function (e) {
 			var img = e.target.closest
-				? e.target.closest('img[data-cp-check-enabled="true"]')
+				? e.target.closest('img[data-cp-processed="true"]')
 				: null;
 			if (img) {
 				if (state.overlayEl.contains(e.relatedTarget)) return;
@@ -346,9 +346,7 @@
 	function generatePageSearchUrl() {
 		var assetIds = {};
 		var filenames = {};
-		var imgs = document.querySelectorAll(
-			'img[data-cp-check-enabled="true"]',
-		);
+		var imgs = document.querySelectorAll('img[data-cp-processed="true"]');
 
 		for (var i = 0; i < imgs.length; i++) {
 			var img = imgs[i];
@@ -438,11 +436,14 @@
 				if (node.nodeType !== 1) continue;
 				if (
 					node.tagName === "IMG" &&
-					node.getAttribute("data-cp-check-enabled") !== "true"
+					node.getAttribute("data-cp-processed") !== "true"
 				) {
 					return true;
 				}
-				if (node.querySelector && node.querySelector('img:not([data-cp-check-enabled="true"])')) {
+				if (
+					node.querySelector &&
+					node.querySelector('img:not([data-cp-processed="true"])')
+				) {
 					return true;
 				}
 			}
