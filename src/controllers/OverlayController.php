@@ -48,7 +48,8 @@ class OverlayController extends Controller
 
         $settings = AltPilot::getInstance()->getSettings();
 
-        if (!$settings->showImageOverlay ||
+        if (
+            !$settings->showImageOverlay ||
             !Craft::$app->getUser()->checkPermission('accessPlugin-altpilot')
         ) {
             return $this->asJson(['authenticated' => false]);

@@ -10,7 +10,6 @@ use craft\events\ModelEvent;
 use craft\events\RegisterElementActionsEvent;
 use craft\events\RegisterElementSearchableAttributesEvent;
 use craft\enums\MenuItemType;
-use craft\helpers\Json;
 use szenario\craftaltpilot\AltPilot;
 use szenario\craftaltpilot\behaviors\AltPilotMetadata;
 use szenario\craftaltpilot\elements\actions\GenerateAltPilotElementAction;
