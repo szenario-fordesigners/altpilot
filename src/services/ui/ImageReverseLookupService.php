@@ -75,6 +75,35 @@ class ImageReverseLookupService extends Component
             }
         }
 
+        // Detect Craft transform directory passing changed extensions (e.g. .png to .jpg)
+        // Matches typical transform paths like: /_archivehero/17628/filename.jpg
+        if (empty($candidates) && $src !== null) {
+            $srcPath = parse_url($src, PHP_URL_PATH);
+            // Captures both the potential transform handle/folder (group 1) and the filename (group 2)
+            if (is_string($srcPath) && preg_match('/\/_([^\/]+)\/(?:[^\/]+\/)?([^\/]+)$/', $srcPath, $matches)) {
+                $potentialHandle = $matches[1];
+                $matchedFilename = $matches[2];
+
+                // Verify if the matched directory name is a registered transform handle in Craft
+                $isTransform = \Craft::$app->getImageTransforms()->getTransformByHandle($potentialHandle) !== null;
+
+                // If not a named handle, it might be an inline transform like "_800x600_crop"
+                if (!$isTransform && preg_match('/^\d+x\d+/', $potentialHandle)) {
+                    $isTransform = true;
+                }
+
+                if ($isTransform) {
+                    $baseName = pathinfo($matchedFilename, PATHINFO_FILENAME);
+
+                    $fallbackCandidates = Asset::find()->filename($baseName . '.*')->all();
+                    if (!empty($fallbackCandidates)) {
+                        $candidates = $fallbackCandidates;
+                        $filename = $baseName; // Strip it down for the fallback search filename returned to UI
+                    }
+                }
+            }
+        }
+
         $targetAssetId = null;
 
         if (count($candidates) === 1) {
