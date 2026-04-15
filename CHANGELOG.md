@@ -1,5 +1,9 @@
 # Release Notes for AltPilot
 
+## 5.0.10 - 2026-04-15
+
+- Added support for resolving image transforms to their original assets in the frontend overlay.
+
 ## 5.0.9 - 2026-04-09
 
 - Improve compatibility with basic-auth-protected sites
