@@ -38,7 +38,7 @@ class ImageReverseLookupService extends Component
                 continue;
             }
 
-            $cacheKey = $filename . '::' . $alt;
+            $cacheKey = $src . '::' . $alt;
             if (!isset($lookupCache[$cacheKey])) {
                 $lookupCache[$cacheKey] = $this->resolveAssetUrl($filename, $alt, $src);
             }
