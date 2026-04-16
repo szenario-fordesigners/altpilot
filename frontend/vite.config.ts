@@ -36,7 +36,7 @@ export default defineConfig({
     outDir: '../src/assetbundles/altpilotfrontend/dist',
     emptyOutDir: true,
 
-    sourcemap: true,
+    sourcemap: nodeEnv !== 'production',
     minify: nodeEnv === 'production',
   },
 });
