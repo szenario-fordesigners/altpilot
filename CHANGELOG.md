@@ -1,5 +1,10 @@
 # Release Notes for AltPilot
 
+## 5.0.11 - 2026-04-16
+
+- Fixed an issue affecting inline frontend editing for files with identical names.
+- Minify the javascript production build properly
+
 ## 5.0.10 - 2026-04-15
 
 - Added support for resolving image transforms to their original assets in the frontend overlay.
@@ -23,7 +28,7 @@
 
 ## 5.0.5 - 2026-03-03
 
-- Fix Inline frontend editing workflow
+- Fix inline frontend editing workflow
 
 ## 5.0.4 - 2026-03-03
 
