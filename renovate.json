@@ -7,6 +7,16 @@
 		":automergePr",
 		"group:allNonMajor"
 	],
+	"ignoreDeps": ["php", "craftcms/cms", "node"],
+	"packageRules": [
+		{
+			"matchDatasources": ["php-version", "node-version"],
+			"enabled": false
+		}
+	],
 	"schedule": ["before 2am on saturday"],
-	"lockFileMaintenance": { "enabled": true, "schedule": ["before 2am on saturday"] }
+	"lockFileMaintenance": {
+		"enabled": true,
+		"schedule": ["before 2am on saturday"]
+	}
 }
