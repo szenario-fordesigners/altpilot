@@ -1,5 +1,10 @@
 # Release Notes for AltPilot
 
+## 5.0.12 - 2026-04-21
+
+- Do not ship sourcemaps in production builds.
+- Adjust release workflow
+
 ## 5.0.11 - 2026-04-16
 
 - Fixed an issue affecting inline frontend editing for files with identical names.
