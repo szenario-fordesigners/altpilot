@@ -28,6 +28,7 @@
 	},
 	"archive": {
 		"exclude": [
+			"/.agents/**",
 			"/.github/**",
 			"/.vscode/**",
 			"/.idea/**",
@@ -46,7 +47,9 @@
 			"/.gitattributes",
 			"/.gitignore",
 			"/CHANGELOG.md",
-			"/images/**"
+			"/images/**",
+			"/skills-lock.json",
+			"/renovate.json",
 		]
 	},
 	"extra": {
