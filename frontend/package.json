@@ -20,10 +20,10 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "4.2.4",
-    "@vueuse/core": "14.2.1",
-    "reka-ui": "2.9.6",
+    "@vueuse/core": "14.3.0",
+    "reka-ui": "2.9.7",
     "tailwindcss": "4.2.4",
-    "vue": "3.5.32"
+    "vue": "3.5.33"
   },
   "devDependencies": {
     "@prettier/plugin-oxc": "0.1.4",
@@ -33,19 +33,19 @@
     "@vue/eslint-config-prettier": "10.2.0",
     "@vue/eslint-config-typescript": "14.7.0",
     "@vue/tsconfig": "0.9.1",
-    "eslint": "10.2.1",
-    "eslint-plugin-oxlint": "1.61.0",
-    "eslint-plugin-vue": "10.8.0",
+    "eslint": "10.3.0",
+    "eslint-plugin-oxlint": "1.62.0",
+    "eslint-plugin-vue": "10.9.0",
     "jiti": "2.6.1",
     "npm-run-all2": "8.0.4",
-    "oxlint": "1.61.0",
+    "oxlint": "1.62.0",
     "prettier": "3.8.3",
-    "prettier-plugin-tailwindcss": "0.7.2",
+    "prettier-plugin-tailwindcss": "0.8.0",
     "sass-embedded": "1.99.0",
     "typescript": "6.0.3",
-    "vite": "8.0.9",
+    "vite": "8.0.10",
     "vite-plugin-vue-devtools": "8.1.1",
-    "vue-tsc": "3.2.7"
+    "vue-tsc": "3.2.8"
   },
-  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
+  "packageManager": "pnpm@10.33.3+sha512.a19744364a7e248b92657a4ca5973f9354d21caf982579674b1c539f32c7420c47138ad8b1254df07aba9bc782d9b3029e3db34d5dbff974326eb74dac8ff489"
 }
