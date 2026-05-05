@@ -49,7 +49,7 @@
 			"/CHANGELOG.md",
 			"/images/**",
 			"/skills-lock.json",
-			"/renovate.json",
+			"/renovate.json"
 		]
 	},
 	"extra": {
