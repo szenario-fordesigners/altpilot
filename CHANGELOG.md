@@ -1,5 +1,10 @@
 # Release Notes for AltPilot
 
+## 5.0.13 - 2026-05-12
+
+- Fix a bug regarding widget initialization
+- Exclude .agents folder from bundle
+
 ## 5.0.12 - 2026-04-21
 
 - Do not ship sourcemaps in production builds.
