@@ -1,5 +1,8 @@
 # Release Notes for AltPilot
 
+## 5.0.14 - 2026-05-26
+- Show progress when queueing bulk alt text generation
+
 ## 5.0.13 - 2026-05-12
 
 - Fix a bug regarding widget initialization
