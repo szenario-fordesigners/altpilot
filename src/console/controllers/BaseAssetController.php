@@ -53,31 +53,60 @@ abstract class BaseAssetController extends Controller
             $query->siteId('*');
         }
 
-        $count = 0;
         $total = $query->count();
 
         $this->stdout("Scanning $total assets...\n");
 
-        // Batch processing to avoid memory issues
+        $queued = 0;
+        $skipped = 0;
+        $processed = 0;
+        $errors = [];
+
+        Console::startProgress(0, $total, 'Queueing: ', false);
+
         foreach ($query->batch(100) as $assets) {
             foreach ($assets as $asset) {
+                $processed++;
+
                 if ($onlyMissing && !empty($asset->alt)) {
+                    $skipped++;
+                    Console::updateProgress($processed, $total);
                     continue;
                 }
 
                 if ($excludeManual) {
                     $behavior = $asset->getBehavior('altPilotMetadata');
                     if ($behavior instanceof AltPilotMetadata && $behavior->getStatus() === AltPilotMetadata::STATUS_MANUAL) {
+                        $skipped++;
+                        Console::updateProgress($processed, $total);
                         continue;
                     }
                 }
 
-                $this->queueJob($asset);
-                $count++;
+                $result = AltPilot::getInstance()->queueService->safelyCreateJob($asset);
+
+                if ($result['status'] === 'success') {
+                    $queued++;
+                } elseif ($result['status'] === 'warning') {
+                    $skipped++;
+                } else {
+                    $errors[] = "Asset {$asset->id} (Site: {$asset->siteId}): {$result['message']}";
+                }
+
+                Console::updateProgress($processed, $total);
             }
         }
 
-        $this->success("Queued $count assets for generation.");
+        Console::endProgress();
+
+        $this->success("Queued $queued assets for generation. Skipped: $skipped. Errors: " . count($errors) . '.');
+
+        if (!empty($errors)) {
+            $this->stdout("\nErrors:\n", Console::FG_RED);
+            foreach ($errors as $error) {
+                $this->stdout("  - $error\n", Console::FG_RED);
+            }
+        }
 
         $this->stdout("\nIMPORTANT:\n", Console::BOLD);
         $this->stdout("The jobs have been added to the queue. If you have a cron job set up to run the queue, they will process automatically.\n");
