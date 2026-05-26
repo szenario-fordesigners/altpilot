@@ -1,5 +1,8 @@
 # Release Notes for AltPilot
 
+## 5.0.15 - 2026-05-26
+- Add pending job index for queue deduplication
+
 ## 5.0.14 - 2026-05-26
 - Show progress when queueing bulk alt text generation
 
