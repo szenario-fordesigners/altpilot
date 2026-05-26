@@ -20,8 +20,12 @@ class QueueService extends Component
     /**
      * Create a queue job for the given asset, unless one is already pending/running.
      * Returns an array with 'status' (success|warning|error), 'message', and 'jobId'.
+     *
+     * For bulk loops, pass a `$pendingJobIndex` built once via buildPendingJobIndex().
+     * The index is updated in place as new jobs are pushed, so callers reuse it across
+     * the whole batch instead of re-querying the queue on every iteration.
      */
-    public function safelyCreateJob(Asset $asset): array
+    public function safelyCreateJob(Asset $asset, ?array &$pendingJobIndex = null): array
     {
         $siteLanguageCode = $this->getSiteLanguageCode($asset->siteId);
         $displayFilename = $this->getDisplayFilename($asset);
@@ -32,36 +36,25 @@ class QueueService extends Component
             return ['status' => "error", 'message' => 'AltPilot OpenAI API key is not set', 'jobId' => null];
         }
 
-        // check if a job for this asset is already in the queue
-        $jobs = Craft::$app->getQueue()->getJobInfo();
-        foreach ($jobs as $job) {
-            // Extract asset ID and site ID from job description (Site ID might be missing)
-            $description = $job['description'] ?? '';
-            if (preg_match('/\[Asset ID: (\d+)(?:\s+\|\s+Site ID: (\d+))?\]/', $description, $matches)) {
-                $jobAssetId = (int) $matches[1];
-                $jobSiteId = isset($matches[2]) ? (int) $matches[2] : $asset->siteId;
+        if ($pendingJobIndex === null) {
+            $pendingJobIndex = $this->buildPendingJobIndex();
+        }
 
-                if ($jobAssetId === $asset->id && $jobSiteId === $asset->siteId) {
-                    $jobStatus = $job['status'] ?? null;
-                    $jobStatusInt = is_numeric($jobStatus) ? (int) $jobStatus : null;
+        $dedupKey = $this->buildAssetKey($asset->id, $asset->siteId);
+        $existing = $pendingJobIndex[$dedupKey] ?? null;
 
-                    // If the job is failed, allow creating a new one (user can retry)
-                    if ($jobStatusInt === CraftQueue::STATUS_FAILED) {
-                        Craft::info(sprintf('Existing job for %s on site ID: %d is failed, allowing new job creation', $asset->filename ?? $asset->id, $asset->siteId), 'altpilot');
-                        // Continue to create a new job
-                        continue;
-                    }
-
-                    // For active jobs (waiting, running), skip creating a duplicate
-                    $message = sprintf('Job for %s (%s) already in queue, skipping', $displayFilename, $siteLanguageCode);
-                    Craft::info($message, 'altpilot');
-                    return [
-                        'status' => "warning",
-                        'message' => $message,
-                        'jobId' => (string) ($job['id'] ?? ''),
-                    ];
-                }
-                continue;
+        if ($existing !== null) {
+            if ($this->isFailedJob($existing)) {
+                // Allow retry of a previously-failed job by falling through to push.
+                Craft::info(sprintf('Existing job for %s on site ID: %d is failed, allowing new job creation', $asset->filename ?? $asset->id, $asset->siteId), 'altpilot');
+            } else {
+                $message = sprintf('Job for %s (%s) already in queue, skipping', $displayFilename, $siteLanguageCode);
+                Craft::info($message, 'altpilot');
+                return [
+                    'status' => "warning",
+                    'message' => $message,
+                    'jobId' => (string) ($existing['id'] ?? ''),
+                ];
             }
         }
 
@@ -72,6 +65,13 @@ class QueueService extends Component
                 'filename' => $asset->filename ?? '',
             ]);
             $jobId = Craft::$app->getQueue()->push($job);
+
+            // Reflect the newly-pushed job so the next iteration in a bulk loop dedupes against it.
+            $pendingJobIndex[$dedupKey] = [
+                'id' => $jobId,
+                'status' => CraftQueue::STATUS_WAITING,
+            ];
+
             return [
                 'status' => "success",
                 'message' => 'Job created for ' . $displayFilename . ' (' . $siteLanguageCode . ')',
@@ -85,6 +85,41 @@ class QueueService extends Component
                 'jobId' => null,
             ];
         }
+    }
+
+    /**
+     * Build a flat assetId:siteId → job map of currently-queued AltPilot jobs, used
+     * by safelyCreateJob() for deduplication. Call once before a bulk loop to avoid
+     * re-querying the entire queue table on every insert.
+     *
+     * When multiple jobs exist for the same (asset, site), the non-failed one wins
+     * so a stale failure doesn't shadow a fresh retry.
+     */
+    public function buildPendingJobIndex(): array
+    {
+        $jobs = Craft::$app->getQueue()->getJobInfo();
+        $index = [];
+
+        foreach ($jobs as $job) {
+            $description = (string) ($job['description'] ?? '');
+            if (!preg_match('/\[Asset ID: (\d+)\s+\|\s+Site ID: (\d+)\]/', $description, $matches)) {
+                continue;
+            }
+
+            $key = $this->buildAssetKey((int) $matches[1], (int) $matches[2]);
+            $existing = $index[$key] ?? null;
+            if ($existing === null || ($this->isFailedJob($existing) && !$this->isFailedJob($job))) {
+                $index[$key] = $job;
+            }
+        }
+
+        return $index;
+    }
+
+    private function isFailedJob(array $job): bool
+    {
+        $status = $job['status'] ?? null;
+        return is_numeric($status) && (int) $status === CraftQueue::STATUS_FAILED;
     }
 
     /** Count AltPilot jobs that haven't finished yet (used by the dashboard widget). */

@@ -48,6 +48,9 @@ class GenerateAltPilotElementAction extends ElementAction
         $elements = $query->all();
         $jobCount = 0;
 
+        // Build the dedup index once for the whole bulk action; safelyCreateJob() updates it in place.
+        $pendingJobIndex = AltPilot::getInstance()->queueService->buildPendingJobIndex();
+
         foreach ($elements as $element) {
             if (!$element instanceof Asset) {
                 continue;
@@ -62,7 +65,7 @@ class GenerateAltPilotElementAction extends ElementAction
             }
 
             // Create a job for the asset
-            AltPilot::getInstance()->queueService->safelyCreateJob($asset);
+            AltPilot::getInstance()->queueService->safelyCreateJob($asset, $pendingJobIndex);
             $jobCount++;
         }
 

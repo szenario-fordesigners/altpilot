@@ -62,6 +62,9 @@ abstract class BaseAssetController extends Controller
         $processed = 0;
         $errors = [];
 
+        // Build the dedup index once; safelyCreateJob() updates it in place as jobs are pushed.
+        $pendingJobIndex = AltPilot::getInstance()->queueService->buildPendingJobIndex();
+
         Console::startProgress(0, $total, 'Queueing: ', false);
 
         foreach ($query->batch(100) as $assets) {
@@ -83,7 +86,7 @@ abstract class BaseAssetController extends Controller
                     }
                 }
 
-                $result = AltPilot::getInstance()->queueService->safelyCreateJob($asset);
+                $result = AltPilot::getInstance()->queueService->safelyCreateJob($asset, $pendingJobIndex);
 
                 if ($result['status'] === 'success') {
                     $queued++;
