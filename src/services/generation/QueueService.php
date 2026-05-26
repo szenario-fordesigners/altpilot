@@ -132,6 +132,26 @@ class QueueService extends Component
     }
 
     /**
+     * Count AltPilot jobs in the queue grouped by mapped status (waiting/running/failed/finished/unknown).
+     * Statuses with zero jobs are omitted from the result.
+     */
+    public function getAltPilotJobStatusCounts(): array
+    {
+        $jobs = Craft::$app->getQueue()->getJobInfo();
+        $counts = [];
+
+        foreach ($jobs as $job) {
+            if (!str_contains($job['description'] ?? '', 'AltPilot')) {
+                continue;
+            }
+            $status = $this->mapJobStatus($job['status'] ?? null);
+            $counts[$status] = ($counts[$status] ?? 0) + 1;
+        }
+
+        return $counts;
+    }
+
+    /**
      * Given a list of asset+site pairs, return each one's queue job status.
      * Used by the frontend to poll for completion after triggering generation.
      * If no job is found, checks whether the asset exists and returns 'finished' or 'missing'.

@@ -22,7 +22,7 @@ class StatsController extends Controller
         $queueService = AltPilot::getInstance()->queueService;
 
         $counts = $databaseService->getStatusCounts();
-        $pendingJobs = $queueService->getPendingAltPilotJobCount();
+        $jobCounts = $queueService->getAltPilotJobStatusCounts();
 
         $this->stdout("AltPilot Statistics:\n", Console::BOLD);
         $this->stdout("Total Assets in Metadata: " . $counts['total'] . "\n");
@@ -36,7 +36,13 @@ class StatsController extends Controller
             $this->stdout("  - $label: $count\n");
         }
 
-        $this->stdout("\nPending Jobs: $pendingJobs\n", Console::FG_CYAN);
+        $pendingTotal = ($jobCounts['waiting'] ?? 0) + ($jobCounts['running'] ?? 0) + ($jobCounts['failed'] ?? 0);
+        $this->stdout("\nJobs in Queue: $pendingTotal\n", Console::FG_CYAN);
+        foreach (['waiting', 'running', 'failed'] as $status) {
+            if (($jobCounts[$status] ?? 0) > 0) {
+                $this->stdout("  - " . ucfirst($status) . ": {$jobCounts[$status]}\n");
+            }
+        }
 
         return ExitCode::OK;
     }
