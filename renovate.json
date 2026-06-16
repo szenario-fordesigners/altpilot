@@ -1,24 +1,24 @@
 {
-	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
-	"extends": [
-		"config:recommended",
-		":dependencyDashboard",
-		":pinVersions",
-		":automergePr",
-		"group:allNonMajor"
-	],
-	"ignoreDeps": ["php", "craftcms/cms", "node"],
-	"packageRules": [
-		{
-			"matchDatasources": ["php-version", "node-version"],
-			"enabled": false
-		}
-	],
-	"schedule": ["before 2am on saturday"],
-	"lockFileMaintenance": {
-		"enabled": true,
-		"schedule": ["before 2am on saturday"]
-	},
-	"minimumReleaseAge": "7 days",
-	"internalChecksFilter": "strict"
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":pinVersions",
+    ":automergePr",
+    "group:allNonMajor"
+  ],
+  "ignoreDeps": ["php", "craftcms/cms", "node"],
+  "packageRules": [
+    {
+      "matchDatasources": ["php-version", "node-version"],
+      "enabled": false
+    }
+  ],
+  "schedule": ["before 2am on saturday"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 2am on saturday"]
+  },
+  "minimumReleaseAge": "3 days",
+  "internalChecksFilter": "strict"
 }
