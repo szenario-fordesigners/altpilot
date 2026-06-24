@@ -25,7 +25,7 @@ class StatsController extends Controller
         $jobCounts = $queueService->getAltPilotJobStatusCounts();
 
         $this->stdout("AltPilot Statistics:\n", Console::BOLD);
-        $this->stdout("Total Assets in Metadata: " . $counts['total'] . "\n");
+        $this->stdout("Total Alt Texts: " . $counts['total'] . "\n");
         foreach ($counts['counts'] as $status => $count) {
             $label = match ($status) {
                 AltPilotMetadata::STATUS_AI_GENERATED => 'AI Generated',

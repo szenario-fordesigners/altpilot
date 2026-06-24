@@ -6,11 +6,9 @@ use Craft;
 use craft\web\Controller;
 use craft\elements\Asset;
 use szenario\craftaltpilot\behaviors\AltPilotMetadata;
-use szenario\craftaltpilot\services\assets\DatabaseService;
 use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 use szenario\craftaltpilot\AltPilot;
-use yii\db\Query;
 
 /**
  * JSON API controller for the AltPilot control panel section (Vue frontend).
@@ -413,59 +411,9 @@ class WebController extends Controller
                 break;
         }
 
-        $settings = AltPilot::getInstance()->getSettings();
-        $volumeIds = $settings->volumeIDs;
-
-        $uniqueAssetQuery = Asset::find()
-            ->kind('image')
-            ->siteId('*')
-            ->orderBy($orderBy);
-
-        if ($filterParam === 'missing') {
-            $uniqueAssetQuery->andWhere([
-                'or',
-                [
-                    'exists',
-                    (new Query())
-                        ->select('assetId')
-                        ->from(DatabaseService::TABLE_NAME)
-                        ->where('[[assetId]] = [[elements.id]]')
-                        ->andWhere(['status' => AltPilotMetadata::STATUS_MISSING])
-                ],
-                [
-                    'not exists',
-                    (new Query())
-                        ->select('assetId')
-                        ->from(DatabaseService::TABLE_NAME)
-                        ->where('[[assetId]] = [[elements.id]]')
-                ]
-            ]);
-        } elseif ($filterParam === 'manual') {
-            $uniqueAssetQuery->andWhere([
-                'exists',
-                (new Query())
-                    ->select('assetId')
-                    ->from(DatabaseService::TABLE_NAME)
-                    ->where('[[assetId]] = [[elements.id]]')
-                    ->andWhere(['status' => AltPilotMetadata::STATUS_MANUAL])
-            ]);
-        } elseif ($filterParam === 'ai-generated') {
-            $uniqueAssetQuery->andWhere([
-                'exists',
-                (new Query())
-                    ->select('assetId')
-                    ->from(DatabaseService::TABLE_NAME)
-                    ->where('[[assetId]] = [[elements.id]]')
-                    ->andWhere(['status' => AltPilotMetadata::STATUS_AI_GENERATED])
-            ]);
-        }
-
-
-        if (!empty($volumeIds)) {
-            $uniqueAssetQuery->volumeId($volumeIds);
-        } else {
-            $uniqueAssetQuery->volumeId('*');
-        }
+        $uniqueAssetQuery = AltPilot::getInstance()
+            ->databaseService
+            ->createAssetStatusQuery($filterParam, $orderBy);
 
         if ($queryParam !== null && $queryParam !== '') {
             $queryTokens = preg_split('/\s+OR\s+/i', (string) $queryParam) ?: [];

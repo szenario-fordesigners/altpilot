@@ -4,7 +4,9 @@ namespace szenario\craftaltpilot\services\assets;
 
 use Craft;
 use craft\db\Query;
+use craft\db\Table;
 use craft\elements\Asset;
+use craft\elements\db\AssetQuery;
 use craft\helpers\StringHelper;
 use szenario\craftaltpilot\AltPilot;
 use szenario\craftaltpilot\behaviors\AltPilotMetadata;
@@ -254,16 +256,18 @@ class DatabaseService extends Component
     }
 
     /**
-     * Returns aggregated counts of assets by AltPilot status.
+     * Returns aggregate counts from the metadata table.
+     *
+     * Metadata is the status source of truth. Counts are scoped to rows that
+     * still point at live image assets in the configured volumes.
      *
      * @return array{counts: array<int,int>, total: int}
      */
     public function getStatusCounts(): array
     {
-        $rows = (new Query())
-            ->select(['status', 'count' => 'COUNT(*)'])
-            ->from(self::TABLE_NAME)
-            ->groupBy(['status'])
+        $rows = $this->createMetadataStatusQuery()
+            ->select(['metadata.status', 'count' => 'COUNT(*)'])
+            ->groupBy(['metadata.status'])
             ->all();
 
         $counts = [
@@ -289,6 +293,58 @@ class DatabaseService extends Component
         ];
     }
 
+    public function createAssetStatusQuery(string $filter = 'all', ?string $orderBy = null): AssetQuery
+    {
+        $settings = AltPilot::getInstance()->getSettings();
+        $volumeIds = SettingsHelper::normalizeVolumeIds($settings->volumeIDs ?? []);
+
+        $query = Asset::find()
+            ->kind('image')
+            ->siteId('*');
+
+        if ($orderBy !== null) {
+            $query->orderBy($orderBy);
+        }
+
+        if ($volumeIds !== []) {
+            $query->volumeId($volumeIds);
+        } else {
+            $query->volumeId('*');
+        }
+
+        $this->applyStatusFilter($query, $filter);
+
+        return $query;
+    }
+
+    private function applyStatusFilter(AssetQuery $query, string $filter): void
+    {
+        if ($filter === 'missing') {
+            $query->andWhere(['exists', $this->metadataExistsQuery(AltPilotMetadata::STATUS_MISSING)]);
+        } elseif ($filter === 'manual') {
+            $query->andWhere(['exists', $this->metadataExistsQuery(AltPilotMetadata::STATUS_MANUAL)]);
+        } elseif ($filter === 'ai-generated') {
+            $query->andWhere(['exists', $this->metadataExistsQuery(AltPilotMetadata::STATUS_AI_GENERATED)]);
+        } else {
+            $query->andWhere(['exists', $this->metadataExistsQuery()]);
+        }
+    }
+
+    private function metadataExistsQuery(?int $status = null): Query
+    {
+        $query = (new Query())
+            ->select('assetId')
+            ->from(self::TABLE_NAME)
+            ->where('[[assetId]] = [[elements.id]]')
+            ->andWhere('[[volumeId]] = [[assets.volumeId]]');
+
+        if ($status !== null) {
+            $query->andWhere(['status' => $status]);
+        }
+
+        return $query;
+    }
+
     /**
      * Returns distinct totals used by the dashboard widget.
      *
@@ -296,18 +352,32 @@ class DatabaseService extends Component
      */
     public function getWidgetTotals(): array
     {
-        $imageTotal = (new Query())
-            ->from(self::TABLE_NAME)
-            ->count('DISTINCT [[assetId]]');
-
-        $languageTotal = (new Query())
-            ->from(self::TABLE_NAME)
-            ->count('DISTINCT [[siteId]]');
+        $metadataQuery = $this->createMetadataStatusQuery();
 
         return [
-            'imageTotal' => (int) $imageTotal,
-            'languageTotal' => (int) $languageTotal,
+            'imageTotal' => (int) (clone $metadataQuery)->count('DISTINCT [[metadata.assetId]]'),
+            'languageTotal' => (int) (clone $metadataQuery)->count('DISTINCT [[metadata.siteId]]'),
         ];
+    }
+
+    private function createMetadataStatusQuery(): Query
+    {
+        $settings = AltPilot::getInstance()->getSettings();
+        $volumeIds = SettingsHelper::normalizeVolumeIds($settings->volumeIDs ?? []);
+
+        $query = (new Query())
+            ->from(['metadata' => self::TABLE_NAME])
+            ->innerJoin(['assets' => Table::ASSETS], '[[assets.id]] = [[metadata.assetId]]')
+            ->innerJoin(['elements' => Table::ELEMENTS], '[[elements.id]] = [[metadata.assetId]]')
+            ->where(['assets.kind' => Asset::KIND_IMAGE])
+            ->andWhere(['elements.dateDeleted' => null])
+            ->andWhere('[[metadata.volumeId]] = [[assets.volumeId]]');
+
+        if ($volumeIds !== []) {
+            $query->andWhere(['assets.volumeId' => $volumeIds]);
+        }
+
+        return $query;
     }
 
     /**
