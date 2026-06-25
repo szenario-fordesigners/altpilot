@@ -66,10 +66,11 @@ final class AssetEvents
                     return;
                 }
 
-                if (!Craft::$app->getRequest()->getIsConsoleRequest() && !Craft::$app->getUser()->checkPermission('accessPlugin-altpilot')) {
-                    return;
-                }
-
+                // Intentionally NOT gated on the uploader's permission: metadata is
+                // the source of truth and must be recorded for every image in a
+                // configured volume, no matter who (or what process) created it.
+                // Gating this previously left assets uploaded by users without the
+                // plugin permission untracked, diverging the counts from the grid.
                 $asset = $event->sender;
                 if (!$asset instanceof Asset || !$asset->id || $asset->kind !== 'image') {
                     return;
