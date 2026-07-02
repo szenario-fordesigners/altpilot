@@ -63,11 +63,6 @@ const appendCsrf = (body: RequestOptions['body'], includeCsrf: boolean) => {
     return body;
   }
 
-  if (body instanceof FormData) {
-    body.append(token.name, token.value);
-    return body;
-  }
-
   if (isPlainObject(body)) {
     return {
       ...body,
@@ -150,13 +145,6 @@ export const apiClient = {
         'Content-Type': 'application/json',
         ...options.headers,
       },
-    });
-  },
-  postForm<T>(url: string, form: FormData, options: Omit<RequestOptions, 'method' | 'body'> = {}) {
-    return request<T>(url, {
-      ...options,
-      method: 'POST',
-      body: form,
     });
   },
 };

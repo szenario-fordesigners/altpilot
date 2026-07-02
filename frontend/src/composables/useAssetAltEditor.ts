@@ -21,8 +21,6 @@ export function useAssetAltEditor(asset: MultiLanguageAsset) {
   const originalAltTexts = reactive<AltTextMap>(buildInitialAltMap(asset));
 
   const saving = ref(false);
-  const error = ref<string | null>(null);
-  const successMessage = ref<string | null>(null);
 
   const { toast } = useToasts();
 
@@ -80,8 +78,6 @@ export function useAssetAltEditor(asset: MultiLanguageAsset) {
       const siteId = Number(key);
       altTexts[siteId] = originalAltTexts[siteId] ?? '';
     }
-    error.value = null;
-    successMessage.value = null;
   };
 
   const getChangedAltTexts = (): Record<number, string> => {
@@ -104,15 +100,12 @@ export function useAssetAltEditor(asset: MultiLanguageAsset) {
     }
 
     saving.value = true;
-    error.value = null;
-    successMessage.value = null;
 
     const assetId = asset[primarySiteId.value]?.id;
     if (!assetId) {
-      error.value = 'Asset ID missing';
       toast({
         title: 'Error',
-        description: error.value,
+        description: 'Asset ID missing',
         type: 'foreground',
       });
       saving.value = false;
@@ -153,17 +146,15 @@ export function useAssetAltEditor(asset: MultiLanguageAsset) {
         }
       });
 
-      successMessage.value = 'Alt texts saved';
       toast({
         title: 'Saved',
-        description: successMessage.value,
+        description: 'Alt texts saved',
         type: 'foreground',
       });
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Unknown error';
       toast({
         title: 'Error',
-        description: error.value,
+        description: err instanceof Error ? err.message : 'Unknown error',
         type: 'foreground',
       });
     } finally {
@@ -177,8 +168,6 @@ export function useAssetAltEditor(asset: MultiLanguageAsset) {
     hasSiteChanges,
     resetChanges,
     saving,
-    error,
-    successMessage,
     save,
   };
 }

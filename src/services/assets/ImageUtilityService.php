@@ -145,13 +145,16 @@ class ImageUtilityService extends Component
         return false;
     }
 
-    /** A GIF is animated if it contains more than one image separator byte (0x2C). */
+    /**
+     * A GIF is animated if it has more than one Graphic Control Extension block (0x21 0xF9 0x04), one per frame.
+     * ponytail: heuristic — GCE is technically optional per frame; parse the frame table if a real GIF slips through.
+     */
     private function isAnimatedGif(string $filePath): bool
     {
         $contents = file_get_contents($filePath);
         if ($contents === false) {
             return false;
         }
-        return substr_count($contents, "\x2C") > 1;
+        return substr_count($contents, "\x21\xF9\x04") > 1;
     }
 }

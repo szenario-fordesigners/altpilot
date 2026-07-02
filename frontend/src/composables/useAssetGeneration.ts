@@ -1,4 +1,4 @@
-import { reactive, ref } from 'vue';
+import { reactive } from 'vue';
 import { useGlobalState } from '@/composables/useGlobalState';
 import { useGenerationTracker } from '@/composables/useGenerationTracker';
 import type { MultiLanguageAsset } from '@/types/Asset';
@@ -18,8 +18,6 @@ export function useAssetGeneration(asset: MultiLanguageAsset) {
   const { toast } = useToasts();
 
   const generatingBySite = reactive<Record<number, boolean>>({});
-  const errorBySite = reactive<Record<number, string | null>>({});
-  const successBySite = reactive<Record<number, string | null>>({});
 
   const triggerQueueRunner = () => {
     if (!cpTrigger.value) {
@@ -42,11 +40,9 @@ export function useAssetGeneration(asset: MultiLanguageAsset) {
 
   const generateForSite = async (siteId: number) => {
     if (!csrfToken.value) {
-      const msg = 'CSRF token not available';
-      errorBySite[siteId] = msg;
       toast({
         title: 'Error',
-        description: msg,
+        description: 'CSRF token not available',
         type: 'foreground',
       });
       return;
@@ -57,8 +53,6 @@ export function useAssetGeneration(asset: MultiLanguageAsset) {
     }
 
     generatingBySite[siteId] = true;
-    errorBySite[siteId] = null;
-    successBySite[siteId] = null;
 
     try {
       const payload: Record<string, string> = {
@@ -71,12 +65,9 @@ export function useAssetGeneration(asset: MultiLanguageAsset) {
         payload,
       );
 
-      const msg = message || 'Alt text generation queued successfully';
-      successBySite[siteId] = msg;
-
       toast({
         title: 'Queued',
-        description: msg,
+        description: message || 'Alt text generation queued successfully',
         type: 'foreground',
       });
 
@@ -89,11 +80,9 @@ export function useAssetGeneration(asset: MultiLanguageAsset) {
 
       triggerQueueRunner();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error';
-      errorBySite[siteId] = msg;
       toast({
         title: 'Error',
-        description: msg,
+        description: err instanceof Error ? err.message : 'Unknown error',
         type: 'foreground',
       });
     } finally {
@@ -107,16 +96,10 @@ export function useAssetGeneration(asset: MultiLanguageAsset) {
   const isGenerationFinished = (siteId: number) =>
     stateForAsset(asset[siteId]!.id, siteId)?.status === 'finished';
 
-  const generationMessage = (siteId: number) =>
-    stateForAsset(asset[siteId]!.id, siteId)?.message ?? null;
-
   return {
     generateForSite,
     generatingBySite,
-    errorBySite,
-    successBySite,
     isGenerationActive,
     isGenerationFinished,
-    generationMessage,
   };
 }

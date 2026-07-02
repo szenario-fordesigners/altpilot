@@ -9,8 +9,6 @@ use craft\events\ModelEvent;
 use szenario\craftaltpilot\AltPilot;
 use szenario\craftaltpilot\services\assets\DatabaseService;
 use yii\base\Behavior;
-use yii\base\Event;
-use yii\db\Exception;
 
 /**
  * Behavior attached to every image Asset. Tracks how the alt text was set:
@@ -55,7 +53,6 @@ class AltPilotMetadata extends Behavior
         return [
             Asset::EVENT_BEFORE_SAVE => 'beforeSave',
             Asset::EVENT_AFTER_SAVE => 'afterSave',
-            Asset::EVENT_AFTER_DELETE => 'afterDelete',
         ];
     }
 
@@ -131,24 +128,6 @@ class AltPilotMetadata extends Behavior
 
         $this->_status = $status;
         $this->_loaded = true;
-    }
-
-    public function afterDelete(Event $event): void
-    {
-        $asset = $this->owner;
-
-        if (!$asset instanceof Asset || !$asset->id) {
-            return;
-        }
-
-        try {
-            Craft::$app->getDb()
-                ->createCommand()
-                ->delete(DatabaseService::TABLE_NAME, ['assetId' => $asset->id])
-                ->execute();
-        } catch (Exception $e) {
-            Craft::error('Failed to delete AltPilot metadata for asset ' . $asset->id . ': ' . $e->getMessage(), 'altpilot');
-        }
     }
 
     /**

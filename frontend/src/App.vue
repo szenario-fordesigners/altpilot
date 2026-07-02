@@ -37,9 +37,7 @@ state.primarySiteId.value = primarySiteId;
 state.hasSelectedVolumes.value = hasSelectedVolumes;
 
 const ASSET_CARD_LIMIT = 36;
-const { assets, assetIds, loading, pagination } = useAssets({
-  defaultLimit: ASSET_CARD_LIMIT,
-});
+const { assets, assetIds, loading, pagination } = useAssets();
 const { fetchStatusCounts } = useStatusCounts();
 const showLoading = computed(() => loading.value);
 

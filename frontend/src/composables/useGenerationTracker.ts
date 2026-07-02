@@ -1,5 +1,5 @@
 import { createGlobalState, useIntervalFn } from '@vueuse/core';
-import { reactive, ref, watch } from 'vue';
+import { reactive, watch } from 'vue';
 import { useAssets } from '@/composables/useAssets';
 import { useStatusCounts } from '@/composables/useStatusCounts';
 import { useGlobalState } from '@/composables/useGlobalState';
@@ -61,7 +61,6 @@ const getErrorMessageForFailedJob = (item: StatusResponse): string => {
 
 export const useGenerationTracker = createGlobalState(() => {
   const trackedAssets = reactive(new Map<string, TrackedAsset>());
-  const lastError = ref<string | null>(null);
   const { csrfToken } = useGlobalState();
   const { replaceAsset } = useAssets();
   const { fetchStatusCounts } = useStatusCounts();
@@ -190,10 +189,8 @@ export const useGenerationTracker = createGlobalState(() => {
           }, 2000);
         }
       });
-
-      lastError.value = null;
-    } catch (err) {
-      lastError.value = err instanceof Error ? err.message : 'Unknown error';
+    } catch {
+      // transient poll failure; next tick retries
     }
   };
 
@@ -227,10 +224,6 @@ export const useGenerationTracker = createGlobalState(() => {
     });
   };
 
-  const clearAsset = (assetId: number, siteId?: number | null) => {
-    trackedAssets.delete(makeKey(assetId, siteId ?? null));
-  };
-
   const stateForAsset = (assetId: number, siteId?: number | null): TrackedAsset | null =>
     trackedAssets.get(makeKey(assetId, siteId ?? null)) ?? null;
 
@@ -242,9 +235,7 @@ export const useGenerationTracker = createGlobalState(() => {
 
   return {
     trackAsset,
-    clearAsset,
     stateForAsset,
     isAssetRunning,
-    lastError,
   };
 });

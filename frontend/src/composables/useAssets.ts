@@ -24,64 +24,31 @@ type AssetsResponse = {
   pagination: PaginationInfo | null;
 };
 
-type UseAssetsOptions = {
-  defaultLimit?: number;
-  defaultOffset?: number;
-  defaultSort?: string;
-  defaultQuery?: string;
-  defaultFilter?: string;
-};
-
-const useAssetsState = createGlobalState(() => {
+export const useAssets = createGlobalState(() => {
   const assets = ref<AssetsByAssetId>({});
   const assetIds = ref<number[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
   const pagination = ref<PaginationInfo | null>(null);
-  const defaultLimit = ref(20);
-  const defaultOffset = ref(0);
-  const defaultSort = ref('dateCreated');
-  const defaultQuery = ref('');
-  const defaultFilter = ref('all');
-
-  const setDefaults = (
-    limit?: number,
-    offset?: number,
-    sort?: string,
-    query?: string,
-    filter?: string,
-  ) => {
-    if (typeof limit === 'number') {
-      defaultLimit.value = limit;
-    }
-    if (typeof offset === 'number') {
-      defaultOffset.value = offset;
-    }
-    if (typeof sort === 'string') {
-      defaultSort.value = sort;
-    }
-    if (typeof query === 'string') {
-      defaultQuery.value = query;
-    }
-    if (typeof filter === 'string') {
-      defaultFilter.value = filter;
-    }
-  };
+  const defaultLimit = ref(36);
+  const sort = ref('dateCreated');
+  const query = ref('');
+  const filter = ref('all');
 
   const fetchAssets = async (options: FetchAssetsOptions = {}) => {
     const limit = options.limit ?? defaultLimit.value;
-    const offset = options.offset ?? defaultOffset.value;
-    const sort = options.sort ?? defaultSort.value;
-    const query = options.query ?? defaultQuery.value;
-    const filter = options.filter ?? defaultFilter.value;
+    const offset = options.offset ?? 0;
+    const sortValue = options.sort ?? sort.value;
+    const queryValue = options.query ?? query.value;
+    const filterValue = options.filter ?? filter.value;
 
     loading.value = true;
     error.value = null;
 
     try {
       const { data } = await apiClient.get<AssetsResponse>(
-        `/actions/altpilot/web/get-all-assets?limit=${limit}&offset=${offset}&sort=${sort}&filter=${filter}&query=${encodeURIComponent(
-          query,
+        `/actions/altpilot/web/get-all-assets?limit=${limit}&offset=${offset}&sort=${sortValue}&filter=${filterValue}&query=${encodeURIComponent(
+          queryValue,
         )}&siteId=all`,
       );
       assets.value = data.assets ?? {};
@@ -101,11 +68,7 @@ const useAssetsState = createGlobalState(() => {
     const assetId = updatedAsset.id;
     const siteId = updatedAsset.siteId;
 
-    if (siteId == null) {
-      return;
-    }
-
-    // Check if the asset exists in the assets object
+    // Only update if the asset exists in the assets object
     if (!assets.value[assetId]) {
       return;
     }
@@ -120,25 +83,10 @@ const useAssetsState = createGlobalState(() => {
     loading,
     error,
     pagination,
-    sort: defaultSort,
-    query: defaultQuery,
-    filter: defaultFilter,
+    sort,
+    query,
+    filter,
     fetchAssets,
-    setDefaults,
     replaceAsset,
   };
 });
-
-export function useAssets(options?: UseAssetsOptions) {
-  const state = useAssetsState();
-  if (options) {
-    state.setDefaults(
-      options.defaultLimit,
-      options.defaultOffset,
-      options.defaultSort,
-      options.defaultQuery,
-      options.defaultFilter,
-    );
-  }
-  return state;
-}
