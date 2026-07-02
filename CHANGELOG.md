@@ -1,9 +1,16 @@
 # Release Notes for AltPilot
 
+## 5.0.16 - 2026-07-02
+
+- Record image metadata even when file permissions are missing
+- Report job status counts in the `stats` command
+
 ## 5.0.15 - 2026-05-26
+
 - Add pending job index for queue deduplication
 
 ## 5.0.14 - 2026-05-26
+
 - Show progress when queueing bulk alt text generation
 
 ## 5.0.13 - 2026-05-12
