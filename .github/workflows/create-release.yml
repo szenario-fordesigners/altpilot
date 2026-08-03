@@ -21,7 +21,7 @@ jobs:
             # 1. Setup Environment
             - uses: pnpm/action-setup@v6.0.9
               with:
-                  version: 11.17.0
+                  version: 11.19.0
             - uses: actions/setup-node@v6.5.0
               with:
                   node-version: 24.14.1
