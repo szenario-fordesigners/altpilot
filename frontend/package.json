@@ -13,11 +13,8 @@
     "build-only": "vite build",
     "watch": "vite build --watch --mode development",
     "type-check": "vue-tsc --build",
-    "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
-    "lint:eslint": "eslint . --fix --cache",
-    "lint": "run-s lint:*",
-    "format": "prettier --write src/",
-    "audit:ts-deps": "node scripts/audit-ts-deps.mjs"
+    "lint": "eslint . --fix --cache",
+    "format": "prettier --write src/"
   },
   "dependencies": {
     "@tailwindcss/vite": "4.3.3",
@@ -35,11 +32,9 @@
     "@vue/eslint-config-typescript": "14.9.0",
     "@vue/tsconfig": "0.9.1",
     "eslint": "10.8.0",
-    "eslint-plugin-oxlint": "1.76.0",
     "eslint-plugin-vue": "10.10.0",
     "jiti": "2.7.0",
     "npm-run-all2": "9.0.3",
-    "oxlint": "1.76.0",
     "prettier": "3.9.6",
     "prettier-plugin-tailwindcss": "0.8.1",
     "sass-embedded": "1.100.0",
