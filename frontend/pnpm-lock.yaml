@@ -24,9 +24,6 @@ importers:
         specifier: 3.5.40
         version: 3.5.40(typescript@6.0.3)
     devDependencies:
-      '@prettier/plugin-oxc':
-        specifier: 0.2.2
-        version: 0.2.2
       '@tsconfig/node24':
         specifier: 24.0.4
         version: 24.0.4
@@ -2562,7 +2559,8 @@ snapshots:
   '@oxc-parser/binding-win32-x64-msvc@0.139.0':
     optional: true
 
-  '@oxc-project/types@0.139.0': {}
+  '@oxc-project/types@0.139.0':
+    optional: true
 
   '@oxc-project/types@0.142.0': {}
 
@@ -2634,6 +2632,7 @@ snapshots:
   '@prettier/plugin-oxc@0.2.2':
     dependencies:
       oxc-parser: 0.139.0
+    optional: true
 
   '@rolldown/binding-android-arm64@1.2.1':
     optional: true
@@ -3606,6 +3605,7 @@ snapshots:
       '@oxc-parser/binding-win32-arm64-msvc': 0.139.0
       '@oxc-parser/binding-win32-ia32-msvc': 0.139.0
       '@oxc-parser/binding-win32-x64-msvc': 0.139.0
+    optional: true
 
   p-limit@3.1.0:
     dependencies:
