@@ -42,5 +42,5 @@
     "vite-plugin-vue-devtools": "8.2.1",
     "vue-tsc": "3.3.11"
   },
-  "packageManager": "pnpm@11.27.0"
+  "packageManager": "pnpm@12.4.1"
 }
