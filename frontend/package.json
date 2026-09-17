@@ -25,22 +25,22 @@
   },
   "devDependencies": {
     "@tsconfig/node24": "24.0.5",
-    "@types/node": "24.13.3",
-    "@vitejs/plugin-vue": "6.0.8",
+    "@types/node": "24.13.4",
+    "@vitejs/plugin-vue": "6.0.9",
     "@vue/eslint-config-prettier": "10.2.0",
     "@vue/eslint-config-typescript": "14.9.0",
     "@vue/tsconfig": "0.9.1",
-    "eslint": "10.9.1",
-    "eslint-plugin-vue": "10.10.0",
+    "eslint": "10.10.0",
+    "eslint-plugin-vue": "10.11.0",
     "jiti": "2.7.0",
     "npm-run-all2": "9.0.3",
     "prettier": "3.9.6",
     "prettier-plugin-tailwindcss": "0.8.1",
-    "sass-embedded": "1.103.1",
+    "sass-embedded": "1.104.1",
     "typescript": "6.0.3",
-    "vite": "8.2.2",
+    "vite": "8.3.0",
     "vite-plugin-vue-devtools": "8.2.1",
     "vue-tsc": "3.3.11"
   },
-  "packageManager": "pnpm@11.24.0"
+  "packageManager": "pnpm@11.27.0"
 }
