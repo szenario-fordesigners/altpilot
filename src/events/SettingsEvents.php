@@ -3,25 +3,26 @@
 namespace szenario\craftaltpilot\events;
 
 use Craft;
-use craft\events\PluginEvent;
-use craft\services\Plugins;
+use craft\events\ConfigEvent;
+use craft\services\ProjectConfig;
 use szenario\craftaltpilot\AltPilot;
 use szenario\craftaltpilot\helpers\SettingsHelper;
-use yii\base\Event;
 
 /**
- * Listens for plugin settings saves and triggers side effects when volumes change.
+ * Listens for plugin settings changes and triggers side effects when volumes change.
  *
  * When volumes are added or removed in settings, DatabaseService needs to
- * populate/clean up the metadata table accordingly. We snapshot the volume IDs
- * before the save and compare after to detect changes.
+ * populate/clean up the metadata table accordingly. This listens on the plugin's
+ * project config path instead of Plugins::EVENT_*_SAVE_PLUGIN_SETTINGS, because
+ * those only fire for a CP save. The project config handler fires for both a CP
+ * save and a deploy (`project-config/apply`), and carries the old and new values.
  */
 final class SettingsEvents
 {
     private AltPilot $plugin;
 
-    /** Volume IDs from before the current save, used to detect changes */
-    private array $previousVolumeIds = [];
+    /** The last [old, new] volume change handled, used to skip Craft's duplicate dispatch */
+    private ?array $lastChange = null;
 
     public function __construct(AltPilot $plugin)
     {
@@ -30,39 +31,33 @@ final class SettingsEvents
 
     public function register(): void
     {
-        Event::on(
-            Plugins::class,
-            Plugins::EVENT_BEFORE_SAVE_PLUGIN_SETTINGS,
-            function (PluginEvent $event) {
-                if ($event->plugin !== $this->plugin) {
-                    return;
-                }
+        $path = ProjectConfig::PATH_PLUGINS . '.' . $this->plugin->handle . '.settings';
+        $handler = function (ConfigEvent $event) {
+            $this->handleSettingsChange($event);
+        };
 
-                $info = Craft::$app->getPlugins()->getStoredPluginInfo($this->plugin->handle) ?? [];
-                $this->previousVolumeIds = SettingsHelper::normalizeVolumeIds($info['settings']['volumeIDs'] ?? []);
-            }
-        );
+        // ponytail: no onRemove, the settings path only disappears on uninstall,
+        // when the tables are dropped anyway.
+        Craft::$app->getProjectConfig()
+            ->onAdd($path, $handler)
+            ->onUpdate($path, $handler);
+    }
 
-        Event::on(
-            Plugins::class,
-            Plugins::EVENT_AFTER_SAVE_PLUGIN_SETTINGS,
-            function (PluginEvent $event) {
-                if ($event->plugin !== $this->plugin) {
-                    return;
-                }
+    private function handleSettingsChange(ConfigEvent $event): void
+    {
+        $oldVolumeIds = SettingsHelper::normalizeVolumeIds($event->oldValue['volumeIDs'] ?? []);
+        $newVolumeIds = SettingsHelper::normalizeVolumeIds($event->newValue['volumeIDs'] ?? []);
 
-                Craft::info('AltPilot settings saved.', 'altpilot');
+        // During `project-config/apply`, ProjectConfig::reset() re-runs init(), which
+        // attaches Craft's change dispatcher a second time, so every config handler
+        // fires twice. Skip the repeat so we don't rescan the volumes twice.
+        $change = [$oldVolumeIds, $newVolumeIds];
+        if ($oldVolumeIds === $newVolumeIds || $change === $this->lastChange) {
+            return;
+        }
+        $this->lastChange = $change;
 
-                $newVolumeIds = SettingsHelper::normalizeVolumeIds(
-                    $this->plugin->getSettings()->volumeIDs ?? []
-                );
-
-                if ($this->previousVolumeIds !== $newVolumeIds) {
-                    $this->plugin->databaseService->handleVolumesChange($this->previousVolumeIds, $newVolumeIds);
-                }
-
-                $this->previousVolumeIds = $newVolumeIds;
-            }
-        );
+        Craft::info('AltPilot volume settings changed.', 'altpilot');
+        $this->plugin->databaseService->handleVolumesChange($oldVolumeIds, $newVolumeIds);
     }
 }

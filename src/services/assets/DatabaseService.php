@@ -165,8 +165,13 @@ class DatabaseService extends Component
         if ($addedVolumes !== []) {
             Craft::info('Volumes added: ' . implode(', ', $addedVolumes), 'altpilot');
 
-            foreach ($addedVolumes as $volumeId) {
-                $this->ensureAltFieldForVolume((int) $volumeId);
+            // During a project config apply, the volume config comes from the YAML,
+            // which the source environment already updated. Saving volumes here would
+            // throw when admin changes are disabled (read-only project config).
+            if (!Craft::$app->getProjectConfig()->getIsApplyingExternalChanges()) {
+                foreach ($addedVolumes as $volumeId) {
+                    $this->ensureAltFieldForVolume((int) $volumeId);
+                }
             }
 
             $db = Craft::$app->getDb();
