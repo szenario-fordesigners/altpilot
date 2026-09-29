@@ -110,10 +110,13 @@ class AltPilot extends Plugin
     {
         parent::afterInstall();
 
+        // Non-fatal on purpose: the metadata table is a rebuildable index, and failing here
+        // would roll back the install (or abort a whole project-config apply) over it.
         try {
             $this->databaseService->initializeDatabase();
         } catch (\Throwable $exception) {
-            Craft::error('AltPilot database initialization failed: ' . $exception->getMessage(), 'altpilot');
+            Craft::error($exception, 'altpilot');
+            Craft::error('AltPilot metadata initialization failed; the status index may be empty or partial. Rebuild it with `php craft altpilot/metadata/backfill --generate=0`.', 'altpilot');
         }
 
         // Redirect to the control panel settings page if we're in a web context
