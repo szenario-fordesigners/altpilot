@@ -22,8 +22,11 @@ class m260624_115000_metadata_identity extends Migration
 
         $this->normalizeMetadataRows();
 
-        $this->dropIndexIfExists(DatabaseService::TABLE_NAME, ['assetId', 'siteId', 'volumeId'], true);
+        // Create before drop: on MySQL the assetId foreign key has no index of its own
+        // and relies on whichever unique index starts with assetId. Dropping the old
+        // one first fails with error 1553.
         $this->createIndexIfMissing(DatabaseService::TABLE_NAME, ['assetId', 'siteId'], true);
+        $this->dropIndexIfExists(DatabaseService::TABLE_NAME, ['assetId', 'siteId', 'volumeId'], true);
 
         return true;
     }
@@ -34,8 +37,9 @@ class m260624_115000_metadata_identity extends Migration
             return true;
         }
 
-        $this->dropIndexIfExists(DatabaseService::TABLE_NAME, ['assetId', 'siteId'], true);
+        // Create before drop, see safeUp().
         $this->createIndexIfMissing(DatabaseService::TABLE_NAME, ['assetId', 'siteId', 'volumeId'], true);
+        $this->dropIndexIfExists(DatabaseService::TABLE_NAME, ['assetId', 'siteId'], true);
 
         return true;
     }
