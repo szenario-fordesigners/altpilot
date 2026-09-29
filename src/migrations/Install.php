@@ -38,7 +38,7 @@ class Install extends Migration
             $this->createIndex(
                 null,
                 DatabaseService::TABLE_NAME,
-                ['assetId', 'siteId', 'volumeId'],
+                ['assetId', 'siteId'],
                 true // unique
             );
 
