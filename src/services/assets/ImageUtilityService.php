@@ -4,6 +4,7 @@ namespace szenario\craftaltpilot\services\assets;
 
 use Craft;
 use craft\elements\Asset;
+use craft\image\Raster;
 use craft\models\ImageTransform;
 use yii\base\Component;
 
@@ -51,34 +52,53 @@ class ImageUtilityService extends Component
     /**
      * Convert an asset to a base64 data URI suitable for the OpenAI API.
      *
-     * If a transform is needed (resize and/or format conversion), fetches the
-     * transformed image via its internal URL and encodes it. If no transform
-     * is needed, uses Craft's built-in getDataUrl().
+     * If a transform is needed (resize and/or format conversion), converts a local
+     * copy of the file to JPG and encodes that. No HTTP request is made, so this works on
+     * sites the server can't reach at its own public URL (basic auth, IP allowlists, split DNS).
+     * If no transform is needed, uses Craft's built-in getDataUrl().
      *
-     * Throws if format conversion is required but the transform URL can't be fetched
+     * Throws if format conversion is required but fails
      * (we can't safely fall back to the original bytes of an unsupported format).
      */
     public function assetToBase64(Asset $asset): string
     {
-        $needsConversion = $this->needsFormatConversion($asset);
         $transform = $this->buildTransform($asset);
+        if ($transform === null) {
+            return $asset->getDataUrl();
+        }
 
-        if ($transform !== null) {
-            $url = $asset->getUrl($transform);
-            if ($url !== null) {
-                $data = @file_get_contents($url);
-                if ($data !== false) {
-                    $mime = ($transform->format === 'jpg') ? 'image/jpeg' : $asset->getMimeType();
-                    return "data:{$mime};base64," . base64_encode($data);
+        $path = null;
+        $jpgPath = null;
+
+        try {
+            $path = $asset->getCopyOfFile();
+            $jpgPath = $path . '.jpg';
+
+            /** @var Raster $image */
+            $image = Craft::$app->getImages()->loadImage($path, rasterize: true, svgSize: self::MAX_DIMENSION);
+            // First frame only for animated GIFs; white fill so transparent pixels don't turn black in the JPG
+            $image->disableAnimation()
+                ->scaleToFitAndFill($transform->width, $transform->height, '#ffffff', upscale: false)
+                ->saveAs($jpgPath);
+
+            return 'data:image/jpeg;base64,' . base64_encode((string) file_get_contents($jpgPath));
+        } catch (\Throwable $e) {
+            $reason = $e->getMessage() . ($e->getPrevious() !== null ? ' (' . $e->getPrevious()->getMessage() . ')' : '');
+
+            // Resize only: the original is a supported format, so send it full-size rather than fail
+            if ($transform->format !== 'jpg') {
+                Craft::warning('Could not resize asset ' . $asset->id . ', sending original: ' . $reason, 'altpilot');
+                return $asset->getDataUrl();
+            }
+
+            throw new \Exception('Could not transform asset ' . $asset->id . ' into an OpenAI-supported format: ' . $reason, 0, $e);
+        } finally {
+            foreach ([$path, $jpgPath] as $file) {
+                if ($file !== null && is_file($file)) {
+                    @unlink($file);
                 }
             }
         }
-
-        if ($needsConversion) {
-            throw new \Exception('Could not transform asset ' . $asset->id . ' into an OpenAI-supported format.');
-        }
-
-        return $asset->getDataUrl();
     }
 
     /**
