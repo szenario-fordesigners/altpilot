@@ -13,6 +13,13 @@ phpstan.neon export-ignore
 stubs/ export-ignore
 tests/ export-ignore
 frontend/ export-ignore
+.agents/ export-ignore
+.vscode/ export-ignore
+.idea/ export-ignore
+.editorconfig export-ignore
+images/ export-ignore
+renovate.json export-ignore
+skills-lock.json export-ignore
 
 # Auto-detect text files and perform LF normalization
 * text=auto
