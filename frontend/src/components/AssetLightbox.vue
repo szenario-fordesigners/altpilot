@@ -111,7 +111,7 @@ onUnmounted(() => {
             class="flex h-[min(62vh,520px)] w-full max-w-[calc(100vw-2rem)] items-center justify-center bg-white p-3 shadow-2xl sm:h-[min(78vh,900px)] sm:w-[960px] sm:max-w-[calc(100vw-8rem)] sm:p-6"
           >
             <img
-              :src="currentAsset.url"
+              :src="currentAsset.previewUrl"
               :alt="currentAsset.title || 'Asset'"
               class="h-full w-full object-contain"
             />

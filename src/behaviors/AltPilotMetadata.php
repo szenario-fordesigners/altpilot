@@ -5,6 +5,7 @@ namespace szenario\craftaltpilot\behaviors;
 use Craft;
 use craft\db\Query;
 use craft\elements\Asset;
+use craft\helpers\Assets as AssetsHelper;
 use craft\events\ModelEvent;
 use szenario\craftaltpilot\AltPilot;
 use szenario\craftaltpilot\services\assets\DatabaseService;
@@ -145,10 +146,30 @@ class AltPilotMetadata extends Behavior
             'id' => (int) $asset->id,
             'siteId' => $asset->siteId === null ? null : (int) $asset->siteId,
             'url' => is_string($url) ? $url : '',
+            'thumbUrl' => Craft::$app->getAssets()->getThumbUrl($asset, 600, 300) ?? '',
+            'previewUrl' => self::previewUrl($asset) ?? (is_string($url) ? $url : ''),
             'title' => (string) $asset->title,
             'alt' => ($altText === null || $altText === '') ? null : (string) $altText,
             'status' => (int) $status,
         ];
+    }
+
+    /**
+     * Lightbox-sized URL: fits within 1920px, never upscales. Uses Craft's deferred
+     * thumb transforms, so it also works for volumes without public URLs.
+     */
+    private static function previewUrl(Asset $asset): ?string
+    {
+        $width = (int) $asset->getWidth();
+        $height = (int) $asset->getHeight();
+
+        if (!$width || !$height) {
+            return null;
+        }
+
+        [$fitWidth, $fitHeight] = AssetsHelper::scaledDimensions($width, $height, min($width, 1920), min($height, 1920));
+
+        return Craft::$app->getAssets()->getThumbUrl($asset, $fitWidth, $fitHeight, false);
     }
 
     /**

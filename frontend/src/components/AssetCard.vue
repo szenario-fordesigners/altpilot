@@ -123,8 +123,9 @@ watch([meta_s, ctrl_s], ([m, c]) => {
     <div class="relative h-32 w-full">
       <img
         class="aspect-[4/3] h-full w-full cursor-pointer object-cover"
-        :src="currentAsset.url"
+        :src="currentAsset.thumbUrl"
         :alt="currentAsset.title"
+        loading="lazy"
         @click="emit('click-image', currentAsset.id)"
       />
 

@@ -2,6 +2,8 @@ export type Asset = {
   id: number;
   siteId: number;
   url: string;
+  thumbUrl: string;
+  previewUrl: string;
   title: string;
   alt: string | null;
   status: 0 | 1 | 2;
