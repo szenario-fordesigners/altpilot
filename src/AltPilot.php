@@ -161,7 +161,7 @@ class AltPilot extends Plugin
      * - DashboardEvents  → Auto-creates the widget on install, registers widget type
      * - SettingsEvents   → Detects volume changes (CP save or project config apply)
      * - AssetEvents      → Attaches metadata behavior, auto-queues new images, registers element actions
-     * - CleanupEvents    → Deletes metadata when assets/sites/volumes are deleted
+     * - CleanupEvents    → Deletes metadata when sites/volumes are deleted
      * - OverlayEvents    → Injects the image overlay JS on frontend page renders
      */
     private function attachEventHandlers(): void

@@ -206,26 +206,6 @@ class DatabaseService extends Component
         }
     }
 
-    /**
-     * Remove metadata rows for the given asset ID.
-     */
-    public function deleteMetadataForAsset(int $assetId): void
-    {
-        try {
-            $result = Craft::$app->getDb()
-                ->createCommand()
-                ->delete(self::TABLE_NAME, ['assetId' => $assetId])
-                ->execute();
-
-            Craft::info('Deleted ' . $result . ' metadata rows for asset ' . $assetId, 'altpilot');
-        } catch (Throwable $exception) {
-            Craft::error(
-                sprintf('Failed to delete metadata for asset %d: %s', $assetId, $exception->getMessage()),
-                'altpilot'
-            );
-        }
-    }
-
     public function deleteMetadataForSite(int $siteId): void
     {
         try {

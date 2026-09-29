@@ -2,7 +2,6 @@
 
 namespace szenario\craftaltpilot\events;
 
-use craft\elements\Asset;
 use craft\events\DeleteSiteEvent;
 use craft\events\VolumeEvent;
 use craft\services\Sites;
@@ -21,16 +20,11 @@ final class CleanupEvents
 
     public function register(): void
     {
-        Event::on(
-            Asset::class,
-            Asset::EVENT_AFTER_DELETE,
-            function (Event $event) {
-                /** @var Asset $asset */
-                $asset = $event->sender;
-                $this->plugin->databaseService->deleteMetadataForAsset((int)$asset->id);
-            }
-        );
-
+        // ponytail: no asset delete handler. Asset::EVENT_AFTER_DELETE also fires when
+        // an asset is trashed, and restoring it doesn't save it, so deleting rows there
+        // lost them for good. Trashed assets are already filtered out by the queries
+        // (elements.dateDeleted), and a hard delete (including trash garbage collection)
+        // removes the rows via the assetId foreign key's ON DELETE CASCADE.
         Event::on(
             Sites::class,
             Sites::EVENT_AFTER_DELETE_SITE,
