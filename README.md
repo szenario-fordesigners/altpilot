@@ -118,7 +118,12 @@ php craft altpilot/all [--siteId=<id>] --exclude-manual
 
 # show status counts and queue overview
 php craft altpilot/stats
+
+# track images missing from altpilot's index and queue generation for them
+php craft altpilot/metadata/backfill [--dryRun] [--generate=0] [--volumeId=<id>] [--siteId=<id>] [--limit=<n>]
 ```
+
+`altpilot/metadata/backfill` repairs altpilot's status index when images aren't tracked, e.g. after bulk imports, direct database changes, or an interrupted install. It adds the missing entries (as *manual* if the image already has alt text, otherwise *missing*) and queues generation for the missing ones. It writes changes by default; run with `--dryRun` first to preview. Use `--generate=0` to only add the entries without queueing jobs. It is safe to re-run.
 
 ## Queue and Performance Notes
 
