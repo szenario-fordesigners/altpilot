@@ -54,7 +54,7 @@ use szenario\craftaltpilot\services\ui\ImageReverseLookupService;
  */
 class AltPilot extends Plugin
 {
-    public string $schemaVersion = '1.0.1';
+    public string $schemaVersion = '1.0.2';
     public bool $hasCpSettings = true;
     public bool $hasCpSection = true;
 
