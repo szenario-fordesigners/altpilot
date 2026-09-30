@@ -7,7 +7,6 @@ use Psr\Log\LogLevel;
 use craft\base\Model;
 use craft\base\Plugin;
 use craft\helpers\App;
-use craft\helpers\UrlHelper;
 use craft\log\MonologTarget;
 use szenario\craftaltpilot\events\AssetEvents;
 use szenario\craftaltpilot\events\CleanupEvents;
@@ -117,12 +116,6 @@ class AltPilot extends Plugin
         } catch (\Throwable $exception) {
             Craft::error($exception, 'altpilot');
             Craft::error('AltPilot metadata initialization failed; the status index may be empty or partial. Rebuild it with `php craft altpilot/metadata/backfill --generate=0`.', 'altpilot');
-        }
-
-        // Redirect to the control panel settings page if we're in a web context
-        if (Craft::$app->getRequest()->getIsConsoleRequest() === false && Craft::$app->getRequest()->getIsCpRequest()) {
-            $settingsUrl = UrlHelper::cpUrl('settings/plugins/' . $this->handle);
-            Craft::$app->getResponse()->redirect($settingsUrl)->send();
         }
     }
 
