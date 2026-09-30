@@ -1,5 +1,17 @@
 # Release Notes for AltPilot
 
+## 5.1.0 - 2026-09-30
+
+- Use optimized thumbnails and previews in the gallery and lightbox
+- Improve error messages when SVG rasterization isn't supported by the server
+- Apply volume setting changes from project config deploys (`project-config/apply`)
+- Keep alt text statuses when a volume is unticked and re-added
+- Keep metadata when an asset is trashed, so restored assets show up again
+- Respect site URL and action trigger settings for the overlay endpoint
+- Exclude leftover development files from the package
+- Add `metadata/backfill` console command to reconcile the status table with existing assets
+- Update dependencies
+
 ## 5.0.16 - 2026-07-02
 
 - Record image metadata even when file permissions are missing
