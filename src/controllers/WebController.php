@@ -239,7 +239,7 @@ class WebController extends Controller
 
             $behavior = $asset->getBehavior('altPilotMetadata');
             if ($behavior instanceof AltPilotMetadata) {
-                $behavior->setStatus($altText === null || trim($altText) === '' ? AltPilotMetadata::STATUS_MISSING : AltPilotMetadata::STATUS_MANUAL);
+                $behavior->setStatus(AltPilotMetadata::statusForAlt($altText));
             }
 
             if (!$elementsService->saveElement($asset)) {

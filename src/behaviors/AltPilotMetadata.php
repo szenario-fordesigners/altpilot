@@ -8,6 +8,7 @@ use craft\elements\Asset;
 use craft\helpers\Assets as AssetsHelper;
 use craft\events\ModelEvent;
 use szenario\craftaltpilot\AltPilot;
+use szenario\craftaltpilot\helpers\SettingsHelper;
 use szenario\craftaltpilot\services\assets\DatabaseService;
 use yii\base\Behavior;
 
@@ -58,6 +59,15 @@ class AltPilotMetadata extends Behavior
     }
 
     /**
+     * Status implied by the alt text alone: MANUAL if set, MISSING if empty.
+     * Used wherever no recorded status exists (yet).
+     */
+    public static function statusForAlt(?string $alt): int
+    {
+        return trim((string) $alt) !== '' ? self::STATUS_MANUAL : self::STATUS_MISSING;
+    }
+
+    /**
      * Returns the current status for the asset.
      */
     public function getStatus(): int
@@ -100,9 +110,7 @@ class AltPilotMetadata extends Behavior
         if ($asset->isAttributeDirty('alt')) {
             $altText = $asset->alt;
             Craft::info("AltPilotMetadata: Alt text dirty. New value: '$altText' for asset " . $asset->id . " on site " . $asset->siteId, 'altpilot');
-            $status = ($altText === null || trim($altText) === '')
-                ? self::STATUS_MISSING
-                : self::STATUS_MANUAL;
+            $status = self::statusForAlt($altText);
 
             Craft::info("AltPilotMetadata: Auto-setting status to $status for asset " . $asset->id . " on site " . $asset->siteId, 'altpilot');
             $this->setStatus($status);
@@ -117,6 +125,13 @@ class AltPilotMetadata extends Behavior
         $asset = $this->owner;
 
         if (!$asset instanceof Asset || !$asset->id || !$asset->siteId) {
+            return;
+        }
+
+        // ponytail: rows of unticked volumes go stale while unticked; the
+        // re-add sync fixes contradictions, but not an AI text edited by hand.
+        $volumeIds = SettingsHelper::normalizeVolumeIds(AltPilot::getInstance()->getSettings()->volumeIDs ?? []);
+        if (!in_array((int) $asset->volumeId, $volumeIds, true)) {
             return;
         }
 
@@ -191,7 +206,7 @@ class AltPilotMetadata extends Behavior
             ->where(['assetId' => $asset->id, 'siteId' => $asset->siteId])
             ->one();
 
-        $this->_status = $row ? (int) $row['status'] : self::STATUS_MISSING;
+        $this->_status = $row ? (int) $row['status'] : self::statusForAlt($asset->alt);
         $this->_loaded = true;
     }
 }

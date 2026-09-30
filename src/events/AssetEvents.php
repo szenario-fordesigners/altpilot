@@ -88,6 +88,9 @@ final class AssetEvents
                     $siteAsset = clone $asset;
                     $siteAsset->siteId = $site->id;
 
+                    // The behavior can't cover uploads: EVENT_INIT runs before `kind`
+                    // is set on a new asset, so it never gets attached. The cloned alt
+                    // is right for every site, Craft copies it to all sites on create.
                     $this->plugin->databaseService->insertSingleAsset(Craft::$app->getDb(), $siteAsset);
                     $this->plugin->queueService->safelyCreateJob($siteAsset);
                 }

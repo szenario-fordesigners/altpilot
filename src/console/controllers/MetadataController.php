@@ -206,7 +206,7 @@ class MetadataController extends Controller
 
         foreach ($rows as $row) {
             $hasAlt = trim((string) $row['alt']) !== '';
-            $status = $hasAlt ? AltPilotMetadata::STATUS_MANUAL : AltPilotMetadata::STATUS_MISSING;
+            $status = AltPilotMetadata::statusForAlt($row['alt']);
 
             if ($hasAlt) {
                 $insertedManual++;

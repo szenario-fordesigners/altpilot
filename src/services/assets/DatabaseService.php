@@ -451,8 +451,6 @@ class DatabaseService extends Component
 
     private function determineInitialStatus(Asset $asset): int
     {
-        return trim((string) $asset->alt) !== ''
-            ? AltPilotMetadata::STATUS_MANUAL
-            : AltPilotMetadata::STATUS_MISSING;
+        return AltPilotMetadata::statusForAlt($asset->alt);
     }
 }
