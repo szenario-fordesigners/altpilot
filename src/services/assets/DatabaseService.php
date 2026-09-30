@@ -71,7 +71,7 @@ class DatabaseService extends Component
 
             foreach ($query->batch($batchSize) as $assetBatch) {
                 /** @var Asset[] $assetBatch */
-                $this->insertMultipleAssets($db, $assetBatch);
+                $this->syncAssets($db, $assetBatch);
             }
         }
     }
@@ -114,22 +114,59 @@ class DatabaseService extends Component
     }
 
     /**
-     * Batch-insert metadata rows. Falls back to one-by-one inserts on failure
-     * (e.g. when some rows already exist from a partial earlier run).
+     * Bring the metadata rows for these assets in line with their alt text.
+     *
+     * Missing rows are batch-inserted. Existing rows keep their status, because
+     * AI-generated vs. manual can't be rebuilt from the alt text; only
+     * contradictions are corrected: empty alt → MISSING, alt text on a MISSING
+     * row → MANUAL. A stale volumeId is updated too.
+     *
+     * @param Asset[] $assets
      */
-    private function insertMultipleAssets(Connection $db, array $assets): void
+    private function syncAssets(Connection $db, array $assets): void
     {
+        if ($assets === []) {
+            return;
+        }
+
+        $existing = [];
+        $existingRows = (new Query())
+            ->select(['assetId', 'siteId', 'volumeId', 'status'])
+            ->from(self::TABLE_NAME)
+            ->where(['assetId' => array_unique(array_map(static fn(Asset $asset) => (int) $asset->id, $assets))])
+            ->all($db);
+        foreach ($existingRows as $row) {
+            $existing[$row['assetId'] . '-' . $row['siteId']] = $row;
+        }
+
         $rows = [];
+        $newAssets = [];
         foreach ($assets as $asset) {
-            $rows[] = [
-                'assetId' => (int) $asset->id,
-                'siteId' => (int) $asset->siteId,
-                'volumeId' => (int) $asset->volumeId,
-                'status' => $this->determineInitialStatus($asset),
-                'dateCreated' => new Expression('NOW()'),
-                'dateUpdated' => new Expression('NOW()'),
-                'uid' => StringHelper::UUID(),
-            ];
+            $status = $this->determineInitialStatus($asset);
+            $row = $existing[$asset->id . '-' . $asset->siteId] ?? null;
+
+            if ($row === null) {
+                $newAssets[] = $asset;
+                $rows[] = [
+                    'assetId' => (int) $asset->id,
+                    'siteId' => (int) $asset->siteId,
+                    'volumeId' => (int) $asset->volumeId,
+                    'status' => $status,
+                    'dateCreated' => new Expression('NOW()'),
+                    'dateUpdated' => new Expression('NOW()'),
+                    'uid' => StringHelper::UUID(),
+                ];
+                continue;
+            }
+
+            $oldStatus = (int) $row['status'];
+            if ($status === AltPilotMetadata::STATUS_MANUAL && $oldStatus !== AltPilotMetadata::STATUS_MISSING) {
+                $status = $oldStatus;
+            }
+
+            if ($status !== $oldStatus || (int) $row['volumeId'] !== (int) $asset->volumeId) {
+                $this->insertSingleAsset($db, $asset, $status);
+            }
         }
 
         if ($rows === []) {
@@ -145,22 +182,21 @@ class DatabaseService extends Component
                 ->execute();
         } catch (Throwable $exception) {
             Craft::error('Batch metadata insert failed: ' . $exception->getMessage(), 'altpilot');
-            foreach ($assets as $asset) {
-                if ($asset instanceof Asset) {
-                    $this->insertSingleAsset($db, $asset);
-                }
+            foreach ($newAssets as $asset) {
+                $this->insertSingleAsset($db, $asset);
             }
         }
     }
 
     /**
      * React to volume selection changes in the plugin settings.
-     * Inserts metadata rows for newly added volumes, deletes rows for removed ones.
+     * Syncs metadata rows for newly added volumes. Rows of removed volumes are
+     * kept (queries ignore unconfigured volumes), so re-adding a volume doesn't
+     * turn its AI-generated statuses into MANUAL.
      */
     public function handleVolumesChange(array $oldVolumeIds, array $newVolumeIds): void
     {
         $addedVolumes = array_values(array_diff($newVolumeIds, $oldVolumeIds));
-        $removedVolumes = array_values(array_diff($oldVolumeIds, $newVolumeIds));
 
         if ($addedVolumes !== []) {
             Craft::info('Volumes added: ' . implode(', ', $addedVolumes), 'altpilot');
@@ -187,22 +223,13 @@ class DatabaseService extends Component
                 /** @var Asset[] $batch */
                 $processedBatchCount++;
                 $processedAssetCount += count($batch);
-                $this->insertMultipleAssets($db, $batch);
+                $this->syncAssets($db, $batch);
             }
 
             Craft::info(
                 'Finished processing added volumes. Batches: ' . $processedBatchCount . ', assets: ' . $processedAssetCount . '.',
                 'altpilot'
             );
-        }
-
-        if ($removedVolumes !== []) {
-            Craft::info('Volumes removed: ' . implode(', ', $removedVolumes), 'altpilot');
-            $deletedRows = Craft::$app->getDb()
-                ->createCommand()
-                ->delete(self::TABLE_NAME, ['volumeId' => $removedVolumes])
-                ->execute();
-            Craft::info('Deleted ' . $deletedRows . ' metadata rows for removed volumes.', 'altpilot');
         }
     }
 
@@ -291,11 +318,8 @@ class DatabaseService extends Component
             $query->orderBy($orderBy);
         }
 
-        if ($volumeIds !== []) {
-            $query->volumeId($volumeIds);
-        } else {
-            $query->volumeId('*');
-        }
+        // An empty array matches nothing (AssetQuery::beforePrepare()).
+        $query->volumeId($volumeIds);
 
         $this->applyStatusFilter($query, $filter);
 
@@ -356,11 +380,9 @@ class DatabaseService extends Component
             ->innerJoin(['elements' => Table::ELEMENTS], '[[elements.id]] = [[metadata.assetId]]')
             ->where(['assets.kind' => Asset::KIND_IMAGE])
             ->andWhere(['elements.dateDeleted' => null])
-            ->andWhere('[[metadata.volumeId]] = [[assets.volumeId]]');
-
-        if ($volumeIds !== []) {
-            $query->andWhere(['assets.volumeId' => $volumeIds]);
-        }
+            ->andWhere('[[metadata.volumeId]] = [[assets.volumeId]]')
+            // An empty IN () matches nothing.
+            ->andWhere(['assets.volumeId' => $volumeIds]);
 
         return $query;
     }
