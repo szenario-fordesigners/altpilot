@@ -84,6 +84,9 @@ class ImageUtilityService extends Component
             return 'data:image/jpeg;base64,' . base64_encode((string) file_get_contents($jpgPath));
         } catch (\Throwable $e) {
             $reason = $e->getMessage() . ($e->getPrevious() !== null ? ' (' . $e->getPrevious()->getMessage() . ')' : '');
+            if (strtolower((string) $asset->getMimeType()) === 'image/svg+xml') {
+                $reason = $this->svgRasterizeError() ?? $reason;
+            }
 
             // Resize only: the original is a supported format, so send it full-size rather than fail
             if ($transform->format !== 'jpg') {
@@ -98,6 +101,25 @@ class ImageUtilityService extends Component
                     @unlink($file);
                 }
             }
+        }
+    }
+
+    /**
+     * Why this server can't rasterize SVGs, or null if it can (so the failure lies with the file).
+     * Craft's Raster::loadFromSVG() retries with an XML declaration prepended and only reports
+     * the retry's error, which hides the real cause (e.g. an ImageMagick policy blocking MVG).
+     */
+    private function svgRasterizeError(): ?string
+    {
+        if (!Craft::$app->getImages()->getIsImagick()) {
+            return 'this server uses the GD image driver, which cannot rasterize SVGs';
+        }
+
+        try {
+            (new \Imagick())->readImageBlob('<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>');
+            return null;
+        } catch (\Throwable $e) {
+            return 'this server cannot rasterize SVGs: ' . $e->getMessage();
         }
     }
 
