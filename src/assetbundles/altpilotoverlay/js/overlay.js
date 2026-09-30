@@ -1,7 +1,9 @@
 (function () {
 	"use strict";
 
-	var RESOLVE_URL = "/actions/altpilot/overlay/resolve-images";
+	// Set by OverlayEvents via registerJsVar().
+	var config = window.altPilotOverlay || {};
+	var RESOLVE_URL = config.resolveUrl;
 	var RESCAN_DEBOUNCE_MS = 200;
 
 	var WARN_ICON = "\u26A0";
@@ -468,7 +470,18 @@
 
 	// ── Bootstrap ──────────────────────────────────────────────
 
+	function hasHintCookie() {
+		return (
+			!!config.hintCookie &&
+			new RegExp("(?:^|;\\s*)" + config.hintCookie + "=").test(document.cookie)
+		);
+	}
+
 	function boot() {
+		// Without the hint cookie this browser can't see the overlay, so don't
+		// make every anonymous page view hit the server.
+		if (!RESOLVE_URL || !hasHintCookie()) return;
+
 		scan();
 		startObserver();
 	}

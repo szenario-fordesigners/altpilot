@@ -6,6 +6,7 @@ use Craft;
 use craft\helpers\UrlHelper;
 use craft\web\Controller;
 use szenario\craftaltpilot\AltPilot;
+use szenario\craftaltpilot\events\OverlayEvents;
 use yii\web\Response;
 
 /**
@@ -48,10 +49,13 @@ class OverlayController extends Controller
 
         $settings = AltPilot::getInstance()->getSettings();
 
-        if (
-            !$settings->showImageOverlay ||
-            !Craft::$app->getUser()->checkPermission('accessPlugin-altpilot')
-        ) {
+        if (!Craft::$app->getUser()->checkPermission('accessPlugin-altpilot')) {
+            // Stale hint (session expired, permission revoked): stop this browser asking.
+            OverlayEvents::removeHintCookie();
+            return $this->asJson(['authenticated' => false]);
+        }
+
+        if (!$settings->showImageOverlay) {
             return $this->asJson(['authenticated' => false]);
         }
 
