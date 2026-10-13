@@ -29,7 +29,7 @@ watch(
   (isOpen) => {
     if (isOpen && props.initialAssetId !== null) {
       const index = props.assets.findIndex(
-        (a) => a[props.primarySiteId]?.id === props.initialAssetId,
+        (a) => Object.values(a)[0]?.id === props.initialAssetId,
       );
       if (index !== -1) {
         currentIndex.value = index;
@@ -41,7 +41,9 @@ watch(
 const currentAssetWrapper = computed(() => props.assets[currentIndex.value]);
 const currentAsset = computed(() => {
   if (!currentAssetWrapper.value) return null;
-  return currentAssetWrapper.value[props.primarySiteId];
+  return (
+    currentAssetWrapper.value[props.primarySiteId] ?? Object.values(currentAssetWrapper.value)[0]
+  );
 });
 
 function next() {

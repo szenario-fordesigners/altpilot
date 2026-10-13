@@ -23,7 +23,12 @@ const pendingGenerationSiteId = ref<number | null>(null);
 
 const currentSiteId = computed(() => primarySiteId.value!);
 
-const currentAsset = computed(() => props.asset[currentSiteId.value] as Asset);
+// Assets only exist in sites their volume propagates to, so the current site may be missing.
+const currentAsset = computed(
+  () => (props.asset[currentSiteId.value] ?? Object.values(props.asset)[0]) as Asset,
+);
+
+const assetSites = computed(() => sites.value.filter((site) => props.asset[site.id]));
 
 const currentSiteHandle = computed(() => {
   return sites.value.find((site) => site.id === currentSiteId.value)?.handle ?? null;
@@ -165,7 +170,7 @@ watch([meta_s, ctrl_s], ([m, c]) => {
 
     <div class="flex w-full gap-0 pt-2">
       <div
-        v-for="site in sites"
+        v-for="site in assetSites"
         :key="site.id"
         class="mb-4 flex w-full gap-0 border-b border-[#ECECEC] last:mb-0 last:border-b-0"
       >
