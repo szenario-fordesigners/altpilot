@@ -28,9 +28,7 @@ watch(
   () => props.open,
   (isOpen) => {
     if (isOpen && props.initialAssetId !== null) {
-      const index = props.assets.findIndex(
-        (a) => Object.values(a)[0]?.id === props.initialAssetId,
-      );
+      const index = props.assets.findIndex((a) => Object.values(a)[0]?.id === props.initialAssetId);
       if (index !== -1) {
         currentIndex.value = index;
       }
