@@ -1,5 +1,9 @@
 # Release Notes for AltPilot
 
+## 5.1.1 - 2026-10-13
+
+- Fix the control panel gallery failing to load when assets don't exist in every site
+
 ## 5.1.0 - 2026-09-30
 
 - Use optimized thumbnails and previews in the gallery and lightbox
