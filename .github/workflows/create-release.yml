@@ -31,7 +31,7 @@ jobs:
             - uses: pnpm/action-setup@v6.1.0
               if: steps.guard.outputs.skip != 'true'
               with:
-                  version: 12.15.0
+                  version: 12.16.1
             - uses: actions/setup-node@v7.1.0
               if: steps.guard.outputs.skip != 'true'
               with:
