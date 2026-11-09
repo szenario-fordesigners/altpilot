@@ -28,10 +28,10 @@ jobs:
                   fi
 
             # 1. Setup Environment
-            - uses: pnpm/action-setup@v6.1.0
+            - uses: pnpm/action-setup@v6.1.1
               if: steps.guard.outputs.skip != 'true'
               with:
-                  version: 12.16.1
+                  version: 12.18.0
             - uses: actions/setup-node@v7.1.0
               if: steps.guard.outputs.skip != 'true'
               with:
