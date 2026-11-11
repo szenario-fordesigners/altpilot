@@ -12,7 +12,6 @@ use szenario\craftaltpilot\helpers\SettingsHelper;
 class Settings extends Model
 {
     public $openAiApiKey = '';
-    public $openAiModel = 'gpt-5-nano';
 
     public $openAiPrompt = 'You are an expert in semantic image analysis for web accessibility. Your job is to generate alt texts for images.
 1. Describe the primary subject, specific action, and setting efficiently.

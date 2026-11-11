@@ -86,13 +86,10 @@ altpilot settings are available in the Craft control panel:
 - **Prompt**: base prompt sent with each image
 - **Prompt Role**: optional role/context
 - **Prompt Focus**: optional domain-specific focus
-- **OpenAI Model**: model used for alt text generation (recommended: `gpt-5-nano`)
 
-## Model Recommendation and Cost
+## Model and Cost
 
-We recommend `gpt-5-nano` as the default model for most projects because it currently offers the best price/performance for alt text generation.
-
-In our experience, generating 1,000 alt texts with `gpt-5-nano` costs less **$0.7 USD**.
+Alt texts are generated with OpenAI's `gpt-6-luna`, which currently offers the best price/performance for alt text generation.
 
 > Pricing is an estimate, not a guarantee. Actual cost depends on your prompt length, image complexity, response length, and OpenAI pricing changes over time.
 

@@ -115,7 +115,7 @@ class OpenAiService extends Component
 
         try {
             $response = $this->getClient()->chat()->create([
-                'model' => $settings->openAiModel ?? 'gpt-5-nano',
+                'model' => 'gpt-6-luna',
                 'messages' => $messages,
             ]);
         } catch (\Exception $e) {
