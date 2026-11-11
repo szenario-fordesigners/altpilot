@@ -1,5 +1,11 @@
 # Release Notes for AltPilot
 
+## 5.1.2 - 2026-11-11
+
+- Generate alt texts with GPT-6 Luna, since OpenAI is retiring GPT-5 Nano (December 11, 2026) and GPT-4o (January 14, 2027)
+- Remove the OpenAI Model setting
+- Update dependencies
+
 ## 5.1.1 - 2026-10-13
 
 - Fix the control panel gallery failing to load when assets don't exist in every site
